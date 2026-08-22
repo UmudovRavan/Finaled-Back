@@ -1,0 +1,12 @@
+c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Contract\bin\Debug\net8.0\AltensorAuthService.Contract.deps.json
+c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Contract\bin\Debug\net8.0\AltensorAuthService.Contract.dll
+c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Contract\bin\Debug\net8.0\AltensorAuthService.Contract.pdb
+c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.GeneratedMSBuildEditorConfig.editorconfig
+c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.AssemblyInfoInputs.cache
+c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.AssemblyInfo.cs
+c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.csproj.CoreCompileInputs.cache
+c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.sourcelink.json
+c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.dll
+c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\refint\AltensorAuthService.Contract.dll
+c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.pdb
+c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\ref\AltensorAuthService.Contract.dll
