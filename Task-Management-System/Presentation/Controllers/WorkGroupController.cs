@@ -21,6 +21,7 @@ namespace Presentation.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,TenantAdmin,PlatformSuperAdmin,SuperAdmin")]
         public async Task<IActionResult> CreateWorkGroup([FromBody] WorkGroupDTO workgroupDto)
         {
             var result = await _workGroupService.CreateWorkGroupAsync(workgroupDto);
@@ -42,6 +43,7 @@ namespace Presentation.Controllers
         }
 
         [HttpPut("{id:guid}")]
+        [Authorize(Roles = "Admin,TenantAdmin,PlatformSuperAdmin,SuperAdmin,Manager")]
         public async Task<IActionResult> UpdateWorkGroup(Guid id, [FromBody] WorkGroupDTO workgroupDto)
         {
             workgroupDto.Id = id;
@@ -50,6 +52,7 @@ namespace Presentation.Controllers
         }
 
         [HttpDelete("{id:guid}")]
+        [Authorize(Roles = "Admin,TenantAdmin,PlatformSuperAdmin,SuperAdmin")]
         public async Task<IActionResult> DeleteWorkGroup(Guid id)
         {
             await _workGroupService.DeleteWorkGroupAsync(id);
@@ -57,6 +60,7 @@ namespace Presentation.Controllers
         }
 
         [HttpPost("{workGroupId:guid}/AddUser/{userId}")]
+        [Authorize(Roles = "Admin,TenantAdmin,PlatformSuperAdmin,SuperAdmin,Manager")]
         public async Task<IActionResult> AddUserToWorkGroup(Guid workGroupId, string userId)
         {
             await _workGroupService.AddUserToWorkGroupAsync(workGroupId, userId);
@@ -64,6 +68,7 @@ namespace Presentation.Controllers
         }
 
         [HttpPost("{workGroupId:guid}/RemoveUser/{userId}")]
+        [Authorize(Roles = "Admin,TenantAdmin,PlatformSuperAdmin,SuperAdmin,Manager")]
         public async Task<IActionResult> RemoveUserFromWorkGroup(Guid workGroupId, string userId)
         {
             await _workGroupService.RemoveUserFromWorkGroupAsync(workGroupId, userId);
@@ -71,6 +76,7 @@ namespace Presentation.Controllers
         }
 
         [HttpPost("AssignTask")]
+        [Authorize(Roles = "Admin,TenantAdmin,PlatformSuperAdmin,SuperAdmin,Manager")]
         public async Task<IActionResult> AssignTaskToGroup(Guid taskId, Guid targetWorkGroupId)
         {
             var leaderId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");

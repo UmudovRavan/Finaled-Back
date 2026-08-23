@@ -41,8 +41,8 @@ namespace ApplicationLayer.Services
                         _tenantService.UserId.Value,
                         tenantId,
                         _tenantService.Email ?? "user@system.local",
-                        _tenantService.Email,
-                        _tenantService.Email
+                        null,
+                        null
                     );
                 }
                 catch (Exception ex)

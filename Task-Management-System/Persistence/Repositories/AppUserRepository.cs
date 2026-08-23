@@ -32,16 +32,16 @@ namespace Persistence.Repositories
                     Id = userId,
                     TenantId = tenantId,
                     Email = email,
-                    FullName = fullName,
-                    UserName = userName,
+                    FullName = !string.IsNullOrWhiteSpace(fullName) ? fullName : (!string.IsNullOrWhiteSpace(email) ? email.Split('@')[0] : null),
+                    UserName = !string.IsNullOrWhiteSpace(userName) ? userName : (!string.IsNullOrWhiteSpace(email) ? email.Split('@')[0] : null),
                     CreatedAt = DateTime.UtcNow
                 });
             }
             else
             {
-                existing.Email = email;
-                existing.FullName = fullName;
-                existing.UserName = userName;
+                if (!string.IsNullOrWhiteSpace(email)) existing.Email = email;
+                if (!string.IsNullOrWhiteSpace(fullName)) existing.FullName = fullName;
+                if (!string.IsNullOrWhiteSpace(userName)) existing.UserName = userName;
             }
 
             await _db.SaveChangesAsync();
