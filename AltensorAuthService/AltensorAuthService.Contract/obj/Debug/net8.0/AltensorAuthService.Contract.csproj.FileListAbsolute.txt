@@ -10,3 +10,15 @@ c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService
 c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\refint\AltensorAuthService.Contract.dll
 c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.pdb
 c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\ref\AltensorAuthService.Contract.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\bin\Debug\net8.0\AltensorAuthService.Contract.deps.json
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\bin\Debug\net8.0\AltensorAuthService.Contract.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\bin\Debug\net8.0\AltensorAuthService.Contract.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.AssemblyInfoInputs.cache
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.AssemblyInfo.cs
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.csproj.CoreCompileInputs.cache
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.sourcelink.json
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\refint\AltensorAuthService.Contract.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\ref\AltensorAuthService.Contract.dll

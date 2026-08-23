@@ -35,7 +35,7 @@ namespace Presentation.Controllers
             _notificationService = notificationService;
         }
 
-        [Authorize]
+        [Authorize(Policy = "CanCreateTasks")]
         [HttpPost("CreateTask")]
         public async Task<IActionResult> CreateTask([FromForm] TaskDTO taskDto, [FromForm] List<IFormFile> files)
         {
@@ -74,7 +74,7 @@ namespace Presentation.Controllers
             return Ok(createdTask);
         }
 
-        [Authorize]
+        [Authorize(Policy = "CanViewTasks")]
         [HttpGet("GetTask/{id}")]
         public async Task<IActionResult> GetTask(Guid id)
         {
@@ -91,7 +91,7 @@ namespace Presentation.Controllers
             return Ok(task);
         }
 
-        [Authorize]
+        [Authorize(Policy = "CanUpdateTasks")]
         [HttpPut("UpdateTask")]
         public async Task<IActionResult> UpdateTask([FromBody] TaskDTO taskDto)
         {
@@ -103,7 +103,7 @@ namespace Presentation.Controllers
             return Ok("Dəyişikliklər Qeyd Olundu");
         }
 
-        [Authorize]
+        [Authorize(Policy = "CanUploadAttachments")]
         [HttpPost("AddFilesToTask/{taskId}")]
         public async Task<IActionResult> AddFilesToTask(Guid taskId, [FromForm] List<IFormFile>? files)
         {
@@ -130,7 +130,7 @@ namespace Presentation.Controllers
             return Ok("Fayllar uğurla əlavə olundu.");
         }
 
-        [Authorize]
+        [Authorize(Policy = "CanViewTasks")]
         [HttpGet("GetAllTask")]
         public async Task<IActionResult> GetAllTask()
         {
@@ -138,7 +138,7 @@ namespace Presentation.Controllers
             return Ok(tasks);
         }
 
-        [Authorize]
+        [Authorize(Policy = "CanDeleteTasks")]
         [HttpDelete("DeleteTask/{id}")]
         public async Task<IActionResult> DeleteTask(Guid id)
         {
@@ -150,7 +150,7 @@ namespace Presentation.Controllers
             return NoContent();
         }
 
-        [Authorize]
+        [Authorize(Policy = "CanCommentTasks")]
         [HttpPost("AddComment")]
         public async Task<IActionResult> AddComment(Guid taskId, string comment)
         {
@@ -159,7 +159,7 @@ namespace Presentation.Controllers
             return Ok();
         }
 
-        [Authorize]
+        [Authorize(Policy = "CanAssignTasks")]
         [HttpPost("AssignTask")]
         public async Task<IActionResult> AssignTask(Guid taskId)
         {
@@ -168,7 +168,7 @@ namespace Presentation.Controllers
             return Ok();
         }
 
-        [Authorize]
+        [Authorize(Policy = "CanAssignTasks")]
         [HttpPost("UnAssignTask")]
         public async Task<IActionResult> UnAssignTask(Guid taskId)
         {
@@ -177,7 +177,7 @@ namespace Presentation.Controllers
             return Ok();
         }
 
-        [Authorize]
+        [Authorize(Policy = "CanManageTaskStatus")]
         [HttpPost("AcceptTask")]
         public async Task<IActionResult> AcceptTask(Guid taskId)
         {
@@ -186,7 +186,7 @@ namespace Presentation.Controllers
             return Ok();
         }
 
-        [Authorize]
+        [Authorize(Policy = "CanManageTaskStatus")]
         [HttpPost("reject")]
         public async Task<IActionResult> RejectTask(Guid taskId, string reason)
         {
@@ -195,7 +195,7 @@ namespace Presentation.Controllers
             return Ok();
         }
 
-        [Authorize]
+        [Authorize(Policy = "CanManageTaskStatus")]
         [HttpPost("FinishTask")]
         public async Task<IActionResult> FinishTask(Guid taskId)
         {
@@ -204,7 +204,7 @@ namespace Presentation.Controllers
             return Ok();
         }
 
-        [Authorize]
+        [Authorize(Policy = "CanManageTaskStatus")]
         [HttpPost("ReopenTask")]
         public async Task<IActionResult> ReturnedForRevision(Guid taskId, string userId, string reason)
         {

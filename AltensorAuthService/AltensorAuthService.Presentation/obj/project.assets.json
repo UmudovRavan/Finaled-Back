@@ -4129,23 +4129,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Huawei\\.nuget\\packages\\": {},
+    "C:\\Users\\Ravan999\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Presentation\\AltensorAuthService.Presentation.csproj",
+      "projectUniqueName": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Presentation\\AltensorAuthService.Presentation.csproj",
       "projectName": "AltensorAuthService.Presentation",
-      "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Presentation\\AltensorAuthService.Presentation.csproj",
-      "packagesPath": "C:\\Users\\Huawei\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Presentation\\obj\\",
+      "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Presentation\\AltensorAuthService.Presentation.csproj",
+      "packagesPath": "C:\\Users\\Ravan999\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Presentation\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\Huawei\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Ravan999\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -4160,17 +4160,17 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Application\\AltensorAuthService.Application.csproj": {
-              "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Application\\AltensorAuthService.Application.csproj"
+            "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Application\\AltensorAuthService.Application.csproj": {
+              "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Application\\AltensorAuthService.Application.csproj"
             },
-            "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj": {
-              "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj"
+            "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj": {
+              "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj"
             },
-            "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj": {
-              "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj"
+            "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj": {
+              "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj"
             },
-            "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Persistence\\AltensorAuthService.Persistence.csproj": {
-              "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Persistence\\AltensorAuthService.Persistence.csproj"
+            "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Persistence\\AltensorAuthService.Persistence.csproj": {
+              "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Persistence\\AltensorAuthService.Persistence.csproj"
             }
           }
         }
@@ -4185,7 +4185,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "10.0.200"
+      "SdkAnalysisLevel": "10.0.100"
     },
     "frameworks": {
       "net8.0": {
@@ -4228,19 +4228,19 @@
         "downloadDependencies": [
           {
             "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[8.0.27, 8.0.27]"
+            "version": "[8.0.24, 8.0.24]"
           },
           {
             "name": "Microsoft.NETCore.App.Host.win-x64",
-            "version": "[8.0.27, 8.0.27]"
+            "version": "[8.0.24, 8.0.24]"
           },
           {
             "name": "Microsoft.NETCore.App.Ref",
-            "version": "[8.0.27, 8.0.27]"
+            "version": "[8.0.24, 8.0.24]"
           },
           {
             "name": "Microsoft.WindowsDesktop.App.Ref",
-            "version": "[8.0.27, 8.0.27]"
+            "version": "[8.0.24, 8.0.24]"
           }
         ],
         "frameworkReferences": {
@@ -4251,7 +4251,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.204/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

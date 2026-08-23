@@ -23,6 +23,7 @@ namespace Presentation.Controllers
             _hub = hub;
         }
 
+        [Authorize(Policy = "CanViewNotifications")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {

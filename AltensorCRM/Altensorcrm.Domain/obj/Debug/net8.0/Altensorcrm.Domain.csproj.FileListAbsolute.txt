@@ -11,3 +11,16 @@ c:\Users\Huawei\Desktop\Altensor Backend\AltensorCRM\Altensorcrm.Domain\obj\Debu
 c:\Users\Huawei\Desktop\Altensor Backend\AltensorCRM\Altensorcrm.Domain\obj\Debug\net8.0\refint\Altensorcrm.Domain.dll
 c:\Users\Huawei\Desktop\Altensor Backend\AltensorCRM\Altensorcrm.Domain\obj\Debug\net8.0\Altensorcrm.Domain.pdb
 c:\Users\Huawei\Desktop\Altensor Backend\AltensorCRM\Altensorcrm.Domain\obj\Debug\net8.0\ref\Altensorcrm.Domain.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Domain\bin\Debug\net8.0\Altensorcrm.Domain.deps.json
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Domain\bin\Debug\net8.0\Altensorcrm.Domain.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Domain\bin\Debug\net8.0\Altensorcrm.Domain.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Domain\obj\Debug\net8.0\Altensorcrm.Domain.csproj.AssemblyReference.cache
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Domain\obj\Debug\net8.0\Altensorcrm.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Domain\obj\Debug\net8.0\Altensorcrm.Domain.AssemblyInfoInputs.cache
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Domain\obj\Debug\net8.0\Altensorcrm.Domain.AssemblyInfo.cs
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Domain\obj\Debug\net8.0\Altensorcrm.Domain.csproj.CoreCompileInputs.cache
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Domain\obj\Debug\net8.0\Altensorcrm.Domain.sourcelink.json
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Domain\obj\Debug\net8.0\Altensorcrm.Domain.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Domain\obj\Debug\net8.0\refint\Altensorcrm.Domain.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Domain\obj\Debug\net8.0\Altensorcrm.Domain.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Domain\obj\Debug\net8.0\ref\Altensorcrm.Domain.dll

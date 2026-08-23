@@ -18,6 +18,7 @@ namespace Presentation.Controllers
             _taskAttachmentService = taskAttachmentService;
         }
 
+        [Authorize(Policy = "CanViewAttachments")]
         [HttpGet("{attachmentId:guid}/download")]
         public async Task<IActionResult> DownloadAttachment(Guid attachmentId)
         {
@@ -30,6 +31,7 @@ namespace Presentation.Controllers
             return File(fileDto.Content, fileDto.ContentType, fileDto.FileName);
         }
 
+        [Authorize(Policy = "CanViewAttachments")]
         [HttpGet("{attachmentId:guid}/preview-url")]
         public async Task<IActionResult> GetPresignedUrl(Guid attachmentId)
         {

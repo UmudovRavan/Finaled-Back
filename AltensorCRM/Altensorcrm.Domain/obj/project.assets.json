@@ -561,23 +561,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Huawei\\.nuget\\packages\\": {},
+    "C:\\Users\\Ravan999\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorCRM\\Altensorcrm.Domain\\Altensorcrm.Domain.csproj",
+      "projectUniqueName": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorCRM\\Altensorcrm.Domain\\Altensorcrm.Domain.csproj",
       "projectName": "Altensorcrm.Domain",
-      "projectPath": "c:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorCRM\\Altensorcrm.Domain\\Altensorcrm.Domain.csproj",
-      "packagesPath": "C:\\Users\\Huawei\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorCRM\\Altensorcrm.Domain\\obj\\",
+      "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorCRM\\Altensorcrm.Domain\\Altensorcrm.Domain.csproj",
+      "packagesPath": "C:\\Users\\Ravan999\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorCRM\\Altensorcrm.Domain\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\Huawei\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Ravan999\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -604,7 +604,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "10.0.200"
+      "SdkAnalysisLevel": "10.0.100"
     },
     "frameworks": {
       "net8.0": {
@@ -629,15 +629,15 @@
         "downloadDependencies": [
           {
             "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[8.0.27, 8.0.27]"
+            "version": "[8.0.24, 8.0.24]"
           },
           {
             "name": "Microsoft.NETCore.App.Ref",
-            "version": "[8.0.27, 8.0.27]"
+            "version": "[8.0.24, 8.0.24]"
           },
           {
             "name": "Microsoft.WindowsDesktop.App.Ref",
-            "version": "[8.0.27, 8.0.27]"
+            "version": "[8.0.24, 8.0.24]"
           }
         ],
         "frameworkReferences": {
@@ -645,7 +645,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.204/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

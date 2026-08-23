@@ -80,22 +80,50 @@ namespace Presentationn
             builder.Services.AddAltensorAuthentication(builder.Configuration);
 
             // ================= Authorization Policies =================
+            static bool HasTmsPermissionOrAdmin(Microsoft.AspNetCore.Authorization.AuthorizationHandlerContext ctx, params string[] permissions)
+            {
+                if (ctx.User.IsInRole("TenantAdmin") || ctx.User.IsInRole("PlatformSuperAdmin") || ctx.User.IsInRole("Admin") || ctx.User.IsInRole("SuperAdmin"))
+                    return true;
+
+                foreach (var perm in permissions)
+                {
+                    if (ctx.User.HasClaim("permissions", perm))
+                        return true;
+                }
+                return false;
+            }
+
             builder.Services.AddAuthorization(options =>
             {
                 options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
                     .Build();
 
-                options.AddPolicy("CanViewTasks", p => p.RequireClaim("permissions", "tms.tasks.view"));
-                options.AddPolicy("CanCreateTasks", p => p.RequireClaim("permissions", "tms.tasks.create"));
-                options.AddPolicy("CanUpdateTasks", p => p.RequireClaim("permissions", "tms.tasks.update"));
-                options.AddPolicy("CanDeleteTasks", p => p.RequireClaim("permissions", "tms.tasks.delete"));
+                options.AddPolicy("TMSAccess", p => p.RequireAssertion(ctx => 
+                    ctx.User.HasClaim("modules", "TMS") || ctx.User.HasClaim("modules", "tms") || ctx.User.IsInRole("TenantAdmin") || ctx.User.IsInRole("PlatformSuperAdmin")));
 
-                options.AddPolicy("CanViewWorkGroups", p => p.RequireClaim("permissions", "tms.workgroups.view"));
-                options.AddPolicy("CanManageWorkGroups", p => p.RequireClaim("permissions", "tms.workgroups.manage"));
+                // Task policies
+                options.AddPolicy("CanViewTasks", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.tasks.view")));
+                options.AddPolicy("CanCreateTasks", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.tasks.create")));
+                options.AddPolicy("CanUpdateTasks", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.tasks.update")));
+                options.AddPolicy("CanDeleteTasks", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.tasks.delete")));
+                options.AddPolicy("CanAssignTasks", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.tasks.assign", "tms.tasks.update")));
+                options.AddPolicy("CanManageTaskStatus", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.tasks.status_manage", "tms.tasks.update")));
+                options.AddPolicy("CanCommentTasks", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.tasks.comment", "tms.tasks.view")));
+                options.AddPolicy("CanViewAttachments", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.tasks.attachment.view", "tms.tasks.view")));
+                options.AddPolicy("CanUploadAttachments", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.tasks.attachment.upload", "tms.tasks.update", "tms.tasks.create")));
 
-                options.AddPolicy("CanViewPerformance", p => p.RequireClaim("permissions", "tms.performance.view"));
-                options.AddPolicy("TMSAccess", p => p.RequireClaim("modules", "TMS"));
+                // WorkGroup policies
+                options.AddPolicy("CanViewWorkGroups", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.workgroups.view")));
+                options.AddPolicy("CanCreateWorkGroups", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.workgroups.create", "tms.workgroups.manage")));
+                options.AddPolicy("CanUpdateWorkGroups", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.workgroups.update", "tms.workgroups.manage")));
+                options.AddPolicy("CanDeleteWorkGroups", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.workgroups.delete", "tms.workgroups.manage")));
+                options.AddPolicy("CanManageWorkGroupMembers", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.workgroups.members_manage", "tms.workgroups.manage")));
+                options.AddPolicy("CanAssignWorkGroupTasks", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.workgroups.task_assign", "tms.workgroups.manage")));
+
+                // Performance & Notifications
+                options.AddPolicy("CanViewPerformance", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.performance.view")));
+                options.AddPolicy("CanViewNotifications", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.notifications.view")));
             });
 
             // ================= Minio & Swagger =================

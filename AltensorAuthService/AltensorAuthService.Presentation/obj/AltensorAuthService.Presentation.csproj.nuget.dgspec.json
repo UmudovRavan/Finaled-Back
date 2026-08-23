@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Presentation\\AltensorAuthService.Presentation.csproj": {}
+    "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Presentation\\AltensorAuthService.Presentation.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Application\\AltensorAuthService.Application.csproj": {
+    "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Application\\AltensorAuthService.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Application\\AltensorAuthService.Application.csproj",
+        "projectUniqueName": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Application\\AltensorAuthService.Application.csproj",
         "projectName": "AltensorAuthService.Application",
-        "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Application\\AltensorAuthService.Application.csproj",
-        "packagesPath": "C:\\Users\\Huawei\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Application\\obj\\",
+        "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Application\\AltensorAuthService.Application.csproj",
+        "packagesPath": "C:\\Users\\Ravan999\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Application\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Huawei\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Ravan999\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -30,14 +30,13 @@
         },
         "frameworks": {
           "net8.0": {
-            "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj": {
-                "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj"
+              "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj": {
+                "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj"
               },
-              "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj": {
-                "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj"
+              "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj": {
+                "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj"
               }
             }
           }
@@ -52,11 +51,10 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0": {
-          "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
             "AutoMapper": {
@@ -86,15 +84,15 @@
           "downloadDependencies": [
             {
               "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             },
             {
               "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             },
             {
               "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             }
           ],
           "frameworkReferences": {
@@ -105,24 +103,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.204/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj": {
+    "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj",
+        "projectUniqueName": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj",
         "projectName": "AltensorAuthService.Contract",
-        "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj",
-        "packagesPath": "C:\\Users\\Huawei\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Contract\\obj\\",
+        "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj",
+        "packagesPath": "C:\\Users\\Ravan999\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Contract\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Huawei\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Ravan999\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -135,7 +133,6 @@
         },
         "frameworks": {
           "net8.0": {
-            "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {}
           }
@@ -150,11 +147,10 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0": {
-          "framework": "net8.0",
           "targetAlias": "net8.0",
           "imports": [
             "net461",
@@ -170,15 +166,15 @@
           "downloadDependencies": [
             {
               "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             },
             {
               "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             },
             {
               "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             }
           ],
           "frameworkReferences": {
@@ -186,24 +182,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.204/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj": {
+    "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj",
+        "projectUniqueName": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj",
         "projectName": "AltensorAuthService.Domain",
-        "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj",
-        "packagesPath": "C:\\Users\\Huawei\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Domain\\obj\\",
+        "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj",
+        "packagesPath": "C:\\Users\\Ravan999\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Huawei\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Ravan999\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -216,7 +212,6 @@
         },
         "frameworks": {
           "net8.0": {
-            "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {}
           }
@@ -231,11 +226,10 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0": {
-          "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
             "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
@@ -257,15 +251,15 @@
           "downloadDependencies": [
             {
               "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             },
             {
               "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             },
             {
               "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             }
           ],
           "frameworkReferences": {
@@ -273,24 +267,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.204/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Persistence\\AltensorAuthService.Persistence.csproj": {
+    "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Persistence\\AltensorAuthService.Persistence.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Persistence\\AltensorAuthService.Persistence.csproj",
+        "projectUniqueName": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Persistence\\AltensorAuthService.Persistence.csproj",
         "projectName": "AltensorAuthService.Persistence",
-        "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Persistence\\AltensorAuthService.Persistence.csproj",
-        "packagesPath": "C:\\Users\\Huawei\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Persistence\\obj\\",
+        "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Persistence\\AltensorAuthService.Persistence.csproj",
+        "packagesPath": "C:\\Users\\Ravan999\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Persistence\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Huawei\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Ravan999\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -303,14 +297,13 @@
         },
         "frameworks": {
           "net8.0": {
-            "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj": {
-                "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj"
+              "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj": {
+                "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj"
               },
-              "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj": {
-                "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj"
+              "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj": {
+                "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj"
               }
             }
           }
@@ -325,11 +318,10 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0": {
-          "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
             "Microsoft.EntityFrameworkCore": {
@@ -365,15 +357,15 @@
           "downloadDependencies": [
             {
               "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             },
             {
               "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             },
             {
               "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             }
           ],
           "frameworkReferences": {
@@ -381,24 +373,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.204/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Presentation\\AltensorAuthService.Presentation.csproj": {
+    "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Presentation\\AltensorAuthService.Presentation.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Presentation\\AltensorAuthService.Presentation.csproj",
+        "projectUniqueName": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Presentation\\AltensorAuthService.Presentation.csproj",
         "projectName": "AltensorAuthService.Presentation",
-        "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Presentation\\AltensorAuthService.Presentation.csproj",
-        "packagesPath": "C:\\Users\\Huawei\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Presentation\\obj\\",
+        "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Presentation\\AltensorAuthService.Presentation.csproj",
+        "packagesPath": "C:\\Users\\Ravan999\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Presentation\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Huawei\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Ravan999\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -411,20 +403,19 @@
         },
         "frameworks": {
           "net8.0": {
-            "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Application\\AltensorAuthService.Application.csproj": {
-                "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Application\\AltensorAuthService.Application.csproj"
+              "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Application\\AltensorAuthService.Application.csproj": {
+                "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Application\\AltensorAuthService.Application.csproj"
               },
-              "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj": {
-                "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj"
+              "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj": {
+                "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Contract\\AltensorAuthService.Contract.csproj"
               },
-              "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj": {
-                "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj"
+              "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj": {
+                "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Domain\\AltensorAuthService.Domain.csproj"
               },
-              "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Persistence\\AltensorAuthService.Persistence.csproj": {
-                "projectPath": "C:\\Users\\Huawei\\Desktop\\Altensor Backend\\AltensorAuthService\\AltensorAuthService.Persistence\\AltensorAuthService.Persistence.csproj"
+              "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Persistence\\AltensorAuthService.Persistence.csproj": {
+                "projectPath": "C:\\Users\\Ravan999\\Desktop\\Production\\Finaled-Back\\AltensorAuthService\\AltensorAuthService.Persistence\\AltensorAuthService.Persistence.csproj"
               }
             }
           }
@@ -439,11 +430,10 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.200"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0": {
-          "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
             "Microsoft.EntityFrameworkCore.Design": {
@@ -483,19 +473,19 @@
           "downloadDependencies": [
             {
               "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             },
             {
               "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             },
             {
               "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             },
             {
               "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.27, 8.0.27]"
+              "version": "[8.0.24, 8.0.24]"
             }
           ],
           "frameworkReferences": {
@@ -506,7 +496,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.204/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

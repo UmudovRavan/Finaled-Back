@@ -18,3 +18,23 @@ c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService
 c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Persistence\obj\Debug\net8.0\AltensorAuthService.Persistence.pdb
 c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Persistence\obj\Debug\net8.0\AltensorAuthService.Persistence.genruntimeconfig.cache
 c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Persistence\obj\Debug\net8.0\ref\AltensorAuthService.Persistence.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\bin\Debug\net8.0\AltensorAuthService.Persistence.deps.json
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\bin\Debug\net8.0\AltensorAuthService.Persistence.runtimeconfig.json
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\bin\Debug\net8.0\AltensorAuthService.Persistence.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\bin\Debug\net8.0\AltensorAuthService.Persistence.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\bin\Debug\net8.0\AltensorAuthService.Contract.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\bin\Debug\net8.0\AltensorAuthService.Domain.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\bin\Debug\net8.0\AltensorAuthService.Domain.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\bin\Debug\net8.0\AltensorAuthService.Contract.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\obj\Debug\net8.0\AltensorAuthService.Persistence.csproj.AssemblyReference.cache
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\obj\Debug\net8.0\AltensorAuthService.Persistence.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\obj\Debug\net8.0\AltensorAuthService.Persistence.AssemblyInfoInputs.cache
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\obj\Debug\net8.0\AltensorAuthService.Persistence.AssemblyInfo.cs
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\obj\Debug\net8.0\AltensorAuthService.Persistence.csproj.CoreCompileInputs.cache
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\obj\Debug\net8.0\AltensorAuthService.Persistence.sourcelink.json
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\obj\Debug\net8.0\Altensor.AF98C512.Up2Date
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\obj\Debug\net8.0\AltensorAuthService.Persistence.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\obj\Debug\net8.0\refint\AltensorAuthService.Persistence.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\obj\Debug\net8.0\AltensorAuthService.Persistence.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\obj\Debug\net8.0\AltensorAuthService.Persistence.genruntimeconfig.cache
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Persistence\obj\Debug\net8.0\ref\AltensorAuthService.Persistence.dll

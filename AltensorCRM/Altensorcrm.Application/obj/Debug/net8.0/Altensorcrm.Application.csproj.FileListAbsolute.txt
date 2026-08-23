@@ -16,3 +16,21 @@ c:\Users\Huawei\Desktop\Altensor Backend\AltensorCRM\Altensorcrm.Application\obj
 c:\Users\Huawei\Desktop\Altensor Backend\AltensorCRM\Altensorcrm.Application\obj\Debug\net8.0\refint\Altensorcrm.Application.dll
 c:\Users\Huawei\Desktop\Altensor Backend\AltensorCRM\Altensorcrm.Application\obj\Debug\net8.0\Altensorcrm.Application.pdb
 c:\Users\Huawei\Desktop\Altensor Backend\AltensorCRM\Altensorcrm.Application\obj\Debug\net8.0\ref\Altensorcrm.Application.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\bin\Debug\net8.0\Altensorcrm.Application.deps.json
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\bin\Debug\net8.0\Altensorcrm.Application.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\bin\Debug\net8.0\Altensorcrm.Application.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\bin\Debug\net8.0\Altensorcrm.Contract.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\bin\Debug\net8.0\Altensorcrm.Domain.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\bin\Debug\net8.0\Altensorcrm.Contract.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\bin\Debug\net8.0\Altensorcrm.Domain.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\obj\Debug\net8.0\Altensorcrm.Application.csproj.AssemblyReference.cache
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\obj\Debug\net8.0\Altensorcrm.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\obj\Debug\net8.0\Altensorcrm.Application.AssemblyInfoInputs.cache
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\obj\Debug\net8.0\Altensorcrm.Application.AssemblyInfo.cs
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\obj\Debug\net8.0\Altensorcrm.Application.csproj.CoreCompileInputs.cache
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\obj\Debug\net8.0\Altensorcrm.Application.sourcelink.json
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\obj\Debug\net8.0\Altensor.23722E89.Up2Date
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\obj\Debug\net8.0\Altensorcrm.Application.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\obj\Debug\net8.0\refint\Altensorcrm.Application.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\obj\Debug\net8.0\Altensorcrm.Application.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorCRM\Altensorcrm.Application\obj\Debug\net8.0\ref\Altensorcrm.Application.dll

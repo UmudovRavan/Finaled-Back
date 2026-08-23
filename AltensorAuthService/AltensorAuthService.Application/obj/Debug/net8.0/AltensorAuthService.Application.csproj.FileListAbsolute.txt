@@ -16,3 +16,21 @@ c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService
 c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Application\obj\Debug\net8.0\refint\AltensorAuthService.Application.dll
 c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Application\obj\Debug\net8.0\AltensorAuthService.Application.pdb
 c:\Users\Huawei\Desktop\Altensor Backend\AltensorAuthService\AltensorAuthService.Application\obj\Debug\net8.0\ref\AltensorAuthService.Application.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\bin\Debug\net8.0\AltensorAuthService.Application.deps.json
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\bin\Debug\net8.0\AltensorAuthService.Application.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\bin\Debug\net8.0\AltensorAuthService.Application.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\bin\Debug\net8.0\AltensorAuthService.Contract.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\bin\Debug\net8.0\AltensorAuthService.Domain.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\bin\Debug\net8.0\AltensorAuthService.Domain.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\bin\Debug\net8.0\AltensorAuthService.Contract.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\obj\Debug\net8.0\AltensorAuthService.Application.csproj.AssemblyReference.cache
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\obj\Debug\net8.0\AltensorAuthService.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\obj\Debug\net8.0\AltensorAuthService.Application.AssemblyInfoInputs.cache
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\obj\Debug\net8.0\AltensorAuthService.Application.AssemblyInfo.cs
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\obj\Debug\net8.0\AltensorAuthService.Application.csproj.CoreCompileInputs.cache
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\obj\Debug\net8.0\AltensorAuthService.Application.sourcelink.json
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\obj\Debug\net8.0\Altensor.12F80940.Up2Date
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\obj\Debug\net8.0\AltensorAuthService.Application.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\obj\Debug\net8.0\refint\AltensorAuthService.Application.dll
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\obj\Debug\net8.0\AltensorAuthService.Application.pdb
+C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Application\obj\Debug\net8.0\ref\AltensorAuthService.Application.dll
