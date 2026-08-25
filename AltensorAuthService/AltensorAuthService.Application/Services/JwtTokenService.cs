@@ -85,16 +85,20 @@ namespace AltensorAuthService.Application.Services
             _logger.LogDebug("JWT Access Token generasiya edilir: UserId={UserId}, TenantId={TenantId}, TenantStatus='{TenantStatus}'",
                 user.Id, user.TenantId, tenantStatus);
 
+            // AppClaimTypes.TenantId == "tenant_id" və AppClaimTypes.TenantStatus == "tenant_status"
+            // olduğundan hər birini yalnız bir dəfə əlavə edirik.
+            // Əvvəlki kodda hər iki variant əlavə edilirdi — bu JWT payload-ında
+            // "tenant_id": ["guid", "guid"] kimi array yaradır,
+            // Production-da kütləvi JWT validasiya xəttlərinin ya da dictionarylərin
+            // duplicate key xətasına (ArgumentException) səbəb olur.
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(AppClaimTypes.TenantId, user.TenantId.ToString()),
-                new Claim("tenant_id", user.TenantId.ToString()),
-                new Claim(AppClaimTypes.TenantStatus, tenantStatus),
-                new Claim("tenant_status", tenantStatus)
+                new Claim(AppClaimTypes.TenantId, user.TenantId.ToString()),   // == "tenant_id"
+                new Claim(AppClaimTypes.TenantStatus, tenantStatus)            // == "tenant_status"
             };
 
             if (!string.IsNullOrWhiteSpace(user.FullName))
