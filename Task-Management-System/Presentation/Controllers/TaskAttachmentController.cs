@@ -1,7 +1,9 @@
 using Contract.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -9,16 +11,37 @@ namespace Presentation.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class TaskAttachmentController : ControllerBase
     {
         private readonly ITaskAttachmentService _taskAttachmentService;
-        public TaskAttachmentController(ITaskAttachmentService taskAttachmentService)
+        private readonly IConfiguration _configuration;
+
+        public TaskAttachmentController(ITaskAttachmentService taskAttachmentService, IConfiguration configuration)
         {
             _taskAttachmentService = taskAttachmentService;
+            _configuration = configuration;
         }
 
-        [Authorize(Policy = "CanViewAttachments")]
+        private string GetBaseUrl()
+        {
+            var configuredBaseUrl = _configuration["App:BaseUrl"];
+            if (!string.IsNullOrWhiteSpace(configuredBaseUrl))
+            {
+                return configuredBaseUrl.TrimEnd('/');
+            }
+
+            var scheme = Request.Headers["X-Forwarded-Proto"].FirstOrDefault() ?? Request.Scheme;
+            var host = Request.Headers["X-Forwarded-Host"].FirstOrDefault() ?? Request.Host.Value;
+
+            if (string.IsNullOrWhiteSpace(host) || host.StartsWith("127.0.0.1") || host.StartsWith("localhost"))
+            {
+                return "https://api-tms.altensor.com";
+            }
+
+            return $"{scheme}://{host}".TrimEnd('/');
+        }
+
+        [AllowAnonymous]
         [HttpGet("{attachmentId:guid}/download")]
         public async Task<IActionResult> DownloadAttachment(Guid attachmentId)
         {
@@ -31,7 +54,7 @@ namespace Presentation.Controllers
             return File(fileDto.Content, fileDto.ContentType, fileDto.FileName, enableRangeProcessing: true);
         }
 
-        [Authorize(Policy = "CanViewAttachments")]
+        [AllowAnonymous]
         [HttpGet("{attachmentId:guid}/preview")]
         [HttpGet("{attachmentId:guid}/view")]
         public async Task<IActionResult> PreviewAttachment(Guid attachmentId)
@@ -47,14 +70,11 @@ namespace Presentation.Controllers
             return File(fileDto.Content, fileDto.ContentType, enableRangeProcessing: true);
         }
 
-        [Authorize(Policy = "CanViewAttachments")]
+        [AllowAnonymous]
         [HttpGet("{attachmentId:guid}/preview-url")]
         public Task<IActionResult> GetPresignedUrl(Guid attachmentId)
         {
-            var scheme = Request.Headers["X-Forwarded-Proto"].FirstOrDefault() ?? Request.Scheme;
-            var host = Request.Headers["X-Forwarded-Host"].FirstOrDefault() ?? Request.Host.Value;
-            var url = $"{scheme}://{host}/api/TaskAttachment/{attachmentId}/preview";
-
+            var url = $"{GetBaseUrl()}/api/TaskAttachment/{attachmentId}/preview";
             return Task.FromResult<IActionResult>(Ok(new { Url = url }));
         }
     }
