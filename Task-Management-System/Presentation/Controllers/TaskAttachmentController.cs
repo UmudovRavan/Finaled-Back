@@ -30,15 +30,7 @@ namespace Presentation.Controllers
                 return configuredBaseUrl.TrimEnd('/');
             }
 
-            var scheme = Request.Headers["X-Forwarded-Proto"].FirstOrDefault() ?? Request.Scheme;
-            var host = Request.Headers["X-Forwarded-Host"].FirstOrDefault() ?? Request.Host.Value;
-
-            if (string.IsNullOrWhiteSpace(host) || host.StartsWith("127.0.0.1") || host.StartsWith("localhost"))
-            {
-                return "https://api-tms.altensor.com";
-            }
-
-            return $"{scheme}://{host}".TrimEnd('/');
+            return "https://api-tms.altensor.com";
         }
 
         [AllowAnonymous]

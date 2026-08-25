@@ -22,7 +22,7 @@ namespace Application.Profiles
                 .ForMember(dest => dest.FileName, opt => opt.MapFrom(src => src.FileName))
                 .ForMember(dest => dest.ContentType, opt => opt.MapFrom(src => src.ContentType))
                 .ForMember(dest => dest.Size, opt => opt.MapFrom(src => src.Size))
-                .ForMember(dest => dest.Url, opt => opt.MapFrom(src => $"/api/TaskAttachment/{src.Id}/preview"))
+                .ForMember(dest => dest.Url, opt => opt.MapFrom(src => $"https://api-tms.altensor.com/api/TaskAttachment/{src.Id}/preview"))
                 .ForMember(dest => dest.Content, opt => opt.Ignore());
 
             // Task mapping: DTO -> Entity

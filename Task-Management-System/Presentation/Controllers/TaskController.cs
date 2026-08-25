@@ -94,7 +94,7 @@ namespace Presentation.Controllers
                         FileName = attachment.FileName,
                         ContentType = attachment.ContentType,
                         Size = attachment.Size,
-                        Url = $"/api/TaskAttachment/{attachment.Id}/preview"
+                        Url = $"https://api-tms.altensor.com/api/TaskAttachment/{attachment.Id}/preview"
                     });
                 }
             }
