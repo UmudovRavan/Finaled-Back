@@ -90,21 +90,85 @@ namespace Application.Services
             var ext = Path.GetExtension(fileName).ToLowerInvariant();
             return ext switch
             {
-                ".pdf"  => "application/pdf",
-                ".jpg"  => "image/jpeg",
-                ".jpeg" => "image/jpeg",
-                ".png"  => "image/png",
-                ".gif"  => "image/gif",
-                ".webp" => "image/webp",
-                ".svg"  => "image/svg+xml",
-                ".txt"  => "text/plain",
-                ".csv"  => "text/csv",
-                ".doc"  => "application/msword",
-                ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                ".xls"  => "application/vnd.ms-excel",
-                ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                ".zip"  => "application/zip",
-                _       => "application/octet-stream"
+                // Documents & Office
+                ".pdf"   => "application/pdf",
+                ".doc"   => "application/msword",
+                ".docx"  => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                ".dot"   => "application/msword",
+                ".dotx"  => "application/vnd.openxmlformats-officedocument.wordprocessingml.template",
+                ".rtf"   => "application/rtf",
+                ".odt"   => "application/vnd.oasis.opendocument.text",
+
+                // Spreadsheets
+                ".xls"   => "application/vnd.ms-excel",
+                ".xlsx"  => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                ".xlsm"  => "application/vnd.ms-excel.sheet.macroEnabled.12",
+                ".xltx"  => "application/vnd.openxmlformats-officedocument.spreadsheetml.template",
+                ".csv"   => "text/csv",
+                ".ods"   => "application/vnd.oasis.opendocument.spreadsheet",
+
+                // Presentations
+                ".ppt"   => "application/vnd.ms-powerpoint",
+                ".pptx"  => "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                ".pps"   => "application/vnd.ms-powerpoint",
+                ".ppsx"  => "application/vnd.openxmlformats-officedocument.presentationml.slideshow",
+                ".potx"  => "application/vnd.openxmlformats-officedocument.presentationml.template",
+                ".odp"   => "application/vnd.oasis.opendocument.presentation",
+
+                // Text & Notes
+                ".txt"   => "text/plain",
+                ".md"    => "text/markdown",
+                ".log"   => "text/plain",
+                ".cfg"   => "text/plain",
+                ".ini"   => "text/plain",
+
+                // Images
+                ".jpg"   => "image/jpeg",
+                ".jpeg"  => "image/jpeg",
+                ".png"   => "image/png",
+                ".gif"   => "image/gif",
+                ".webp"  => "image/webp",
+                ".svg"   => "image/svg+xml",
+                ".bmp"   => "image/bmp",
+                ".ico"   => "image/x-icon",
+                ".tiff"  => "image/tiff",
+                ".tif"   => "image/tiff",
+                ".heic"  => "image/heic",
+                ".heif"  => "image/heif",
+
+                // Archives
+                ".zip"   => "application/zip",
+                ".rar"   => "application/vnd.rar",
+                ".7z"    => "application/x-7z-compressed",
+                ".tar"   => "application/x-tar",
+                ".gz"    => "application/gzip",
+
+                // Audio
+                ".mp3"   => "audio/mpeg",
+                ".wav"   => "audio/wav",
+                ".ogg"   => "audio/ogg",
+                ".m4a"   => "audio/mp4",
+                ".aac"   => "audio/aac",
+                ".flac"  => "audio/flac",
+
+                // Video
+                ".mp4"   => "video/mp4",
+                ".mov"   => "video/quicktime",
+                ".avi"   => "video/x-msvideo",
+                ".mkv"   => "video/x-matroska",
+                ".webm"  => "video/webm",
+                ".wmv"   => "video/x-ms-wmv",
+
+                // Code & Data
+                ".json"  => "application/json",
+                ".xml"   => "application/xml",
+                ".html"  => "text/html",
+                ".htm"   => "text/html",
+                ".css"   => "text/css",
+                ".js"    => "application/javascript",
+                ".sql"   => "application/sql",
+
+                _        => "application/octet-stream"
             };
         }
 
