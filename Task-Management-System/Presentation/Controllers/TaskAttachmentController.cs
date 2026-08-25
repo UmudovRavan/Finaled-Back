@@ -23,25 +23,39 @@ namespace Presentation.Controllers
         public async Task<IActionResult> DownloadAttachment(Guid attachmentId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            var fileDto = await _taskAttachmentService.DownloadAsync(attachmentId, userId!);
-            if (fileDto == null)
+            var fileDto = await _taskAttachmentService.DownloadAsync(attachmentId, userId ?? string.Empty);
+            if (fileDto == null || fileDto.Content == null)
             {
                 return NotFound();
             }
-            return File(fileDto.Content, fileDto.ContentType, fileDto.FileName);
+            return File(fileDto.Content, fileDto.ContentType, fileDto.FileName, enableRangeProcessing: true);
+        }
+
+        [Authorize(Policy = "CanViewAttachments")]
+        [HttpGet("{attachmentId:guid}/preview")]
+        [HttpGet("{attachmentId:guid}/view")]
+        public async Task<IActionResult> PreviewAttachment(Guid attachmentId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+            var fileDto = await _taskAttachmentService.DownloadAsync(attachmentId, userId ?? string.Empty);
+            if (fileDto == null || fileDto.Content == null)
+            {
+                return NotFound();
+            }
+
+            Response.Headers.Append("Content-Disposition", $"inline; filename=\"{fileDto.FileName}\"");
+            return File(fileDto.Content, fileDto.ContentType, enableRangeProcessing: true);
         }
 
         [Authorize(Policy = "CanViewAttachments")]
         [HttpGet("{attachmentId:guid}/preview-url")]
-        public async Task<IActionResult> GetPresignedUrl(Guid attachmentId)
+        public Task<IActionResult> GetPresignedUrl(Guid attachmentId)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            var url = await _taskAttachmentService.GetPreviewUrlAsync(attachmentId, userId!);
-            if (url == null)
-            {
-                return NotFound();
-            }
-            return Ok(new { Url = url });
+            var scheme = Request.Headers["X-Forwarded-Proto"].FirstOrDefault() ?? Request.Scheme;
+            var host = Request.Headers["X-Forwarded-Host"].FirstOrDefault() ?? Request.Host.Value;
+            var url = $"{scheme}://{host}/api/TaskAttachment/{attachmentId}/preview";
+
+            return Task.FromResult<IActionResult>(Ok(new { Url = url }));
         }
     }
 }

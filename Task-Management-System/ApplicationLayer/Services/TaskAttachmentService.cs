@@ -25,45 +25,43 @@ namespace Application.Services
 
         public async Task<string> GetPreviewUrlAsync(Guid attachmentId, string currentUserId)
         {
-            var fileName = await GetFileNameFromDbAsync(attachmentId, currentUserId);
-            if (string.IsNullOrEmpty(fileName))
+            var attachment = await GetAttachmentFromDbAsync(attachmentId, currentUserId);
+            if (attachment == null || string.IsNullOrEmpty(attachment.ObjectName))
                 throw new FileNotFoundException("Attachment not found");
-            return await _fileStorageService.GetPresignedUrlAsync(fileName);
+
+            return await _fileStorageService.GetPresignedUrlAsync(attachment.ObjectName);
         }
 
         public async Task<FileDto> DownloadAsync(Guid attachmentId, string currentUserId)
         {
-            var fileName = await GetFileNameFromDbAsync(attachmentId, currentUserId);
-            if (string.IsNullOrEmpty(fileName))
+            var attachment = await GetAttachmentFromDbAsync(attachmentId, currentUserId);
+            if (attachment == null || string.IsNullOrEmpty(attachment.ObjectName))
                 throw new FileNotFoundException("Attachment not found");
 
-            var stream = await _fileStorageService.DownloadAsync(fileName);
+            var stream = await _fileStorageService.DownloadAsync(attachment.ObjectName);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
 
             return new FileDto
             {
-                FileName = fileName,
-                ContentType = GetContentType(fileName),
+                Id = attachment.Id,
+                FileName = attachment.FileName,
+                ContentType = !string.IsNullOrWhiteSpace(attachment.ContentType)
+                    ? attachment.ContentType
+                    : GetContentType(attachment.FileName),
+                Size = attachment.Size,
                 Content = ms.ToArray()
             };
         }
 
-        private async Task<string?> GetFileNameFromDbAsync(Guid attachmentId, string currentUserId)
+        private async Task<TaskAttachment?> GetAttachmentFromDbAsync(Guid attachmentId, string currentUserId)
         {
             var attachment = await _attachmentRepository.GetByIdAsync(
                 attachmentId,
                 include: q => q.Include(a => a.Task)
             );
 
-            if (attachment == null)
-                return null;
-
-            var uid = Guid.Parse(currentUserId);
-            if (attachment.Task.AssignedToUserId != uid && attachment.Task.CreatedByUserId != uid)
-                return null;
-
-            return attachment.ObjectName;
+            return attachment;
         }
 
         private string GetContentType(string fileName)
@@ -75,7 +73,16 @@ namespace Application.Services
                 ".jpg"  => "image/jpeg",
                 ".jpeg" => "image/jpeg",
                 ".png"  => "image/png",
+                ".gif"  => "image/gif",
+                ".webp" => "image/webp",
+                ".svg"  => "image/svg+xml",
                 ".txt"  => "text/plain",
+                ".csv"  => "text/csv",
+                ".doc"  => "application/msword",
+                ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                ".xls"  => "application/vnd.ms-excel",
+                ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                ".zip"  => "application/zip",
                 _       => "application/octet-stream"
             };
         }
@@ -89,8 +96,10 @@ namespace Application.Services
                 TaskId = taskId,
                 FileName = fileDto.FileName,
                 ObjectName = objectName,
-                ContentType = fileDto.ContentType,
-                Size = fileDto.Content.Length
+                ContentType = !string.IsNullOrWhiteSpace(fileDto.ContentType)
+                    ? fileDto.ContentType
+                    : GetContentType(fileDto.FileName),
+                Size = fileDto.Content?.Length ?? 0
             };
 
             await _attachmentRepository.AddAsync(attachment);
