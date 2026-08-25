@@ -31,10 +31,8 @@ namespace Application.Profiles
                 .ForMember(dest => dest.TaskComments, opt => opt.Ignore())
                 .ForMember(dest => dest.AssignedToUser, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedByUser, opt => opt.Ignore())
-                .ForMember(dest => dest.AssignedToUserId, opt => opt.MapFrom(src => 
-                    !string.IsNullOrWhiteSpace(src.AssignedToUserId) && Guid.TryParse(src.AssignedToUserId, out var assignedId) ? assignedId : (Guid?)null))
-                .ForMember(dest => dest.CreatedByUserId, opt => opt.MapFrom(src => 
-                    !string.IsNullOrWhiteSpace(src.CreatedByUserId) && Guid.TryParse(src.CreatedByUserId, out var createdId) ? createdId : Guid.Empty))
+                .ForMember(dest => dest.AssignedToUserId, opt => opt.MapFrom(src => SafeParseGuid(src.AssignedToUserId)))
+                .ForMember(dest => dest.CreatedByUserId, opt => opt.MapFrom(src => SafeParseGuid(src.CreatedByUserId) ?? Guid.Empty))
                 .ForMember(dest => dest.AssignedWorkGroupId, opt => opt.MapFrom(src => src.WorkGroupId));
 
             // Task mapping: Entity -> DTO
@@ -81,7 +79,14 @@ namespace Application.Profiles
             CreateMap<WorkGroupDTO, WorkGroup>()
                 .ForMember(dest => dest.Users, opt => opt.Ignore())
                 .ForMember(dest => dest.Tasks, opt => opt.Ignore())
-                .ForMember(dest => dest.LeaderId, opt => opt.MapFrom(src => Guid.Parse(src.LeaderId)));
+                .ForMember(dest => dest.LeaderId, opt => opt.MapFrom(src => SafeParseGuid(src.LeaderId) ?? Guid.Empty));
+        }
+
+        private static Guid? SafeParseGuid(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value) || value == "null" || value == "undefined")
+                return null;
+            return Guid.TryParse(value, out var result) ? result : null;
         }
     }
 }
