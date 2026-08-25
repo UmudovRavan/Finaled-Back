@@ -28,7 +28,13 @@ namespace Presentationn
             var builder = WebApplication.CreateBuilder(args);
 
             // ================= Controllers =================
-            builder.Services.AddControllers();
+            // ReferenceHandler.IgnoreCycles: AppUser↔PerformancePoint kimi
+            // bidireksional naviqasiya əlaqələri JSON serialize zamanı
+            // "object cycle detected" xətası verir. IgnoreCycles artıq null yazır.
+            builder.Services.AddControllers()
+                .AddJsonOptions(o =>
+                    o.JsonSerializerOptions.ReferenceHandler =
+                        System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
 
             // ================= DbContext =================
             builder.Services.AddDbContext<AppDbContext>(options =>

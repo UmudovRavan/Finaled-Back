@@ -20,12 +20,17 @@ namespace Application.Services
         private ClaimsPrincipal? User
             => _httpContextAccessor.HttpContext?.User;
 
-        /// <summary>JWT-dəki "tenant_id" claim-ini oxu</summary>
+        /// <summary>JWT-dəki "tenant_id" claim-ini oxu.
+        /// Köhnə tokenlarda "tenant_id" array şəklindədir (bug: duplicate claim).
+        /// FindAll ilə bütün dəyərləri alıb birinci valid Guid-i seçirik.</summary>
         public Guid? TenantId
         {
             get
             {
-                var val = User?.FindFirstValue("tenant_id");
+                // FindFirstValue yerinə FindAll — array/duplicate claim-lərə qarşı müdafiə
+                var val = User?.FindAll("tenant_id")
+                               .Select(c => c.Value)
+                               .FirstOrDefault(v => Guid.TryParse(v, out _));
                 return Guid.TryParse(val, out var id) ? id : null;
             }
         }
@@ -41,8 +46,9 @@ namespace Application.Services
             }
         }
 
+        // tenant_status da array ola bilər (köhnə token bug). İlk dəyəri götürürük.
         public string? TenantStatus
-            => User?.FindFirstValue("tenant_status");
+            => User?.FindAll("tenant_status").Select(c => c.Value).FirstOrDefault();
 
         public string? Email
             => User?.FindFirstValue(ClaimTypes.Email) ?? User?.FindFirstValue("email");

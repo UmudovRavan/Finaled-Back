@@ -3,6 +3,7 @@ using AltensorAuthService.Persistence;
 using AltensorAuthService.Persistence.Data.Seed;
 using AltensorAuthService.Presentation.Extensions;
 using AltensorAuthService.Presentation.Middleware;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
 
@@ -14,6 +15,13 @@ builder.Host.UseSerilog();
 
 // 1. HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
+
+// 1b. Data Protection — keylər server restart-dan sonra da qorunacaq
+// Production-da bu xüsusilə vacibdir: "ephemeral key repository" xəbərdarlığını aradan qaldırır.
+var dpKeysPath = builder.Configuration["DataProtection:KeysPath"] ?? "/app/dp-keys";
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new System.IO.DirectoryInfo(dpKeysPath))
+    .SetApplicationName("AltensorAuthService");
 
 // 2. Persistence Layer (DbContext, Repositories, UnitOfWork)
 builder.Services.AddPersistenceServices(builder.Configuration);

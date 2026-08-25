@@ -18,10 +18,36 @@ namespace Persistence.Repositories
 
         public async Task<List<AppUser>> GetAllUsersAsync(Guid tenantId)
         {
+            // .Include(u => u.PerformancePoints) istifadə edərkən EF Core "fix-up"
+            // mexanizmi PerformancePoint.User → AppUser back-reference quraraq
+            // JSON serialization-da sonsuz dövrə (cycle) yaradır.
+            // Select projection ilə yalnız lazım olan sahələri götürürük.
             return await _db.AppUsers
                 .AsNoTracking()
                 .Where(u => u.TenantId == tenantId)
-                .Include(u => u.PerformancePoints)
+                .Select(u => new AppUser
+                {
+                    Id            = u.Id,
+                    TenantId      = u.TenantId,
+                    Email         = u.Email,
+                    FullName      = u.FullName,
+                    UserName      = u.UserName,
+                    CreatedAt     = u.CreatedAt,
+                    WorkGroupId   = u.WorkGroupId,
+                    PerformancePoints = u.PerformancePoints
+                        .Select(p => new PerformancePoint
+                        {
+                            Id        = p.Id,
+                            TenantId  = p.TenantId,
+                            UserId    = p.UserId,
+                            Points    = p.Points,
+                            Reason    = p.Reason,
+                            CreatedAt = p.CreatedAt,
+                            UpdatedAt = p.UpdatedAt,
+                            IsDeleted = p.IsDeleted
+                            // User navigation property-ni DAXIL ETMİRİK — dövrü yaradır
+                        }).ToList()
+                })
                 .ToListAsync();
         }
 

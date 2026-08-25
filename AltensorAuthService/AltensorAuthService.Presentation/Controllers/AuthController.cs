@@ -44,6 +44,8 @@ namespace AltensorAuthService.Presentation.Controllers
         /// </summary>
         [AllowAnonymous]
         [HttpPost("refresh")]
+        [HttpPost("refresh-token")]        // alias: /api/auth/refresh-token
+        [HttpPost("token/refresh")]        // alias: /api/auth/token/refresh
         [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
