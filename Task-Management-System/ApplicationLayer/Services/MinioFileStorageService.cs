@@ -1,4 +1,4 @@
-﻿using Contract.DTOs;
+using Contract.DTOs;
 using Contract.Services;
 using Minio;
 using Minio.DataModel.Args;

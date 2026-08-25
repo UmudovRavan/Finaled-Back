@@ -37,20 +37,46 @@ namespace Presentation.Controllers
 
         [Authorize(Policy = "CanCreateTasks")]
         [HttpPost("CreateTask")]
-        public async Task<IActionResult> CreateTask([FromForm] TaskDTO taskDto, [FromForm] List<IFormFile> files)
+        public async Task<IActionResult> CreateTask([FromForm] TaskDTO taskDto, [FromForm] List<IFormFile>? files)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            if (string.IsNullOrEmpty(taskDto.CreatedByUserId))
+            if (string.IsNullOrWhiteSpace(taskDto.CreatedByUserId))
             {
                 taskDto.CreatedByUserId = userId ?? Guid.Empty.ToString();
             }
 
+            // Frontend "null" və ya "undefined" string göndərə bilər
+            if (taskDto.AssignedToUserId == "null" || taskDto.AssignedToUserId == "undefined" || string.IsNullOrWhiteSpace(taskDto.AssignedToUserId))
+            {
+                taskDto.AssignedToUserId = null;
+            }
+
             var createdTask = await _genericService.AddAsync(taskDto);
 
+            // Bütün gələn form fayllarını topla (həm files parametri, həm də Request.Form.Files)
+            var allFormFiles = new List<IFormFile>();
             if (files != null && files.Count > 0)
             {
-                var uploadTasks = files.Select(async file =>
+                allFormFiles.AddRange(files);
+            }
+            if (Request.HasFormContentType && Request.Form.Files.Count > 0)
+            {
+                foreach (var f in Request.Form.Files)
                 {
+                    if (!allFormFiles.Contains(f))
+                    {
+                        allFormFiles.Add(f);
+                    }
+                }
+            }
+
+            if (allFormFiles.Count > 0)
+            {
+                createdTask.Files ??= new List<FileDto>();
+                foreach (var file in allFormFiles)
+                {
+                    if (file.Length == 0) continue;
+
                     using var ms = new MemoryStream();
                     await file.CopyToAsync(ms);
 
@@ -61,12 +87,19 @@ namespace Presentation.Controllers
                         Content = ms.ToArray()
                     };
 
-                    await _taskAttachmentService.UploadAndSaveAsync(createdTask.Id, fileDto, taskDto.CreatedByUserId);
-                });
-                await Task.WhenAll(uploadTasks);
+                    var attachment = await _taskAttachmentService.UploadAndSaveAsync(createdTask.Id, fileDto, taskDto.CreatedByUserId);
+                    createdTask.Files.Add(new FileDto
+                    {
+                        Id = attachment.Id,
+                        FileName = attachment.FileName,
+                        ContentType = attachment.ContentType,
+                        Size = attachment.Size,
+                        Url = $"/api/TaskAttachment/{attachment.Id}/preview"
+                    });
+                }
             }
 
-            if (taskDto.AssignedToUserId != null)
+            if (!string.IsNullOrEmpty(taskDto.AssignedToUserId) && Guid.TryParse(taskDto.AssignedToUserId, out _))
             {
                 await _notificationService.NotifyTaskAssignedAsync(taskDto.AssignedToUserId, createdTask.Title, createdTask.Id);
             }
@@ -134,7 +167,7 @@ namespace Presentation.Controllers
         [HttpGet("GetAllTask")]
         public async Task<IActionResult> GetAllTask()
         {
-            var tasks = await _genericService.GetAllAsync();
+            var tasks = await _genericService.GetAllAsync(query => query.Include(t => t.Attachments));
             return Ok(tasks);
         }
 

@@ -13,19 +13,28 @@ namespace Application.Profiles
         {
             // File mapping: DTO -> Entity
             CreateMap<FileDto, TaskAttachment>()
-                .ForMember(dest => dest.Id, opt => opt.Ignore());
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.Task, opt => opt.Ignore());
 
             // File mapping: Entity -> DTO
-            CreateMap<TaskAttachment, FileDto>();
+            CreateMap<TaskAttachment, FileDto>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.FileName, opt => opt.MapFrom(src => src.FileName))
+                .ForMember(dest => dest.ContentType, opt => opt.MapFrom(src => src.ContentType))
+                .ForMember(dest => dest.Size, opt => opt.MapFrom(src => src.Size))
+                .ForMember(dest => dest.Url, opt => opt.MapFrom(src => $"/api/TaskAttachment/{src.Id}/preview"))
+                .ForMember(dest => dest.Content, opt => opt.Ignore());
 
             // Task mapping: DTO -> Entity
             CreateMap<TaskDTO, TaskItem>()
-                .ForMember(dest => dest.Attachments, opt => opt.MapFrom(src => src.Files))
+                .ForMember(dest => dest.Attachments, opt => opt.Ignore())
                 .ForMember(dest => dest.TaskComments, opt => opt.Ignore())
                 .ForMember(dest => dest.AssignedToUser, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedByUser, opt => opt.Ignore())
-                .ForMember(dest => dest.AssignedToUserId, opt => opt.MapFrom(src => string.IsNullOrEmpty(src.AssignedToUserId) ? (Guid?)null : Guid.Parse(src.AssignedToUserId)))
-                .ForMember(dest => dest.CreatedByUserId, opt => opt.MapFrom(src => Guid.Parse(src.CreatedByUserId)))
+                .ForMember(dest => dest.AssignedToUserId, opt => opt.MapFrom(src => 
+                    !string.IsNullOrWhiteSpace(src.AssignedToUserId) && Guid.TryParse(src.AssignedToUserId, out var assignedId) ? assignedId : (Guid?)null))
+                .ForMember(dest => dest.CreatedByUserId, opt => opt.MapFrom(src => 
+                    !string.IsNullOrWhiteSpace(src.CreatedByUserId) && Guid.TryParse(src.CreatedByUserId, out var createdId) ? createdId : Guid.Empty))
                 .ForMember(dest => dest.AssignedWorkGroupId, opt => opt.MapFrom(src => src.WorkGroupId));
 
             // Task mapping: Entity -> DTO
