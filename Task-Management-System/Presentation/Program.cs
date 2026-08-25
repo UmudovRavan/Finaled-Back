@@ -27,7 +27,7 @@ namespace Presentationn
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
             var builder = WebApplication.CreateBuilder(args);
 
-            // ================= Controllers =================
+            // ================= Controllers & Upload Limits =================
             // ReferenceHandler.IgnoreCycles: AppUser↔PerformancePoint kimi
             // bidireksional naviqasiya əlaqələri JSON serialize zamanı
             // "object cycle detected" xətası verir. IgnoreCycles artıq null yazır.
@@ -35,6 +35,24 @@ namespace Presentationn
                 .AddJsonOptions(o =>
                     o.JsonSerializerOptions.ReferenceHandler =
                         System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);
+
+            // 100 MB fayl yükləmə limitləri (413 Content Too Large xətasının qarşısını alır)
+            builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+            {
+                options.ValueLengthLimit = int.MaxValue;
+                options.MultipartBodyLengthLimit = 104857600; // 100 MB
+                options.MultipartHeadersLengthLimit = int.MaxValue;
+            });
+
+            builder.Services.Configure<IISServerOptions>(options =>
+            {
+                options.MaxRequestBodySize = 104857600; // 100 MB
+            });
+
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Limits.MaxRequestBodySize = 104857600; // 100 MB
+            });
 
             // ================= DbContext =================
             builder.Services.AddDbContext<AppDbContext>(options =>

@@ -37,6 +37,8 @@ namespace Presentation.Controllers
 
         [Authorize(Policy = "CanCreateTasks")]
         [HttpPost("CreateTask")]
+        [DisableRequestSizeLimit]
+        [RequestFormLimits(MultipartBodyLengthLimit = 104857600, ValueLengthLimit = int.MaxValue)]
         public async Task<IActionResult> CreateTask([FromForm] TaskDTO taskDto, [FromForm] List<IFormFile>? files)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
@@ -138,6 +140,8 @@ namespace Presentation.Controllers
 
         [Authorize(Policy = "CanUploadAttachments")]
         [HttpPost("AddFilesToTask/{taskId}")]
+        [DisableRequestSizeLimit]
+        [RequestFormLimits(MultipartBodyLengthLimit = 104857600, ValueLengthLimit = int.MaxValue)]
         public async Task<IActionResult> AddFilesToTask(Guid taskId, [FromForm] List<IFormFile>? files)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
