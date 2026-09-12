@@ -9,6 +9,7 @@ namespace Domain.Entities
         public string Title { get; set; } = default!;
         public string Description { get; set; } = default!;
         public DifficultyLevel Difficulty { get; set; }
+        public Priority Priority { get; set; } = Priority.Normal;
         public CurrentSituation Status { get; set; }
         public DateTime Deadline { get; set; }
 
@@ -17,6 +18,9 @@ namespace Domain.Entities
 
         public AppUser? AssignedToUser { get; set; }
         public AppUser CreatedByUser { get; set; } = default!;
+
+        public Guid? LevelId { get; set; }
+        public ProjectLevel? Level { get; set; }
 
         public Guid? AssignedWorkGroupId { get; set; }
         public WorkGroup? AssignedWorkGroup { get; set; }

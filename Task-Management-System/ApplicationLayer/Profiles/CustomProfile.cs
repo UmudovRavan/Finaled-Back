@@ -31,6 +31,9 @@ namespace Application.Profiles
                 .ForMember(dest => dest.TaskComments, opt => opt.Ignore())
                 .ForMember(dest => dest.AssignedToUser, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedByUser, opt => opt.Ignore())
+                .ForMember(dest => dest.Level, opt => opt.Ignore())
+                .ForMember(dest => dest.LevelId, opt => opt.MapFrom(src => src.LevelId))
+                .ForMember(dest => dest.Priority, opt => opt.MapFrom(src => src.Priority))
                 .ForMember(dest => dest.AssignedToUserId, opt => opt.MapFrom(src => SafeParseGuid(src.AssignedToUserId)))
                 .ForMember(dest => dest.CreatedByUserId, opt => opt.MapFrom(src => SafeParseGuid(src.CreatedByUserId) ?? Guid.Empty))
                 .ForMember(dest => dest.AssignedWorkGroupId, opt => opt.MapFrom(src => src.WorkGroupId));
@@ -39,12 +42,50 @@ namespace Application.Profiles
             CreateMap<TaskItem, TaskDTO>()
                 .ForMember(dest => dest.Files, opt => opt.MapFrom(src => src.Attachments))
                 .ForMember(dest => dest.AssignedToUserId, opt => opt.MapFrom(src => src.AssignedToUserId != null ? src.AssignedToUserId.ToString() : null))
+                .ForMember(dest => dest.AssignedToUserName, opt => opt.MapFrom(src => src.AssignedToUser != null ? (src.AssignedToUser.FullName ?? src.AssignedToUser.UserName ?? src.AssignedToUser.Email) : null))
                 .ForMember(dest => dest.CreatedByUserId, opt => opt.MapFrom(src => src.CreatedByUserId.ToString()))
                 .ForMember(dest => dest.WorkGroupId, opt => opt.MapFrom(src => src.AssignedWorkGroupId))
+                .ForMember(dest => dest.Priority, opt => opt.MapFrom(src => src.Priority))
+                .ForMember(dest => dest.LevelId, opt => opt.MapFrom(src => src.LevelId))
+                .ForMember(dest => dest.LevelName, opt => opt.MapFrom(src => src.Level != null ? src.Level.Name : null))
+                .ForMember(dest => dest.ProjectName, opt => opt.MapFrom(src => src.Level != null && src.Level.Project != null ? src.Level.Project.Name : null))
+                .ForMember(dest => dest.DivisionName, opt => opt.MapFrom(src => src.Level != null && src.Level.Project != null && src.Level.Project.Division != null ? src.Level.Project.Division.Name : null))
                 .ForMember(dest => dest.TaskCommentId, opt => opt.MapFrom(src => src.TaskComments != null
                     ? src.TaskComments.Select(c => c.Id).ToList()
                     : null))
                 .ForMember(dest => dest.TaskComments, opt => opt.MapFrom(src => src.TaskComments));
+
+            // Division mappings
+            CreateMap<Division, DivisionDTO>()
+                .ForMember(dest => dest.ManagerName, opt => opt.MapFrom(src => src.Manager != null ? (src.Manager.FullName ?? src.Manager.UserName) : null))
+                .ForMember(dest => dest.ManagerEmail, opt => opt.MapFrom(src => src.Manager != null ? src.Manager.Email : null))
+                .ForMember(dest => dest.ProjectCount, opt => opt.MapFrom(src => src.Projects != null ? src.Projects.Count(p => !p.IsDeleted) : 0))
+                .ForMember(dest => dest.Projects, opt => opt.MapFrom(src => src.Projects != null ? src.Projects.Where(p => !p.IsDeleted) : null));
+            CreateMap<CreateDivisionDTO, Division>();
+            CreateMap<UpdateDivisionDTO, Division>();
+
+            // Project mappings
+            CreateMap<Project, ProjectDTO>()
+                .ForMember(dest => dest.DivisionName, opt => opt.MapFrom(src => src.Division != null ? src.Division.Name : null))
+                .ForMember(dest => dest.ManagerName, opt => opt.MapFrom(src => src.Manager != null ? (src.Manager.FullName ?? src.Manager.UserName) : null))
+                .ForMember(dest => dest.ManagerEmail, opt => opt.MapFrom(src => src.Manager != null ? src.Manager.Email : null))
+                .ForMember(dest => dest.LevelCount, opt => opt.MapFrom(src => src.Levels != null ? src.Levels.Count(l => !l.IsDeleted) : 0))
+                .ForMember(dest => dest.TaskCount, opt => opt.MapFrom(src => src.Levels != null ? src.Levels.Where(l => !l.IsDeleted).SelectMany(l => l.Tasks).Count(t => !t.IsDeleted) : 0))
+                .ForMember(dest => dest.Levels, opt => opt.MapFrom(src => src.Levels != null ? src.Levels.Where(l => !l.IsDeleted).OrderBy(l => l.Order) : null));
+            CreateMap<CreateProjectDTO, Project>();
+            CreateMap<UpdateProjectDTO, Project>();
+
+            // ProjectLevel mappings
+            CreateMap<ProjectLevel, ProjectLevelDTO>()
+                .ForMember(dest => dest.ProjectName, opt => opt.MapFrom(src => src.Project != null ? src.Project.Name : null))
+                .ForMember(dest => dest.TaskCount, opt => opt.MapFrom(src => src.Tasks != null ? src.Tasks.Count(t => !t.IsDeleted) : 0))
+                .ForMember(dest => dest.Tasks, opt => opt.MapFrom(src => src.Tasks != null ? src.Tasks.Where(t => !t.IsDeleted) : null));
+            CreateMap<CreateProjectLevelDTO, ProjectLevel>();
+            CreateMap<UpdateProjectLevelDTO, ProjectLevel>();
+
+            // TenantSettings mappings
+            CreateMap<TenantSettings, TenantSettingsDTO>();
+            CreateMap<UpdateTenantSettingsDTO, TenantSettings>();
 
             CreateMap<TaskComment, TaskCommentDTO>()
                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId.ToString()))
@@ -73,6 +114,7 @@ namespace Application.Profiles
                     Deadline = t.Deadline,
                     Status = t.Status,
                     Difficulty = t.Difficulty,
+                    Priority = t.Priority,
                     WorkGroupId = t.AssignedWorkGroupId
                 }).ToList() : new List<TaskDTO>()));
 

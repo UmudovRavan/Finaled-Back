@@ -86,6 +86,14 @@ namespace Presentationn
             builder.Services.AddScoped<IPerformanceService, PerformanceService>();
             builder.Services.AddScoped<IWorkGroupService, WorkGroupService>();
 
+            builder.Services.AddScoped<IDivisionService, DivisionService>();
+            builder.Services.AddScoped<IProjectService, ProjectService>();
+            builder.Services.AddScoped<IProjectLevelService, ProjectLevelService>();
+            builder.Services.AddScoped<IWorkloadService, WorkloadService>();
+            builder.Services.AddScoped<IDashboardService, DashboardService>();
+            builder.Services.AddScoped<ITenantSettingsService, TenantSettingsService>();
+            builder.Services.AddHostedService<Application.BackgroundJobs.OverdueTaskEmailJob>();
+
             builder.Services.AddScoped<IEmailSender, EmailSender>();
 
             builder.Services.AddSignalR();
@@ -136,6 +144,34 @@ namespace Presentationn
                 options.AddPolicy("CanCommentTasks", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.tasks.comment", "tms.tasks.view")));
                 options.AddPolicy("CanViewAttachments", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.tasks.attachment.view", "tms.tasks.view")));
                 options.AddPolicy("CanUploadAttachments", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.tasks.attachment.upload", "tms.tasks.update", "tms.tasks.create")));
+
+                // Division policies
+                options.AddPolicy("CanViewDivisions", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.divisions.view")));
+                options.AddPolicy("CanCreateDivisions", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.divisions.create")));
+                options.AddPolicy("CanUpdateDivisions", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.divisions.update")));
+                options.AddPolicy("CanDeleteDivisions", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.divisions.delete")));
+
+                // Project policies
+                options.AddPolicy("CanViewProjects", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.projects.view")));
+                options.AddPolicy("CanCreateProjects", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.projects.create")));
+                options.AddPolicy("CanUpdateProjects", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.projects.update")));
+                options.AddPolicy("CanDeleteProjects", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.projects.delete")));
+
+                // Level policies
+                options.AddPolicy("CanViewLevels", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.levels.view")));
+                options.AddPolicy("CanCreateLevels", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.levels.create")));
+                options.AddPolicy("CanUpdateLevels", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.levels.update")));
+                options.AddPolicy("CanDeleteLevels", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.levels.delete")));
+
+                // Workload policies
+                options.AddPolicy("CanViewWorkload", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.workload.view")));
+
+                // Dashboard policies
+                options.AddPolicy("CanViewDashboard", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.dashboard.view")));
+
+                // Settings policies
+                options.AddPolicy("CanViewSettings", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.settings.view")));
+                options.AddPolicy("CanUpdateSettings", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.settings.update")));
 
                 // WorkGroup policies
                 options.AddPolicy("CanViewWorkGroups", p => p.RequireAssertion(ctx => HasTmsPermissionOrAdmin(ctx, "tms.workgroups.view")));

@@ -19,6 +19,10 @@ namespace Persistence.Data
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<WorkGroup> WorkGroups { get; set; }
         public DbSet<PasswordResetOTP> PasswordResetOtps { get; set; }
+        public DbSet<Division> Divisions { get; set; }
+        public DbSet<Project> Projects { get; set; }
+        public DbSet<ProjectLevel> ProjectLevels { get; set; }
+        public DbSet<TenantSettings> TenantSettings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -138,6 +142,52 @@ namespace Persistence.Data
                 .WithMany()
                 .HasForeignKey(w => w.LeaderId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // ================= Division =================
+            modelBuilder.Entity<Division>(entity =>
+            {
+                entity.Property(d => d.Name).IsRequired().HasMaxLength(256);
+                entity.HasOne(d => d.Manager)
+                      .WithMany(u => u.ManagedDivisions)
+                      .HasForeignKey(d => d.ManagerId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasMany(d => d.Projects)
+                      .WithOne(p => p.Division)
+                      .HasForeignKey(p => p.DivisionId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // ================= Project =================
+            modelBuilder.Entity<Project>(entity =>
+            {
+                entity.Property(p => p.Name).IsRequired().HasMaxLength(256);
+                entity.HasOne(p => p.Manager)
+                      .WithMany(u => u.ManagedProjects)
+                      .HasForeignKey(p => p.ManagerId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasMany(p => p.Levels)
+                      .WithOne(l => l.Project)
+                      .HasForeignKey(l => l.ProjectId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ================= ProjectLevel =================
+            modelBuilder.Entity<ProjectLevel>(entity =>
+            {
+                entity.Property(l => l.Name).IsRequired().HasMaxLength(256);
+                entity.HasMany(l => l.Tasks)
+                      .WithOne(t => t.Level)
+                      .HasForeignKey(t => t.LevelId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // ================= TenantSettings =================
+            modelBuilder.Entity<TenantSettings>(entity =>
+            {
+                entity.HasIndex(s => s.TenantId);
+            });
         }
     }
 }

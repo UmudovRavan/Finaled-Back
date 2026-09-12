@@ -22,3 +22,15 @@ C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAu
 C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\refint\AltensorAuthService.Contract.dll
 C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.pdb
 C:\Users\Ravan999\Desktop\Production\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\ref\AltensorAuthService.Contract.dll
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\bin\Debug\net8.0\AltensorAuthService.Contract.deps.json
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\bin\Debug\net8.0\AltensorAuthService.Contract.dll
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\bin\Debug\net8.0\AltensorAuthService.Contract.pdb
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.AssemblyInfoInputs.cache
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.AssemblyInfo.cs
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.csproj.CoreCompileInputs.cache
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.sourcelink.json
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.dll
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\refint\AltensorAuthService.Contract.dll
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\AltensorAuthService.Contract.pdb
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAuthService\AltensorAuthService.Contract\obj\Debug\net8.0\ref\AltensorAuthService.Contract.dll

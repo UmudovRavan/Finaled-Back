@@ -1,11 +1,13 @@
-﻿using System;
+using Contract.DTOs;
+using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Threading.Tasks;
 
 namespace Contract.Services
 {
     public interface IEmailSender
     {
-        public Task SendOtpEmailAsync(string toEmail, string otp);
+        Task SendOtpEmailAsync(string toEmail, string otp);
+        Task SendOverdueTasksEmailAsync(string toEmail, List<OverdueTaskEmailItem> overdueTasks);
     }
 }

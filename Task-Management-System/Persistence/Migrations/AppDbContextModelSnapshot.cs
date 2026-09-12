@@ -59,6 +59,42 @@ namespace Persistence.Migrations
                     b.ToTable("AppUsers");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Division", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ManagerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ManagerId");
+
+                    b.ToTable("Divisions");
+                });
+
             modelBuilder.Entity("Domain.Entities.Notification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -156,6 +192,86 @@ namespace Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("PerformancePoints");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Project", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("DivisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ManagerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DivisionId");
+
+                    b.HasIndex("ManagerId");
+
+                    b.ToTable("Projects");
+                });
+
+            modelBuilder.Entity("Domain.Entities.ProjectLevel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("ProjectLevels");
                 });
 
             modelBuilder.Entity("Domain.Entities.TaskAttachment", b =>
@@ -302,8 +418,14 @@ namespace Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid?>("LevelId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("ParentTaskId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -325,6 +447,8 @@ namespace Persistence.Migrations
                     b.HasIndex("AssignedWorkGroupId");
 
                     b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("LevelId");
 
                     b.HasIndex("ParentTaskId");
 
@@ -373,6 +497,37 @@ namespace Persistence.Migrations
                     b.ToTable("TaskTransactions");
                 });
 
+            modelBuilder.Entity("Domain.Entities.TenantSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsOverdueNotificationEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("OverdueTaskNotificationEmail")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("TenantSettings");
+                });
+
             modelBuilder.Entity("Domain.Entities.WorkGroup", b =>
                 {
                     b.Property<Guid>("Id")
@@ -415,6 +570,17 @@ namespace Persistence.Migrations
                     b.Navigation("WorkGroup");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Division", b =>
+                {
+                    b.HasOne("Domain.Entities.AppUser", "Manager")
+                        .WithMany("ManagedDivisions")
+                        .HasForeignKey("ManagerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Manager");
+                });
+
             modelBuilder.Entity("Domain.Entities.Notification", b =>
                 {
                     b.HasOne("Domain.Entities.AppUser", "User")
@@ -446,6 +612,35 @@ namespace Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Project", b =>
+                {
+                    b.HasOne("Domain.Entities.Division", "Division")
+                        .WithMany("Projects")
+                        .HasForeignKey("DivisionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Domain.Entities.AppUser", "Manager")
+                        .WithMany("ManagedProjects")
+                        .HasForeignKey("ManagerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Division");
+
+                    b.Navigation("Manager");
+                });
+
+            modelBuilder.Entity("Domain.Entities.ProjectLevel", b =>
+                {
+                    b.HasOne("Domain.Entities.Project", "Project")
+                        .WithMany("Levels")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("Domain.Entities.TaskAttachment", b =>
@@ -515,6 +710,11 @@ namespace Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.ProjectLevel", "Level")
+                        .WithMany("Tasks")
+                        .HasForeignKey("LevelId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Domain.Entities.TaskItem", null)
                         .WithMany()
                         .HasForeignKey("ParentTaskId")
@@ -525,6 +725,8 @@ namespace Persistence.Migrations
                     b.Navigation("AssignedWorkGroup");
 
                     b.Navigation("CreatedByUser");
+
+                    b.Navigation("Level");
                 });
 
             modelBuilder.Entity("Domain.Entities.TaskTransaction", b =>
@@ -571,6 +773,10 @@ namespace Persistence.Migrations
 
                     b.Navigation("CreatedTasks");
 
+                    b.Navigation("ManagedDivisions");
+
+                    b.Navigation("ManagedProjects");
+
                     b.Navigation("Notifications");
 
                     b.Navigation("PerformancePoints");
@@ -578,6 +784,21 @@ namespace Persistence.Migrations
                     b.Navigation("TaskCommentMentions");
 
                     b.Navigation("TaskComments");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Division", b =>
+                {
+                    b.Navigation("Projects");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Project", b =>
+                {
+                    b.Navigation("Levels");
+                });
+
+            modelBuilder.Entity("Domain.Entities.ProjectLevel", b =>
+                {
+                    b.Navigation("Tasks");
                 });
 
             modelBuilder.Entity("Domain.Entities.TaskComment", b =>

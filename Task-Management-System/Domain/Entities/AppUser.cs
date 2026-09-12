@@ -25,5 +25,7 @@ namespace Domain.Entities
         public ICollection<PerformancePoint> PerformancePoints { get; set; } = new List<PerformancePoint>();
         public Guid? WorkGroupId { get; set; }
         public WorkGroup? WorkGroup { get; set; }
+        public ICollection<Division> ManagedDivisions { get; set; } = new List<Division>();
+        public ICollection<Project> ManagedProjects { get; set; } = new List<Project>();
     }
 }

@@ -173,7 +173,35 @@ namespace AltensorAuthService.Persistence.Data.Seed
 
                     // TMS - Performance & Notifications
                     new Permission { Code = "tms.performance.view", Name = "Performansa Baxış", Description = "Performans statistikasına və lider lövhəsinə baxış", ModuleId = tmsModule.Id },
-                    new Permission { Code = "tms.notifications.view", Name = "Bildirişlərə Baxış", Description = "İstifadəçi bildirişlərinə baxış və oxundu qeyd etmə", ModuleId = tmsModule.Id }
+                    new Permission { Code = "tms.notifications.view", Name = "Bildirişlərə Baxış", Description = "İstifadəçi bildirişlərinə baxış və oxundu qeyd etmə", ModuleId = tmsModule.Id },
+
+                    // TMS - Divisions
+                    new Permission { Code = "tms.divisions.view", Name = "Şöbələrə Baxış", Description = "Şöbələrin siyahısına və detallarına baxış", ModuleId = tmsModule.Id },
+                    new Permission { Code = "tms.divisions.create", Name = "Şöbə Yaratma", Description = "Yeni şöbə yaratmaq", ModuleId = tmsModule.Id },
+                    new Permission { Code = "tms.divisions.update", Name = "Şöbə Yeniləmə", Description = "Şöbə məlumatlarını və menecerini yeniləmək", ModuleId = tmsModule.Id },
+                    new Permission { Code = "tms.divisions.delete", Name = "Şöbə Silmə", Description = "Şöbəni silmək", ModuleId = tmsModule.Id },
+
+                    // TMS - Projects
+                    new Permission { Code = "tms.projects.view", Name = "Layihələrə Baxış", Description = "Layihələrin siyahısına və detallarına baxış", ModuleId = tmsModule.Id },
+                    new Permission { Code = "tms.projects.create", Name = "Layihə Yaratma", Description = "Yeni layihə yaratmaq", ModuleId = tmsModule.Id },
+                    new Permission { Code = "tms.projects.update", Name = "Layihə Yeniləmə", Description = "Layihə məlumatlarını yeniləmək", ModuleId = tmsModule.Id },
+                    new Permission { Code = "tms.projects.delete", Name = "Layihə Silmə", Description = "Layihəni silmək", ModuleId = tmsModule.Id },
+
+                    // TMS - Project Levels
+                    new Permission { Code = "tms.levels.view", Name = "Mərhələlərə Baxış", Description = "Layihə mərhələlərinə (levels) baxış", ModuleId = tmsModule.Id },
+                    new Permission { Code = "tms.levels.create", Name = "Mərhələ Yaratma", Description = "Layihə üçün yeni dinamik mərhələ yaratmaq", ModuleId = tmsModule.Id },
+                    new Permission { Code = "tms.levels.update", Name = "Mərhələ Yeniləmə", Description = "Mərhələ məlumatlarını və sırasını yeniləmək", ModuleId = tmsModule.Id },
+                    new Permission { Code = "tms.levels.delete", Name = "Mərhələ Silmə", Description = "Mərhələni silmək", ModuleId = tmsModule.Id },
+
+                    // TMS - Workload & Employee Monitoring
+                    new Permission { Code = "tms.workload.view", Name = "İş Yükünə Baxış", Description = "İşçilərin iş yükü dərəcələrinə və xəbərdarlıqlara baxış", ModuleId = tmsModule.Id },
+
+                    // TMS - Dashboard
+                    new Permission { Code = "tms.dashboard.view", Name = "Dashboard Baxış", Description = "Şirkət müdiri üçün tam sistem dashboard statistikalarına baxış", ModuleId = tmsModule.Id },
+
+                    // TMS - Settings
+                    new Permission { Code = "tms.settings.view", Name = "Sistem Tənzimləmələrinə Baxış", Description = "Gecikən tapşırıqlar üçün email və digər tənzimləmələrə baxış", ModuleId = tmsModule.Id },
+                    new Permission { Code = "tms.settings.update", Name = "Sistem Tənzimləmələrini Yeniləmə", Description = "Bildiriş emailini və digər tənzimləmələri yeniləmək", ModuleId = tmsModule.Id }
                 };
 
                 foreach (var perm in permissions)
@@ -203,9 +231,12 @@ namespace AltensorAuthService.Persistence.Data.Seed
                         TenantId = null
                     };
                     await roleManager.CreateAsync(superAdminRole);
+                }
 
-                    // Assign all permissions
-                    foreach (var p in allPermissions)
+                // Ensure all permissions for PlatformSuperAdmin
+                foreach (var p in allPermissions)
+                {
+                    if (!await context.RolePermissions.AnyAsync(rp => rp.RoleId == superAdminRole.Id && rp.PermissionId == p.Id))
                     {
                         await context.RolePermissions.AddAsync(new RolePermission
                         {
@@ -213,8 +244,8 @@ namespace AltensorAuthService.Persistence.Data.Seed
                             PermissionId = p.Id
                         });
                     }
-                    await context.SaveChangesAsync();
                 }
+                await context.SaveChangesAsync();
 
                 // TenantAdmin
                 const string tenantAdminRoleName = "TenantAdmin";
@@ -230,9 +261,12 @@ namespace AltensorAuthService.Persistence.Data.Seed
                         TenantId = null
                     };
                     await roleManager.CreateAsync(tenantAdminRole);
+                }
 
-                    // Assign all permissions to default TenantAdmin
-                    foreach (var p in allPermissions)
+                // Ensure all permissions for TenantAdmin
+                foreach (var p in allPermissions)
+                {
+                    if (!await context.RolePermissions.AnyAsync(rp => rp.RoleId == tenantAdminRole.Id && rp.PermissionId == p.Id))
                     {
                         await context.RolePermissions.AddAsync(new RolePermission
                         {
@@ -240,8 +274,76 @@ namespace AltensorAuthService.Persistence.Data.Seed
                             PermissionId = p.Id
                         });
                     }
+                }
+                await context.SaveChangesAsync();
+
+                // Helper local function to seed or update role permissions
+                async Task SeedRoleWithPermissionsAsync(string roleName, string description, string[] permissionCodes)
+                {
+                    var role = await roleManager.FindByNameAsync(roleName);
+                    if (role == null)
+                    {
+                        role = new ApplicationRole
+                        {
+                            Name = roleName,
+                            NormalizedName = roleName.ToUpper(),
+                            IsSystemRole = true,
+                            Description = description,
+                            TenantId = null
+                        };
+                        await roleManager.CreateAsync(role);
+                    }
+
+                    var targetPermissions = allPermissions.Where(p => permissionCodes.Contains(p.Code)).ToList();
+                    foreach (var p in targetPermissions)
+                    {
+                        if (!await context.RolePermissions.AnyAsync(rp => rp.RoleId == role.Id && rp.PermissionId == p.Id))
+                        {
+                            await context.RolePermissions.AddAsync(new RolePermission
+                            {
+                                RoleId = role.Id,
+                                PermissionId = p.Id
+                            });
+                        }
+                    }
                     await context.SaveChangesAsync();
                 }
+
+                // TmsManager
+                await SeedRoleWithPermissionsAsync("TmsManager", "TMS Şöbə və Layihə Meneceri", new[]
+                {
+                    "tms.divisions.view",
+                    "tms.projects.view", "tms.projects.create", "tms.projects.update", "tms.projects.delete",
+                    "tms.levels.view", "tms.levels.create", "tms.levels.update", "tms.levels.delete",
+                    "tms.tasks.view", "tms.tasks.create", "tms.tasks.update", "tms.tasks.delete", "tms.tasks.assign", "tms.tasks.status_change", "tms.tasks.comments", "tms.tasks.attachments",
+                    "tms.workload.view",
+                    "tms.performance.view",
+                    "tms.notifications.view"
+                });
+
+                // TmsEmployee
+                await SeedRoleWithPermissionsAsync("TmsEmployee", "TMS İcraçı Əməkdaş", new[]
+                {
+                    "tms.divisions.view",
+                    "tms.projects.view",
+                    "tms.levels.view",
+                    "tms.tasks.view", "tms.tasks.status_change", "tms.tasks.comments", "tms.tasks.attachments",
+                    "tms.notifications.view"
+                });
+
+                // TmsDirector
+                await SeedRoleWithPermissionsAsync("TmsDirector", "TMS Şirkət Direktoru / Rəhbəri", new[]
+                {
+                    "tms.dashboard.view",
+                    "tms.divisions.view",
+                    "tms.projects.view",
+                    "tms.levels.view",
+                    "tms.tasks.view",
+                    "tms.workload.view",
+                    "tms.performance.view",
+                    "tms.notifications.view",
+                    "tms.settings.view", "tms.settings.update"
+                });
 
                 // 4. Seed Platform System Tenant & Platform Super Admin User
                 var platformTenantSlug = "platform";
