@@ -207,7 +207,7 @@ namespace Application.Services
             var userId = GetRequiredUserId();
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
-            if (dto.EmployeeId == userId)
+            if (dto.EmployeeId == userId && !IsAdminOrHr())
                 throw new InvalidOperationException("Menecer öz fəaliyyətinə KPI balı daxil edə bilməz.");
 
             // 1. Bal Hüdudlarının Validasiyası
