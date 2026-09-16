@@ -28,7 +28,7 @@ namespace Presentationn
             var builder = WebApplication.CreateBuilder(args);
 
             // ================= Controllers & Upload Limits =================
-            // ReferenceHandler.IgnoreCycles: AppUser↔PerformancePoint kimi
+            // ReferenceHandler.IgnoreCycles: AppUser↔DailyKpiRecord kimi
             // bidireksional naviqasiya əlaqələri JSON serialize zamanı
             // "object cycle detected" xətası verir. IgnoreCycles artıq null yazır.
             builder.Services.AddControllers()
@@ -83,7 +83,7 @@ namespace Presentationn
             builder.Services.AddScoped<ITaksService, TaskService>();
             builder.Services.AddScoped<IFileStorageService, MinioFileStorageService>();
             builder.Services.AddScoped<ITaskAttachmentService, TaskAttachmentService>();
-            builder.Services.AddScoped<IPerformanceService, PerformanceService>();
+            builder.Services.AddScoped<IKpiService, KpiService>();
             builder.Services.AddScoped<IWorkGroupService, WorkGroupService>();
 
             builder.Services.AddScoped<IDivisionService, DivisionService>();

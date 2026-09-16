@@ -11,5 +11,7 @@ namespace Domain.Entities
         public AppUser? Manager { get; set; }
 
         public ICollection<Project> Projects { get; set; } = new List<Project>();
+        public ICollection<AppUser> Users { get; set; } = new List<AppUser>();
+        public ICollection<DailyKpiRecord> DailyKpiRecords { get; set; } = new List<DailyKpiRecord>();
     }
 }

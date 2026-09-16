@@ -15,7 +15,7 @@ namespace Persistence.Data
         public DbSet<TaskTransaction> TaskTransactions { get; set; }
         public DbSet<TaskComment> TaskComments { get; set; }
         public DbSet<TaskCommentMention> TaskCommentMentions { get; set; }
-        public DbSet<PerformancePoint> PerformancePoints { get; set; }
+        public DbSet<DailyKpiRecord> DailyKpiRecords { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<WorkGroup> WorkGroups { get; set; }
         public DbSet<PasswordResetOTP> PasswordResetOtps { get; set; }
@@ -110,14 +110,36 @@ namespace Persistence.Data
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // ================= PerformancePoint =================
-            modelBuilder.Entity<PerformancePoint>(entity =>
+            // ================= DailyKpiRecord =================
+            modelBuilder.Entity<DailyKpiRecord>(entity =>
             {
-                entity.HasOne(p => p.User)
-                      .WithMany(u => u.PerformancePoints)
-                      .HasForeignKey(p => p.UserId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(k => k.Employee)
+                      .WithMany(u => u.DailyKpiRecords)
+                      .HasForeignKey(k => k.EmployeeId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(k => k.Evaluator)
+                      .WithMany(u => u.EvaluatedKpiRecords)
+                      .HasForeignKey(k => k.EvaluatorId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(k => k.Division)
+                      .WithMany(d => d.DailyKpiRecords)
+                      .HasForeignKey(k => k.DivisionId)
+                      .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasIndex(k => new { k.TenantId, k.EmployeeId, k.EvaluationDate })
+                      .IsUnique();
+
+                entity.HasIndex(k => new { k.TenantId, k.EvaluationDate });
             });
+
+            // AppUser → Division
+            modelBuilder.Entity<AppUser>()
+                .HasOne(u => u.Division)
+                .WithMany(d => d.Users)
+                .HasForeignKey(u => u.DivisionId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // ================= Notification =================
             modelBuilder.Entity<Notification>(entity =>

@@ -22,7 +22,10 @@ namespace Domain.Entities
         public ICollection<TaskComment> TaskComments { get; set; } = new List<TaskComment>();
         public ICollection<TaskCommentMention> TaskCommentMentions { get; set; } = new List<TaskCommentMention>();
         public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
-        public ICollection<PerformancePoint> PerformancePoints { get; set; } = new List<PerformancePoint>();
+        public Guid? DivisionId { get; set; }
+        public Division? Division { get; set; }
+        public ICollection<DailyKpiRecord> DailyKpiRecords { get; set; } = new List<DailyKpiRecord>();
+        public ICollection<DailyKpiRecord> EvaluatedKpiRecords { get; set; } = new List<DailyKpiRecord>();
         public Guid? WorkGroupId { get; set; }
         public WorkGroup? WorkGroup { get; set; }
         public ICollection<Division> ManagedDivisions { get; set; } = new List<Division>();

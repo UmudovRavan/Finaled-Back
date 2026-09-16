@@ -30,6 +30,9 @@ namespace Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("DivisionId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -51,12 +54,87 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DivisionId");
+
                     b.HasIndex("WorkGroupId");
 
                     b.HasIndex("TenantId", "Email")
                         .IsUnique();
 
                     b.ToTable("AppUsers");
+                });
+
+            modelBuilder.Entity("Domain.Entities.DailyKpiRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AdminEditReason")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BonusReason")
+                        .HasColumnType("text");
+
+                    b.Property<int>("BonusScore")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Comments")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisciplinePenaltyReason")
+                        .HasColumnType("text");
+
+                    b.Property<int>("DisciplineScore")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("DivisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("EvaluationDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("EvaluatorId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsAdminEdited")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("JobDutiesScore")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("TotalScore")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DivisionId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("EvaluatorId");
+
+                    b.HasIndex("TenantId", "EvaluationDate");
+
+                    b.HasIndex("TenantId", "EmployeeId", "EvaluationDate")
+                        .IsUnique();
+
+                    b.ToTable("DailyKpiRecords");
                 });
 
             modelBuilder.Entity("Domain.Entities.Division", b =>
@@ -157,41 +235,6 @@ namespace Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("PasswordResetOtps");
-                });
-
-            modelBuilder.Entity("Domain.Entities.PerformancePoint", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("Points")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PerformancePoints");
                 });
 
             modelBuilder.Entity("Domain.Entities.Project", b =>
@@ -562,12 +605,45 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.AppUser", b =>
                 {
+                    b.HasOne("Domain.Entities.Division", "Division")
+                        .WithMany("Users")
+                        .HasForeignKey("DivisionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Domain.Entities.WorkGroup", "WorkGroup")
                         .WithMany("Users")
                         .HasForeignKey("WorkGroupId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.Navigation("Division");
+
                     b.Navigation("WorkGroup");
+                });
+
+            modelBuilder.Entity("Domain.Entities.DailyKpiRecord", b =>
+                {
+                    b.HasOne("Domain.Entities.Division", "Division")
+                        .WithMany("DailyKpiRecords")
+                        .HasForeignKey("DivisionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Domain.Entities.AppUser", "Employee")
+                        .WithMany("DailyKpiRecords")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.AppUser", "Evaluator")
+                        .WithMany("EvaluatedKpiRecords")
+                        .HasForeignKey("EvaluatorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Division");
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Evaluator");
                 });
 
             modelBuilder.Entity("Domain.Entities.Division", b =>
@@ -596,17 +672,6 @@ namespace Persistence.Migrations
                 {
                     b.HasOne("Domain.Entities.AppUser", "User")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Domain.Entities.PerformancePoint", b =>
-                {
-                    b.HasOne("Domain.Entities.AppUser", "User")
-                        .WithMany("PerformancePoints")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -773,13 +838,15 @@ namespace Persistence.Migrations
 
                     b.Navigation("CreatedTasks");
 
+                    b.Navigation("DailyKpiRecords");
+
+                    b.Navigation("EvaluatedKpiRecords");
+
                     b.Navigation("ManagedDivisions");
 
                     b.Navigation("ManagedProjects");
 
                     b.Navigation("Notifications");
-
-                    b.Navigation("PerformancePoints");
 
                     b.Navigation("TaskCommentMentions");
 
@@ -788,7 +855,11 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.Division", b =>
                 {
+                    b.Navigation("DailyKpiRecords");
+
                     b.Navigation("Projects");
+
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("Domain.Entities.Project", b =>

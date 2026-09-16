@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -12,7 +12,7 @@ namespace Domain.Entities
         public ICollection<TaskItem> AssignedTasks { get; set; }
         public ICollection<TaskItem> CreatedTasks { get; set; }
         [JsonIgnore]
-        public ICollection<PerformancePoint> PerformancePoints { get; set; }
+        public ICollection<DailyKpiRecord> DailyKpiRecords { get; set; }
         public ICollection<TaskComment> TaskComments { get; set; }
         public ICollection<TaskCommentMention> TaskCommentMentions { get; set; }
         public ICollection<Notification> Notifications { get; set; }
