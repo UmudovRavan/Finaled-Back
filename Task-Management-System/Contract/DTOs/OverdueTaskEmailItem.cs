@@ -14,5 +14,6 @@ namespace Contract.DTOs
         public string Priority { get; set; } = "Normal";
         public DateTime Deadline { get; set; }
         public int DaysOverdue { get; set; }
+        public string OverdueDuration { get; set; } = string.Empty;
     }
 }
