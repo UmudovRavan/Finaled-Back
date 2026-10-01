@@ -26,6 +26,7 @@ public class AccountingService : IAccountingService
     private readonly IPostingEngine _postingEngine;
     private readonly ICurrentTenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly Microsoft.Extensions.Logging.ILogger<AccountingService> _logger;
 
     public AccountingService(
         IGenericRepository<Account> accountRepo,
@@ -38,7 +39,8 @@ public class AccountingService : IAccountingService
         IGenericRepository<Company> companyRepo,
         IPostingEngine postingEngine,
         ICurrentTenantService tenantService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        Microsoft.Extensions.Logging.ILogger<AccountingService> logger)
     {
         _accountRepo = accountRepo;
         _yearRepo = yearRepo;
@@ -51,6 +53,7 @@ public class AccountingService : IAccountingService
         _postingEngine = postingEngine;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     // Chart of Accounts

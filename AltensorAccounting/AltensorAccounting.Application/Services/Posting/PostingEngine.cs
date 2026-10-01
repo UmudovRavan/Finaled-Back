@@ -7,6 +7,7 @@ using AltensorAccounting.Contract.Services;
 using AltensorAccounting.Domain.Entities.Accounting;
 using AltensorAccounting.Domain.Enums;
 using AltensorAccounting.Domain.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace AltensorAccounting.Application.Services.Posting;
 
@@ -16,17 +17,20 @@ public class PostingEngine : IPostingEngine
     private readonly IGenericRepository<AccountingPeriod> _periodRepo;
     private readonly ICurrentTenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<PostingEngine> _logger;
 
     public PostingEngine(
         IGenericRepository<PostingBatch> batchRepo,
         IGenericRepository<AccountingPeriod> periodRepo,
         ICurrentTenantService tenantService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILogger<PostingEngine> logger)
     {
         _batchRepo = batchRepo;
         _periodRepo = periodRepo;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task<PostingBatch> PostBatchAsync(PostingBatch batch, CancellationToken ct = default)
@@ -89,6 +93,9 @@ public class PostingEngine : IPostingEngine
 
         await _batchRepo.AddAsync(batch, ct);
         await _unitOfWork.SaveChangesAsync(ct);
+
+        _logger.LogInformation("[AltensorAccounting] Ledger Batch {BatchNumber} posted. Debit={Debit}, Credit={Credit}, Lines={Lines}, TenantId={TenantId}",
+            batch.BatchNumber, batch.TotalDebitBase, batch.TotalCreditBase, batch.Entries.Count, tenantId);
 
         return batch;
     }
@@ -158,6 +165,9 @@ public class PostingEngine : IPostingEngine
         await _batchRepo.UpdateAsync(originalBatch, ct);
         await _batchRepo.AddAsync(reversalBatch, ct);
         await _unitOfWork.SaveChangesAsync(ct);
+
+        _logger.LogInformation("[AltensorAccounting] Ledger Batch {BatchNumber} reversed. ReversalBatch={ReversalBatchNumber}, Reason={Reason}, TenantId={TenantId}",
+            originalBatch.BatchNumber, reversalBatch.BatchNumber, reason, tenantId);
 
         return reversalBatch;
     }

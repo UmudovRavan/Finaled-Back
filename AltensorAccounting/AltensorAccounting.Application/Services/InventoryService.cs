@@ -26,6 +26,7 @@ public class InventoryService : IInventoryService
     private readonly IPostingEngine _postingEngine;
     private readonly ICurrentTenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly Microsoft.Extensions.Logging.ILogger<InventoryService> _logger;
 
     public InventoryService(
         IGenericRepository<Item> itemRepo,
@@ -36,7 +37,8 @@ public class InventoryService : IInventoryService
         IStockValuationEngine stockEngine,
         IPostingEngine postingEngine,
         ICurrentTenantService tenantService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        Microsoft.Extensions.Logging.ILogger<InventoryService> logger)
     {
         _itemRepo = itemRepo;
         _warehouseRepo = warehouseRepo;
@@ -47,6 +49,7 @@ public class InventoryService : IInventoryService
         _postingEngine = postingEngine;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task<ItemDto> CreateItemAsync(CreateItemDto dto, CancellationToken ct = default)

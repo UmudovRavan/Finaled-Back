@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AltensorAccounting.Application.Interfaces;
 using AltensorAccounting.Contract.DTOs.Webhooks;
 using AltensorAccounting.Domain.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace AltensorAccounting.Application.Services;
 
@@ -10,11 +11,13 @@ public class UserSyncService : IUserSyncService
 {
     private readonly IGenericRepository<User> _userRepo;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<UserSyncService> _logger;
 
-    public UserSyncService(IGenericRepository<User> userRepo, IUnitOfWork unitOfWork)
+    public UserSyncService(IGenericRepository<User> userRepo, IUnitOfWork unitOfWork, ILogger<UserSyncService> logger)
     {
         _userRepo = userRepo;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task SyncUserCreatedAsync(UserCreatedIntegrationEvent @event, CancellationToken ct = default)
@@ -26,6 +29,7 @@ public class UserSyncService : IUserSyncService
             existing.FullName = @event.FullName;
             existing.UserName = @event.UserName;
             await _userRepo.UpdateAsync(existing, ct);
+            _logger.LogInformation("[AltensorAccounting] Mövcud istifadəçi yeniləndi: UserId={UserId}, TenantId={TenantId}", @event.UserId, @event.TenantId);
         }
         else
         {
@@ -39,6 +43,7 @@ public class UserSyncService : IUserSyncService
                 IsActive = true
             };
             await _userRepo.AddAsync(user, ct);
+            _logger.LogInformation("[AltensorAccounting] Yeni istifadəçi əlavə edildi: UserId={UserId}, TenantId={TenantId}", @event.UserId, @event.TenantId);
         }
 
         await _unitOfWork.SaveChangesAsync(ct);

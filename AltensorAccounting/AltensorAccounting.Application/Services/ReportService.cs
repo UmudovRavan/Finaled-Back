@@ -25,6 +25,7 @@ public class ReportService : IReportService
     private readonly IGenericRepository<BankAccount> _bankRepo;
     private readonly IGenericRepository<BankStatement> _statementRepo;
     private readonly IGenericRepository<Company> _companyRepo;
+    private readonly Microsoft.Extensions.Logging.ILogger<ReportService> _logger;
 
     public ReportService(
         IGenericRepository<Account> accountRepo,
@@ -36,7 +37,8 @@ public class ReportService : IReportService
         IGenericRepository<StockLedgerEntry> stockLedgerRepo,
         IGenericRepository<BankAccount> bankRepo,
         IGenericRepository<BankStatement> statementRepo,
-        IGenericRepository<Company> companyRepo)
+        IGenericRepository<Company> companyRepo,
+        Microsoft.Extensions.Logging.ILogger<ReportService> logger)
     {
         _accountRepo = accountRepo;
         _ledgerRepo = ledgerRepo;
@@ -48,6 +50,7 @@ public class ReportService : IReportService
         _bankRepo = bankRepo;
         _statementRepo = statementRepo;
         _companyRepo = companyRepo;
+        _logger = logger;
     }
 
     public async Task<TrialBalanceReportDto> GetTrialBalanceAsync(DateTime asOfDate, CancellationToken ct = default)

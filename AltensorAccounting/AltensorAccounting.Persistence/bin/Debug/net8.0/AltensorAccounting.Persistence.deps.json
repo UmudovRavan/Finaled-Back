@@ -521,7 +521,8 @@
       "AltensorAccounting.Application/1.0.0": {
         "dependencies": {
           "AltensorAccounting.Contract": "1.0.0",
-          "AltensorAccounting.Domain": "1.0.0"
+          "AltensorAccounting.Domain": "1.0.0",
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.2"
         },
         "runtime": {
           "AltensorAccounting.Application.dll": {

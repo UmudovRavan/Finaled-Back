@@ -1,4 +1,5 @@
 using System;
+using AltensorAccounting.Api.Extensions;
 using AltensorAccounting.Contract.Services;
 using AltensorAccounting.Infrastructure.Extensions;
 using AltensorAccounting.Infrastructure.Middlewares;
@@ -8,8 +9,13 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Serilog Configuration matching AuthService and TMS
+LoggingExtensions.ConfigureSerilog(builder.Configuration);
+builder.Host.UseSerilog();
 
 // 1. Core Services & Multi-Tenant Context
 builder.Services.AddHttpContextAccessor();
@@ -62,6 +68,12 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+// 1. Global Exception Handling Middleware (Logs errors and returns ProblemDetails)
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
+// 2. Serilog HTTP Request Logging
+app.UseSerilogRequestLogging();
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())

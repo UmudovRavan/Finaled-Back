@@ -27,6 +27,7 @@ public class TreasuryService : ITreasuryService
     private readonly IPostingEngine _postingEngine;
     private readonly ICurrentTenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly Microsoft.Extensions.Logging.ILogger<TreasuryService> _logger;
 
     public TreasuryService(
         IGenericRepository<BankAccount> bankRepo,
@@ -38,7 +39,8 @@ public class TreasuryService : ITreasuryService
         IGenericRepository<Company> companyRepo,
         IPostingEngine postingEngine,
         ICurrentTenantService tenantService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        Microsoft.Extensions.Logging.ILogger<TreasuryService> logger)
     {
         _bankRepo = bankRepo;
         _cashRepo = cashRepo;
@@ -50,6 +52,7 @@ public class TreasuryService : ITreasuryService
         _postingEngine = postingEngine;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task<BankAccountDto> CreateBankAccountAsync(CreateBankAccountDto dto, CancellationToken ct = default)

@@ -1,9 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "ITZaRF8rQvE=",
+  "dgSpecHash": "0fFsbmhvFgY=",
   "success": true,
   "projectFilePath": "C:\\Users\\Huawei\\Desktop\\Finaled-Back\\AltensorAccounting\\AltensorAccounting.Application\\AltensorAccounting.Application.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\Huawei\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.2\\microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512",
+    "C:\\Users\\Huawei\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\8.0.2\\microsoft.extensions.logging.abstractions.8.0.2.nupkg.sha512",
     "C:\\Users\\Huawei\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.27\\microsoft.netcore.app.ref.8.0.27.nupkg.sha512",
     "C:\\Users\\Huawei\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.27\\microsoft.windowsdesktop.app.ref.8.0.27.nupkg.sha512",
     "C:\\Users\\Huawei\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.27\\microsoft.aspnetcore.app.ref.8.0.27.nupkg.sha512"
