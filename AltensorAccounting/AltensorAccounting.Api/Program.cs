@@ -31,6 +31,17 @@ builder.Services.AddAltensorAuthentication(builder.Configuration);
 // 4. Controllers & JSON Options
 builder.Services.AddControllers();
 
+// 4b. CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 // 5. Swagger with Bearer Support
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -75,17 +86,23 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 // 2. Serilog HTTP Request Logging
 app.UseSerilogRequestLogging();
 
-// Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+// Swagger is available across all environments
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Altensor Accounting API v1");
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Altensor Accounting API v1");
+});
+
+var forwardedOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
+};
+forwardedOptions.KnownNetworks.Clear();
+forwardedOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedOptions);
 
 app.UseHttpsRedirection();
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseMiddleware<TenantStatusMiddleware>();

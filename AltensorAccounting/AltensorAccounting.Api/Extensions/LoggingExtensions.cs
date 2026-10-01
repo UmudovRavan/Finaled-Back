@@ -10,10 +10,17 @@ namespace AltensorAccounting.Api.Extensions
     {
         public static void ConfigureSerilog(IConfiguration? configuration = null)
         {
-            var logDirectory = Path.Combine(AppContext.BaseDirectory, "Logs");
-            if (!Directory.Exists(logDirectory))
+            try
             {
-                Directory.CreateDirectory(logDirectory);
+                var logDirectory = Path.Combine(AppContext.BaseDirectory, "Logs");
+                if (!Directory.Exists(logDirectory))
+                {
+                    Directory.CreateDirectory(logDirectory);
+                }
+            }
+            catch
+            {
+                // Ignore if process lacks directory creation rights
             }
 
             var loggerConfig = new LoggerConfiguration()
@@ -26,23 +33,33 @@ namespace AltensorAccounting.Api.Extensions
                 .Enrich.WithProperty("Application", "AltensorAccounting")
                 .Enrich.WithProperty("MachineName", Environment.MachineName);
 
-            if (configuration != null && configuration.GetSection("Serilog").Exists())
+            try
             {
-                loggerConfig.ReadFrom.Configuration(configuration);
-            }
-            else
-            {
-                loggerConfig
-                    .WriteTo.Console(
-                        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-                    .WriteTo.File(
-                        path: Path.Combine("Logs", "log-.txt"),
-                        rollingInterval: RollingInterval.Day,
-                        retainedFileCountLimit: 30,
-                        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
-            }
+                if (configuration != null && configuration.GetSection("Serilog").Exists())
+                {
+                    loggerConfig.ReadFrom.Configuration(configuration);
+                }
+                else
+                {
+                    loggerConfig
+                        .WriteTo.Console(
+                            outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+                        .WriteTo.File(
+                            path: Path.Combine("Logs", "log-.txt"),
+                            rollingInterval: RollingInterval.Day,
+                            retainedFileCountLimit: 30,
+                            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
+                }
 
-            Log.Logger = loggerConfig.CreateLogger();
+                Log.Logger = loggerConfig.CreateLogger();
+            }
+            catch
+            {
+                Log.Logger = new LoggerConfiguration()
+                    .MinimumLevel.Information()
+                    .WriteTo.Console()
+                    .CreateLogger();
+            }
         }
     }
 }
