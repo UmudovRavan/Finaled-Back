@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="AltensorAccounting.Api/AltensorAccounting.Api.csproj" />
+  <Project Path="AltensorAccounting.Application/AltensorAccounting.Application.csproj" />
+  <Project Path="AltensorAccounting.Contract/AltensorAccounting.Contract.csproj" />
+  <Project Path="AltensorAccounting.Domain/AltensorAccounting.Domain.csproj" />
+  <Project Path="AltensorAccounting.Infrastructure/AltensorAccounting.Infrastructure.csproj" />
+  <Project Path="AltensorAccounting.Persistence/AltensorAccounting.Persistence.csproj" />
+</Solution>

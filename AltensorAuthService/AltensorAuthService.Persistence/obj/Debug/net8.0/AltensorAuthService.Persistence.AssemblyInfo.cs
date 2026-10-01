@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AltensorAuthService.Persistence")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ebeec3163a6b6a041f9c289cde4f98e28e5e5a67")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4046368e089e6d18e84600ea0d43553c373d1f43")]
 [assembly: System.Reflection.AssemblyProductAttribute("AltensorAuthService.Persistence")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AltensorAuthService.Persistence")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,0 +1,91 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using AltensorAccounting.Domain.Entities.Accounting;
+using AltensorAccounting.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+namespace AltensorAccounting.Persistence.Data;
+
+public static class DbSeeder
+{
+    public static async Task SeedTenantAccountingDefaultsAsync(AppDbContext context, Guid tenantId, ILogger logger)
+    {
+        // 1. Company Defaults
+        var company = await context.Companies.IgnoreQueryFilters().FirstOrDefaultAsync(c => c.TenantId == tenantId);
+        if (company == null)
+        {
+            company = new Company
+            {
+                TenantId = tenantId,
+                Name = "Standart Müəssisə",
+                TaxNumber = "1234567891",
+                BaseCurrency = "AZN",
+                Country = "Azerbaijan"
+            };
+            await context.Companies.AddAsync(company);
+            await context.SaveChangesAsync();
+        }
+
+        // 2. Default Chart of Accounts for Azerbaijan Accounting Standards
+        var existingAccounts = await context.Accounts.IgnoreQueryFilters().Where(a => a.TenantId == tenantId).ToListAsync();
+        if (!existingAccounts.Any())
+        {
+            logger.LogInformation("Seeding standard Chart of Accounts for Tenant {TenantId}...", tenantId);
+
+            var accounts = new List<Account>
+            {
+                // Assets (1000)
+                new Account { TenantId = tenantId, Code = "1000", Name = "Dövriyyə Aktivləri", Category = AccountCategory.Asset, Type = AccountType.CurrentAsset, IsLeaf = false },
+                new Account { TenantId = tenantId, Code = "1010", Name = "Kassa", Category = AccountCategory.Asset, Type = AccountType.Cash, IsLeaf = true, IsControlAccount = true },
+                new Account { TenantId = tenantId, Code = "1020", Name = "Bank Hesablaşma Hesabı", Category = AccountCategory.Asset, Type = AccountType.Bank, IsLeaf = true, IsControlAccount = true },
+                new Account { TenantId = tenantId, Code = "1100", Name = "Mallar və Materiallar (Stok)", Category = AccountCategory.Asset, Type = AccountType.Stock, IsLeaf = true, IsControlAccount = true },
+                new Account { TenantId = tenantId, Code = "1200", Name = "Alıcıların Debitor Borcları (AR)", Category = AccountCategory.Asset, Type = AccountType.Receivable, IsLeaf = true, IsControlAccount = true },
+                new Account { TenantId = tenantId, Code = "1250", Name = "Əvəzləşdirilən ƏDV (Input VAT)", Category = AccountCategory.Asset, Type = AccountType.Tax, IsLeaf = true, IsControlAccount = true },
+
+                // Liabilities (2000)
+                new Account { TenantId = tenantId, Code = "2000", Name = "Qısamüddətli Öhdəliklər", Category = AccountCategory.Liability, Type = AccountType.CurrentLiability, IsLeaf = false },
+                new Account { TenantId = tenantId, Code = "2100", Name = "Təchizatçılara Kreditor Borclar (AP)", Category = AccountCategory.Liability, Type = AccountType.Payable, IsLeaf = true, IsControlAccount = true },
+                new Account { TenantId = tenantId, Code = "2200", Name = "Fakturalaşdırılmamış Mallar (GRNI)", Category = AccountCategory.Liability, Type = AccountType.GRNI, IsLeaf = true, IsControlAccount = true },
+                new Account { TenantId = tenantId, Code = "2250", Name = "Büdcəyə Hesablanmış ƏDV (Output VAT)", Category = AccountCategory.Liability, Type = AccountType.Tax, IsLeaf = true, IsControlAccount = true },
+                new Account { TenantId = tenantId, Code = "2300", Name = "Alınmış Müştəri Avansları", Category = AccountCategory.Liability, Type = AccountType.Payable, IsLeaf = true, IsControlAccount = true },
+
+                // Equity (3000)
+                new Account { TenantId = tenantId, Code = "3000", Name = "Kapital", Category = AccountCategory.Equity, Type = AccountType.Standard, IsLeaf = false },
+                new Account { TenantId = tenantId, Code = "3010", Name = "Nizamnamə Kapitalı", Category = AccountCategory.Equity, Type = AccountType.Standard, IsLeaf = true },
+                new Account { TenantId = tenantId, Code = "3100", Name = "Bölüşdürülməmiş Mənfəət / Zərər", Category = AccountCategory.Equity, Type = AccountType.RetainedEarnings, IsLeaf = true, IsControlAccount = true },
+
+                // Revenue (6000)
+                new Account { TenantId = tenantId, Code = "6000", Name = "Əsas Əməliyyat Gəlirləri", Category = AccountCategory.Income, Type = AccountType.Revenue, IsLeaf = false },
+                new Account { TenantId = tenantId, Code = "6010", Name = "Malların və Xidmətlərin Satış Gəliri", Category = AccountCategory.Income, Type = AccountType.Revenue, IsLeaf = true },
+
+                // Expense (7000)
+                new Account { TenantId = tenantId, Code = "7000", Name = "Əməliyyat Xərcləri", Category = AccountCategory.Expense, Type = AccountType.Expense, IsLeaf = false },
+                new Account { TenantId = tenantId, Code = "7010", Name = "Satılmış Malların Maya Dəyəri (COGS)", Category = AccountCategory.Expense, Type = AccountType.COGS, IsLeaf = true, IsControlAccount = true },
+                new Account { TenantId = tenantId, Code = "7100", Name = "Ümumi və İnzibati Xərclər", Category = AccountCategory.Expense, Type = AccountType.Expense, IsLeaf = true },
+                new Account { TenantId = tenantId, Code = "7200", Name = "Satış Xərcləri", Category = AccountCategory.Expense, Type = AccountType.Expense, IsLeaf = true },
+                new Account { TenantId = tenantId, Code = "7300", Name = "Bank Xidmət Xərcləri", Category = AccountCategory.Expense, Type = AccountType.Expense, IsLeaf = true },
+                new Account { TenantId = tenantId, Code = "7400", Name = "Məzənnə Fərqi Xərci / Zərəri", Category = AccountCategory.Expense, Type = AccountType.Expense, IsLeaf = true }
+            };
+
+            await context.Accounts.AddRangeAsync(accounts);
+            await context.SaveChangesAsync();
+
+            // Link Company Default Control Accounts
+            company.DefaultReceivableAccountId = accounts.First(a => a.Code == "1200").Id;
+            company.DefaultPayableAccountId = accounts.First(a => a.Code == "2100").Id;
+            company.DefaultStockAccountId = accounts.First(a => a.Code == "1100").Id;
+            company.DefaultGRNIAccountId = accounts.First(a => a.Code == "2200").Id;
+            company.DefaultCOGSAccountId = accounts.First(a => a.Code == "7010").Id;
+            company.DefaultRetainedEarningsAccountId = accounts.First(a => a.Code == "3100").Id;
+            company.DefaultInputVatAccountId = accounts.First(a => a.Code == "1250").Id;
+            company.DefaultOutputVatAccountId = accounts.First(a => a.Code == "2250").Id;
+            company.DefaultFXGainLossAccountId = accounts.First(a => a.Code == "7400").Id;
+
+            await context.SaveChangesAsync();
+            logger.LogInformation("Standard Chart of Accounts successfully seeded for Tenant {TenantId}.", tenantId);
+        }
+    }
+}

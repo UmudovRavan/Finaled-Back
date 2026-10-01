@@ -1,0 +1,16 @@
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\obj\Debug\net8.0\AltensorAccounting.Contract.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\obj\Debug\net8.0\AltensorAccounting.Contract.AssemblyInfoInputs.cache
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\obj\Debug\net8.0\AltensorAccounting.Contract.AssemblyInfo.cs
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\obj\Debug\net8.0\AltensorAccounting.Contract.csproj.CoreCompileInputs.cache
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\obj\Debug\net8.0\AltensorAccounting.Contract.sourcelink.json
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\obj\Debug\net8.0\AltensorAccounting.Contract.csproj.AssemblyReference.cache
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\bin\Debug\net8.0\AltensorAccounting.Contract.deps.json
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\bin\Debug\net8.0\AltensorAccounting.Contract.dll
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\bin\Debug\net8.0\AltensorAccounting.Contract.pdb
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\bin\Debug\net8.0\AltensorAccounting.Domain.dll
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\bin\Debug\net8.0\AltensorAccounting.Domain.pdb
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\obj\Debug\net8.0\Altensor.6189A179.Up2Date
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\obj\Debug\net8.0\AltensorAccounting.Contract.dll
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\obj\Debug\net8.0\refint\AltensorAccounting.Contract.dll
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\obj\Debug\net8.0\AltensorAccounting.Contract.pdb
+C:\Users\Huawei\Desktop\Finaled-Back\AltensorAccounting\AltensorAccounting.Contract\obj\Debug\net8.0\ref\AltensorAccounting.Contract.dll

@@ -1,0 +1,741 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using AltensorAccounting.Application.Interfaces;
+using AltensorAccounting.Application.Services.Posting;
+using AltensorAccounting.Contract.DTOs.Accounting;
+using AltensorAccounting.Contract.Services;
+using AltensorAccounting.Domain.Entities.Accounting;
+using AltensorAccounting.Domain.Enums;
+using AltensorAccounting.Domain.Exceptions;
+
+namespace AltensorAccounting.Application.Services;
+
+public class AccountingService : IAccountingService
+{
+    private readonly IGenericRepository<Account> _accountRepo;
+    private readonly IGenericRepository<FiscalYear> _yearRepo;
+    private readonly IGenericRepository<AccountingPeriod> _periodRepo;
+    private readonly IGenericRepository<ManualJournal> _journalRepo;
+    private readonly IGenericRepository<Customer> _customerRepo;
+    private readonly IGenericRepository<CustomerInvoice> _invoiceRepo;
+    private readonly IGenericRepository<Payment> _paymentRepo;
+    private readonly IGenericRepository<Company> _companyRepo;
+    private readonly IPostingEngine _postingEngine;
+    private readonly ICurrentTenantService _tenantService;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public AccountingService(
+        IGenericRepository<Account> accountRepo,
+        IGenericRepository<FiscalYear> yearRepo,
+        IGenericRepository<AccountingPeriod> periodRepo,
+        IGenericRepository<ManualJournal> journalRepo,
+        IGenericRepository<Customer> customerRepo,
+        IGenericRepository<CustomerInvoice> invoiceRepo,
+        IGenericRepository<Payment> paymentRepo,
+        IGenericRepository<Company> companyRepo,
+        IPostingEngine postingEngine,
+        ICurrentTenantService tenantService,
+        IUnitOfWork unitOfWork)
+    {
+        _accountRepo = accountRepo;
+        _yearRepo = yearRepo;
+        _periodRepo = periodRepo;
+        _journalRepo = journalRepo;
+        _customerRepo = customerRepo;
+        _invoiceRepo = invoiceRepo;
+        _paymentRepo = paymentRepo;
+        _companyRepo = companyRepo;
+        _postingEngine = postingEngine;
+        _tenantService = tenantService;
+        _unitOfWork = unitOfWork;
+    }
+
+    // Chart of Accounts
+    public async Task<List<AccountDto>> GetAccountsAsync(CancellationToken ct = default)
+    {
+        var accounts = await _accountRepo.GetAllAsync(ct);
+        return accounts.Select(a => new AccountDto
+        {
+            Id = a.Id,
+            Code = a.Code,
+            Name = a.Name,
+            Category = a.Category,
+            Type = a.Type,
+            ParentAccountId = a.ParentAccountId,
+            IsLeaf = a.IsLeaf,
+            IsControlAccount = a.IsControlAccount,
+            Currency = a.Currency
+        }).OrderBy(a => a.Code).ToList();
+    }
+
+    public async Task<AccountDto> CreateAccountAsync(CreateAccountDto dto, CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.TenantId ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
+
+        if (await _accountRepo.ExistsAsync(a => a.Code == dto.Code, ct))
+        {
+            throw new BusinessRuleException($"'{dto.Code}' kodlu hesab artıq mövcuddur.");
+        }
+
+        var account = new Account
+        {
+            TenantId = tenantId,
+            Code = dto.Code,
+            Name = dto.Name,
+            Category = dto.Category,
+            Type = dto.Type,
+            ParentAccountId = dto.ParentAccountId,
+            IsControlAccount = dto.IsControlAccount,
+            IsLeaf = true,
+            Currency = dto.Currency
+        };
+
+        if (dto.ParentAccountId.HasValue)
+        {
+            var parent = await _accountRepo.GetByIdAsync(dto.ParentAccountId.Value, ct);
+            if (parent != null && parent.IsLeaf)
+            {
+                parent.IsLeaf = false; // Parent cannot be leaf anymore
+                await _accountRepo.UpdateAsync(parent, ct);
+            }
+        }
+
+        await _accountRepo.AddAsync(account, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return new AccountDto
+        {
+            Id = account.Id,
+            Code = account.Code,
+            Name = account.Name,
+            Category = account.Category,
+            Type = account.Type,
+            ParentAccountId = account.ParentAccountId,
+            IsLeaf = account.IsLeaf,
+            IsControlAccount = account.IsControlAccount,
+            Currency = account.Currency
+        };
+    }
+
+    // Fiscal Periods
+    public async Task<FiscalYearDto> CreateFiscalYearAsync(CreateFiscalYearDto dto, CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.TenantId ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
+
+        var year = new FiscalYear
+        {
+            TenantId = tenantId,
+            Name = dto.Name,
+            StartDate = dto.StartDate,
+            EndDate = dto.EndDate,
+            IsClosed = false
+        };
+
+        // Create 12 monthly periods automatically
+        for (int i = 1; i <= 12; i++)
+        {
+            var periodStart = new DateTime(dto.StartDate.Year, i, 1);
+            var periodEnd = periodStart.AddMonths(1).AddDays(-1);
+
+            year.Periods.Add(new AccountingPeriod
+            {
+                TenantId = tenantId,
+                Name = $"{dto.StartDate.Year}-{i:D2}",
+                PeriodNumber = i,
+                StartDate = periodStart,
+                EndDate = periodEnd,
+                Status = FiscalPeriodStatus.Open
+            });
+        }
+
+        await _yearRepo.AddAsync(year, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return new FiscalYearDto
+        {
+            Id = year.Id,
+            Name = year.Name,
+            StartDate = year.StartDate,
+            EndDate = year.EndDate,
+            IsClosed = year.IsClosed,
+            Periods = year.Periods.Select(p => new AccountingPeriodDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                PeriodNumber = p.PeriodNumber,
+                StartDate = p.StartDate,
+                EndDate = p.EndDate,
+                Status = p.Status
+            }).ToList()
+        };
+    }
+
+    public async Task<List<FiscalYearDto>> GetFiscalYearsAsync(CancellationToken ct = default)
+    {
+        var years = await _yearRepo.GetAllAsync(ct);
+        return years.Select(y => new FiscalYearDto
+        {
+            Id = y.Id,
+            Name = y.Name,
+            StartDate = y.StartDate,
+            EndDate = y.EndDate,
+            IsClosed = y.IsClosed,
+            Periods = y.Periods.Select(p => new AccountingPeriodDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                PeriodNumber = p.PeriodNumber,
+                StartDate = p.StartDate,
+                EndDate = p.EndDate,
+                Status = p.Status
+            }).ToList()
+        }).ToList();
+    }
+
+    public async Task ClosePeriodAsync(Guid periodId, CancellationToken ct = default)
+    {
+        var period = await _periodRepo.GetByIdAsync(periodId, ct)
+            ?? throw new BusinessRuleException("Maliyyə dövrü tapılmadı.");
+
+        period.Status = FiscalPeriodStatus.Closed;
+        await _periodRepo.UpdateAsync(period, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+    }
+
+    // Manual Journals
+    public async Task<ManualJournalDto> CreateManualJournalAsync(CreateManualJournalDto dto, CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.TenantId ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
+
+        var totalDebit = dto.Lines.Sum(l => l.Debit);
+        var totalCredit = dto.Lines.Sum(l => l.Credit);
+
+        if (Math.Abs(totalDebit - totalCredit) > 0.001m)
+        {
+            throw new PostingUnbalancedException(totalDebit, totalCredit);
+        }
+
+        var journal = new ManualJournal
+        {
+            TenantId = tenantId,
+            JournalNumber = $"JV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}",
+            PostingDate = dto.PostingDate,
+            ReferenceNumber = dto.ReferenceNumber,
+            Description = dto.Description,
+            Status = DocumentStatus.Draft,
+            TotalAmount = totalDebit
+        };
+
+        foreach (var l in dto.Lines)
+        {
+            journal.Lines.Add(new ManualJournalLine
+            {
+                TenantId = tenantId,
+                AccountId = l.AccountId,
+                Debit = l.Debit,
+                Credit = l.Credit,
+                Currency = l.Currency,
+                ExchangeRate = l.ExchangeRate,
+                PartyId = l.PartyId,
+                PartyType = l.PartyType,
+                CostCenterId = l.CostCenterId,
+                ProjectId = l.ProjectId,
+                DepartmentId = l.DepartmentId,
+                Description = l.Description
+            });
+        }
+
+        await _journalRepo.AddAsync(journal, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return new ManualJournalDto
+        {
+            Id = journal.Id,
+            JournalNumber = journal.JournalNumber,
+            PostingDate = journal.PostingDate,
+            Description = journal.Description,
+            Status = journal.Status,
+            TotalAmount = journal.TotalAmount,
+            Lines = dto.Lines
+        };
+    }
+
+    public async Task<ManualJournalDto> PostManualJournalAsync(Guid journalId, CancellationToken ct = default)
+    {
+        var journal = await _journalRepo.GetByIdAsync(journalId, ct)
+            ?? throw new BusinessRuleException("Journal tapılmadı.");
+
+        if (journal.Status == DocumentStatus.Posted)
+        {
+            throw new DuplicatePostingException(journal.JournalNumber);
+        }
+
+        // Post to General Ledger via PostingEngine
+        var batch = new PostingBatch
+        {
+            SourceDocumentType = DocumentType.ManualJournal,
+            SourceDocumentId = journal.Id,
+            SourceDocumentNumber = journal.JournalNumber,
+            PostingDate = journal.PostingDate,
+            Description = journal.Description
+        };
+
+        foreach (var l in journal.Lines)
+        {
+            batch.Entries.Add(new LedgerEntry
+            {
+                AccountId = l.AccountId,
+                DebitBase = l.Debit * l.ExchangeRate,
+                CreditBase = l.Credit * l.ExchangeRate,
+                TransactionCurrency = l.Currency,
+                TransactionAmount = l.Debit > 0 ? l.Debit : -l.Credit,
+                ExchangeRate = l.ExchangeRate,
+                PartyId = l.PartyId,
+                PartyType = l.PartyType,
+                CostCenterId = l.CostCenterId,
+                ProjectId = l.ProjectId,
+                DepartmentId = l.DepartmentId,
+                LineDescription = l.Description ?? journal.Description
+            });
+        }
+
+        await _postingEngine.PostBatchAsync(batch, ct);
+
+        journal.Status = DocumentStatus.Posted;
+        await _journalRepo.UpdateAsync(journal, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return new ManualJournalDto
+        {
+            Id = journal.Id,
+            JournalNumber = journal.JournalNumber,
+            PostingDate = journal.PostingDate,
+            Description = journal.Description,
+            Status = journal.Status,
+            TotalAmount = journal.TotalAmount
+        };
+    }
+
+    public async Task<ManualJournalDto> ReverseManualJournalAsync(Guid journalId, string reason, DateTime reversalDate, CancellationToken ct = default)
+    {
+        var journal = await _journalRepo.GetByIdAsync(journalId, ct)
+            ?? throw new BusinessRuleException("Journal tapılmadı.");
+
+        if (journal.Status != DocumentStatus.Posted)
+        {
+            throw new BusinessRuleException("Yalnız Posted statuslu journal reverse oluna bilər.");
+        }
+
+        var tenantId = _tenantService.TenantId ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
+
+        var reversalJournal = new ManualJournal
+        {
+            TenantId = tenantId,
+            JournalNumber = $"REV-JV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}",
+            PostingDate = reversalDate,
+            ReferenceNumber = journal.JournalNumber,
+            Description = $"Reversal of {journal.JournalNumber}: {reason}",
+            Status = DocumentStatus.Posted,
+            TotalAmount = journal.TotalAmount,
+            IsReversal = true,
+            ReversalOfJournalId = journal.Id,
+            ReversalReason = reason
+        };
+
+        foreach (var l in journal.Lines)
+        {
+            reversalJournal.Lines.Add(new ManualJournalLine
+            {
+                TenantId = tenantId,
+                AccountId = l.AccountId,
+                Debit = l.Credit,  // SWAPPED
+                Credit = l.Debit,  // SWAPPED
+                Currency = l.Currency,
+                ExchangeRate = l.ExchangeRate,
+                PartyId = l.PartyId,
+                PartyType = l.PartyType,
+                CostCenterId = l.CostCenterId,
+                ProjectId = l.ProjectId,
+                DepartmentId = l.DepartmentId,
+                Description = $"Reversal: {l.Description}"
+            });
+        }
+
+        await _journalRepo.AddAsync(reversalJournal, ct);
+
+        // Reverse through posting engine
+        var batch = new PostingBatch
+        {
+            SourceDocumentType = DocumentType.ManualJournal,
+            SourceDocumentId = reversalJournal.Id,
+            SourceDocumentNumber = reversalJournal.JournalNumber,
+            PostingDate = reversalDate,
+            Description = reversalJournal.Description
+        };
+
+        foreach (var l in reversalJournal.Lines)
+        {
+            batch.Entries.Add(new LedgerEntry
+            {
+                AccountId = l.AccountId,
+                DebitBase = l.Debit * l.ExchangeRate,
+                CreditBase = l.Credit * l.ExchangeRate,
+                TransactionCurrency = l.Currency,
+                TransactionAmount = l.Debit > 0 ? l.Debit : -l.Credit,
+                ExchangeRate = l.ExchangeRate,
+                PartyId = l.PartyId,
+                PartyType = l.PartyType,
+                LineDescription = l.Description
+            });
+        }
+
+        await _postingEngine.PostBatchAsync(batch, ct);
+
+        journal.Status = DocumentStatus.Cancelled;
+        await _journalRepo.UpdateAsync(journal, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return new ManualJournalDto
+        {
+            Id = reversalJournal.Id,
+            JournalNumber = reversalJournal.JournalNumber,
+            PostingDate = reversalJournal.PostingDate,
+            Description = reversalJournal.Description,
+            Status = reversalJournal.Status,
+            TotalAmount = reversalJournal.TotalAmount,
+            IsReversal = true,
+            ReversalOfJournalId = journal.Id
+        };
+    }
+
+    // Customer Invoices
+    public async Task<CustomerInvoiceDto> CreateCustomerInvoiceAsync(CreateCustomerInvoiceDto dto, CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.TenantId ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
+
+        var customer = await _customerRepo.GetByIdAsync(dto.CustomerId, ct)
+            ?? throw new BusinessRuleException("Müştəri tapılmadı.");
+
+        var subTotal = dto.Lines.Sum(l => (l.Quantity * l.UnitPrice) * (1 - (l.DiscountPercent / 100m)));
+        var taxTotal = subTotal * 0.18m; // Default VAT 18%
+        var grandTotal = subTotal + taxTotal;
+
+        var invoice = new CustomerInvoice
+        {
+            TenantId = tenantId,
+            InvoiceNumber = $"SINV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}",
+            CustomerId = customer.Id,
+            InvoiceDate = dto.InvoiceDate,
+            DueDate = dto.DueDate,
+            PostingDate = dto.PostingDate,
+            DocumentStatus = DocumentStatus.Draft,
+            SettlementStatus = SettlementStatus.Unpaid,
+            Currency = dto.Currency,
+            ExchangeRate = dto.ExchangeRate,
+            SubTotal = subTotal,
+            TaxTotal = taxTotal,
+            GrandTotal = grandTotal,
+            OutstandingAmount = grandTotal,
+            Notes = dto.Notes
+        };
+
+        foreach (var l in dto.Lines)
+        {
+            var lineSubTotal = (l.Quantity * l.UnitPrice) * (1 - (l.DiscountPercent / 100m));
+            var lineTax = lineSubTotal * 0.18m;
+
+            invoice.Lines.Add(new CustomerInvoiceLine
+            {
+                TenantId = tenantId,
+                ItemId = l.ItemId,
+                Description = l.Description,
+                Quantity = l.Quantity,
+                UnitPrice = l.UnitPrice,
+                DiscountPercent = l.DiscountPercent,
+                LineSubTotal = lineSubTotal,
+                TaxAmount = lineTax,
+                LineTotal = lineSubTotal + lineTax,
+                RevenueAccountId = l.RevenueAccountId,
+                CostCenterId = l.CostCenterId,
+                ProjectId = l.ProjectId,
+                DepartmentId = l.DepartmentId
+            });
+        }
+
+        await _invoiceRepo.AddAsync(invoice, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return new CustomerInvoiceDto
+        {
+            Id = invoice.Id,
+            InvoiceNumber = invoice.InvoiceNumber,
+            CustomerId = customer.Id,
+            CustomerName = customer.Name,
+            InvoiceDate = invoice.InvoiceDate,
+            DueDate = invoice.DueDate,
+            PostingDate = invoice.PostingDate,
+            DocumentStatus = invoice.DocumentStatus,
+            SettlementStatus = invoice.SettlementStatus,
+            SubTotal = invoice.SubTotal,
+            TaxTotal = invoice.TaxTotal,
+            GrandTotal = invoice.GrandTotal,
+            PaidAmount = 0,
+            OutstandingAmount = invoice.OutstandingAmount
+        };
+    }
+
+    public async Task<CustomerInvoiceDto> PostCustomerInvoiceAsync(Guid invoiceId, CancellationToken ct = default)
+    {
+        var invoice = await _invoiceRepo.GetByIdAsync(invoiceId, ct)
+            ?? throw new BusinessRuleException("Faktura tapılmadı.");
+
+        if (invoice.DocumentStatus == DocumentStatus.Posted)
+        {
+            throw new DuplicatePostingException(invoice.InvoiceNumber);
+        }
+
+        var customer = await _customerRepo.GetByIdAsync(invoice.CustomerId, ct)
+            ?? throw new BusinessRuleException("Müştəri tapılmadı.");
+
+        var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
+            ?? throw new BusinessRuleException("Şirkət parametrləri qurulmayıb.");
+
+        var arAccountId = customer.ReceivableAccountId ?? company.DefaultReceivableAccountId
+            ?? throw new BusinessRuleException("Debitor borclar (AR) üçün default hesab təyin edilməyib.");
+
+        var vatAccountId = company.DefaultOutputVatAccountId
+            ?? throw new BusinessRuleException("Hesablanmış ƏDV üçün default hesab təyin edilməyib.");
+
+        // Post to GL:
+        // Dr Accounts Receivable (GrandTotal)
+        // Cr Revenue (SubTotal)
+        // Cr Output VAT (TaxTotal)
+        var batch = new PostingBatch
+        {
+            SourceDocumentType = DocumentType.CustomerInvoice,
+            SourceDocumentId = invoice.Id,
+            SourceDocumentNumber = invoice.InvoiceNumber,
+            PostingDate = invoice.PostingDate,
+            Description = $"Customer Invoice {invoice.InvoiceNumber} - {customer.Name}"
+        };
+
+        // Dr AR
+        batch.Entries.Add(new LedgerEntry
+        {
+            AccountId = arAccountId,
+            DebitBase = invoice.GrandTotal * invoice.ExchangeRate,
+            CreditBase = 0,
+            TransactionCurrency = invoice.Currency,
+            TransactionAmount = invoice.GrandTotal,
+            ExchangeRate = invoice.ExchangeRate,
+            PartyId = customer.Id,
+            PartyType = "Customer",
+            LineDescription = $"Receivable from {customer.Name}"
+        });
+
+        // Cr Revenue
+        foreach (var line in invoice.Lines)
+        {
+            batch.Entries.Add(new LedgerEntry
+            {
+                AccountId = line.RevenueAccountId,
+                DebitBase = 0,
+                CreditBase = line.LineSubTotal * invoice.ExchangeRate,
+                TransactionCurrency = invoice.Currency,
+                TransactionAmount = -line.LineSubTotal,
+                ExchangeRate = invoice.ExchangeRate,
+                CostCenterId = line.CostCenterId,
+                ProjectId = line.ProjectId,
+                DepartmentId = line.DepartmentId,
+                LineDescription = line.Description
+            });
+        }
+
+        // Cr Output VAT
+        if (invoice.TaxTotal > 0)
+        {
+            batch.Entries.Add(new LedgerEntry
+            {
+                AccountId = vatAccountId,
+                DebitBase = 0,
+                CreditBase = invoice.TaxTotal * invoice.ExchangeRate,
+                TransactionCurrency = invoice.Currency,
+                TransactionAmount = -invoice.TaxTotal,
+                ExchangeRate = invoice.ExchangeRate,
+                LineDescription = $"Output VAT on Invoice {invoice.InvoiceNumber}"
+            });
+        }
+
+        await _postingEngine.PostBatchAsync(batch, ct);
+
+        invoice.DocumentStatus = DocumentStatus.Posted;
+        await _invoiceRepo.UpdateAsync(invoice, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return new CustomerInvoiceDto
+        {
+            Id = invoice.Id,
+            InvoiceNumber = invoice.InvoiceNumber,
+            CustomerId = customer.Id,
+            CustomerName = customer.Name,
+            InvoiceDate = invoice.InvoiceDate,
+            DueDate = invoice.DueDate,
+            PostingDate = invoice.PostingDate,
+            DocumentStatus = invoice.DocumentStatus,
+            SettlementStatus = invoice.SettlementStatus,
+            SubTotal = invoice.SubTotal,
+            TaxTotal = invoice.TaxTotal,
+            GrandTotal = invoice.GrandTotal,
+            PaidAmount = invoice.PaidAmount,
+            OutstandingAmount = invoice.OutstandingAmount
+        };
+    }
+
+    // Payments
+    public async Task<PaymentDto> CreatePaymentAsync(CreatePaymentDto dto, CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.TenantId ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
+
+        var allocatedTotal = dto.Allocations.Sum(a => a.AllocatedAmount);
+        var unallocated = dto.TotalAmount - allocatedTotal;
+
+        var payment = new Payment
+        {
+            TenantId = tenantId,
+            PaymentNumber = $"PAY-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}",
+            Type = dto.Type,
+            PaymentDate = dto.PaymentDate,
+            PostingDate = dto.PostingDate,
+            PartyId = dto.PartyId,
+            PartyType = dto.PartyType,
+            BankOrCashAccountId = dto.BankOrCashAccountId,
+            Currency = dto.Currency,
+            ExchangeRate = dto.ExchangeRate,
+            TotalAmount = dto.TotalAmount,
+            AllocatedAmount = allocatedTotal,
+            UnallocatedAmount = unallocated > 0 ? unallocated : 0,
+            ReferenceNumber = dto.ReferenceNumber,
+            Notes = dto.Notes,
+            Status = DocumentStatus.Draft
+        };
+
+        foreach (var alloc in dto.Allocations)
+        {
+            payment.Allocations.Add(new PaymentAllocation
+            {
+                TenantId = tenantId,
+                TargetDocumentType = alloc.TargetDocumentType,
+                TargetDocumentId = alloc.TargetDocumentId,
+                AllocatedAmount = alloc.AllocatedAmount
+            });
+        }
+
+        await _paymentRepo.AddAsync(payment, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return new PaymentDto
+        {
+            Id = payment.Id,
+            PaymentNumber = payment.PaymentNumber,
+            Type = payment.Type,
+            PaymentDate = payment.PaymentDate,
+            PostingDate = payment.PostingDate,
+            TotalAmount = payment.TotalAmount,
+            AllocatedAmount = payment.AllocatedAmount,
+            UnallocatedAmount = payment.UnallocatedAmount,
+            Status = payment.Status
+        };
+    }
+
+    public async Task<PaymentDto> PostPaymentAsync(Guid paymentId, CancellationToken ct = default)
+    {
+        var payment = await _paymentRepo.GetByIdAsync(paymentId, ct)
+            ?? throw new BusinessRuleException("Ödəniş tapılmadı.");
+
+        if (payment.Status == DocumentStatus.Posted)
+        {
+            throw new DuplicatePostingException(payment.PaymentNumber);
+        }
+
+        var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
+            ?? throw new BusinessRuleException("Şirkət parametrləri qurulmayıb.");
+
+        var batch = new PostingBatch
+        {
+            SourceDocumentType = payment.Type == PaymentType.CustomerReceipt ? DocumentType.CustomerPayment : DocumentType.SupplierPayment,
+            SourceDocumentId = payment.Id,
+            SourceDocumentNumber = payment.PaymentNumber,
+            PostingDate = payment.PostingDate,
+            Description = $"Payment {payment.PaymentNumber}"
+        };
+
+        if (payment.Type == PaymentType.CustomerReceipt || payment.Type == PaymentType.CustomerAdvance)
+        {
+            var arAccountId = company.DefaultReceivableAccountId
+                ?? throw new BusinessRuleException("Debitor borclar (AR) hesabı təyin edilməyib.");
+
+            // Dr Bank/Cash
+            batch.Entries.Add(new LedgerEntry
+            {
+                AccountId = payment.BankOrCashAccountId,
+                DebitBase = payment.TotalAmount * payment.ExchangeRate,
+                CreditBase = 0,
+                TransactionCurrency = payment.Currency,
+                TransactionAmount = payment.TotalAmount,
+                ExchangeRate = payment.ExchangeRate,
+                PartyId = payment.PartyId,
+                PartyType = "Customer",
+                LineDescription = "Receipt from customer"
+            });
+
+            // Cr AR
+            batch.Entries.Add(new LedgerEntry
+            {
+                AccountId = arAccountId,
+                DebitBase = 0,
+                CreditBase = payment.TotalAmount * payment.ExchangeRate,
+                TransactionCurrency = payment.Currency,
+                TransactionAmount = -payment.TotalAmount,
+                ExchangeRate = payment.ExchangeRate,
+                PartyId = payment.PartyId,
+                PartyType = "Customer",
+                LineDescription = "AR Settlement / Customer Advance"
+            });
+
+            // Update allocated customer invoices
+            foreach (var alloc in payment.Allocations.Where(a => a.TargetDocumentType == DocumentType.CustomerInvoice))
+            {
+                var inv = await _invoiceRepo.GetByIdAsync(alloc.TargetDocumentId, ct);
+                if (inv != null)
+                {
+                    inv.PaidAmount += alloc.AllocatedAmount;
+                    inv.OutstandingAmount = inv.GrandTotal - inv.PaidAmount;
+                    inv.SettlementStatus = inv.OutstandingAmount <= 0 ? SettlementStatus.Paid : SettlementStatus.PartiallyPaid;
+                    await _invoiceRepo.UpdateAsync(inv, ct);
+                }
+            }
+        }
+
+        await _postingEngine.PostBatchAsync(batch, ct);
+
+        payment.Status = DocumentStatus.Posted;
+        await _paymentRepo.UpdateAsync(payment, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return new PaymentDto
+        {
+            Id = payment.Id,
+            PaymentNumber = payment.PaymentNumber,
+            Type = payment.Type,
+            PaymentDate = payment.PaymentDate,
+            PostingDate = payment.PostingDate,
+            TotalAmount = payment.TotalAmount,
+            AllocatedAmount = payment.AllocatedAmount,
+            UnallocatedAmount = payment.UnallocatedAmount,
+            Status = payment.Status
+        };
+    }
+}

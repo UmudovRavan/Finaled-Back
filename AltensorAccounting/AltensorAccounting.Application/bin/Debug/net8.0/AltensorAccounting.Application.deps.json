@@ -1,0 +1,56 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "AltensorAccounting.Application/1.0.0": {
+        "dependencies": {
+          "AltensorAccounting.Contract": "1.0.0",
+          "AltensorAccounting.Domain": "1.0.0"
+        },
+        "runtime": {
+          "AltensorAccounting.Application.dll": {}
+        }
+      },
+      "AltensorAccounting.Contract/1.0.0": {
+        "dependencies": {
+          "AltensorAccounting.Domain": "1.0.0"
+        },
+        "runtime": {
+          "AltensorAccounting.Contract.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "AltensorAccounting.Domain/1.0.0": {
+        "runtime": {
+          "AltensorAccounting.Domain.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "AltensorAccounting.Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "AltensorAccounting.Contract/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "AltensorAccounting.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
