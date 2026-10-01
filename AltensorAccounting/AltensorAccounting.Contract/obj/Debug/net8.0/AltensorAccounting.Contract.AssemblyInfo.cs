@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AltensorAccounting.Contract")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c9e52f0b98564d97e1d2a63997ef9dc5131dfde9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+04ad39fe74acdd5c73ba5ee3fe35e205d56b395b")]
 [assembly: System.Reflection.AssemblyProductAttribute("AltensorAccounting.Contract")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AltensorAccounting.Contract")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

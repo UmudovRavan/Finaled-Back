@@ -31,7 +31,7 @@ public class AccountsController : ControllerBase
     public async Task<IActionResult> CreateAccount([FromBody] CreateAccountDto dto, CancellationToken ct)
     {
         var result = await _accountingService.CreateAccountAsync(dto, ct);
-        return CreatedAtAction(nameof(GetAccounts), new { id = result.Id }, result);
+        return Ok(result);
     }
 }
 

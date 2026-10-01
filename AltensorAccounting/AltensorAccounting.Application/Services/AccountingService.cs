@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using AltensorAccounting.Application.Interfaces;
 using AltensorAccounting.Application.Services.Posting;
 using AltensorAccounting.Contract.DTOs.Accounting;
@@ -412,6 +413,61 @@ public class AccountingService : IAccountingService
             IsReversal = true,
             ReversalOfJournalId = journal.Id
         };
+    }
+
+    // Customers
+    public async Task<CustomerDto> CreateCustomerAsync(CreateCustomerDto dto, CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.TenantId ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
+
+        var existing = (await _customerRepo.FindAsync(c => c.Code == dto.Code, ct)).FirstOrDefault();
+        if (existing != null)
+        {
+            throw new BusinessRuleException($"'{dto.Code}' kodlu müştəri artıq mövcuddur.");
+        }
+
+        var customer = new Customer
+        {
+            TenantId = tenantId,
+            Code = dto.Code,
+            Name = dto.Name,
+            TaxNumber = dto.TaxNumber,
+            Email = dto.Email,
+            Phone = dto.Phone,
+            Address = dto.Address,
+            CreditLimit = dto.CreditLimit,
+            PaymentTermsDays = dto.PaymentTermsDays,
+            IsActive = true
+        };
+
+        await _customerRepo.AddAsync(customer, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        _logger.LogInformation("[AltensorAccounting] Müştəri yaradıldı: Code={Code}, Name={Name}, TenantId={TenantId}", customer.Code, customer.Name, tenantId);
+
+        return new CustomerDto
+        {
+            Id = customer.Id,
+            Code = customer.Code,
+            Name = customer.Name,
+            TaxNumber = customer.TaxNumber,
+            Email = customer.Email,
+            OutstandingBalance = 0m
+        };
+    }
+
+    public async Task<List<CustomerDto>> GetCustomersAsync(CancellationToken ct = default)
+    {
+        var customers = await _customerRepo.GetAllAsync(ct);
+        return customers.Select(c => new CustomerDto
+        {
+            Id = c.Id,
+            Code = c.Code,
+            Name = c.Name,
+            TaxNumber = c.TaxNumber,
+            Email = c.Email,
+            OutstandingBalance = 0m
+        }).ToList();
     }
 
     // Customer Invoices

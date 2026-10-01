@@ -113,7 +113,7 @@ public class AppDbContext : DbContext
     {
         modelBuilder.Entity<T>().HasQueryFilter(e => 
             context._tenantService.IsPlatformSuperAdmin || 
-            (context._tenantService.TenantId != null && e.TenantId == context._tenantService.TenantId.Value));
+            (context._tenantService.TenantId != null && e.TenantId == context._tenantService.TenantId));
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

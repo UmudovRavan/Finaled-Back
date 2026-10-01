@@ -27,6 +27,10 @@ public interface IAccountingService
     Task<ManualJournalDto> PostManualJournalAsync(Guid journalId, CancellationToken ct = default);
     Task<ManualJournalDto> ReverseManualJournalAsync(Guid journalId, string reason, DateTime reversalDate, CancellationToken ct = default);
 
+    // Customers
+    Task<CustomerDto> CreateCustomerAsync(CreateCustomerDto dto, CancellationToken ct = default);
+    Task<List<CustomerDto>> GetCustomersAsync(CancellationToken ct = default);
+
     // Invoices & Payments
     Task<CustomerInvoiceDto> CreateCustomerInvoiceAsync(CreateCustomerInvoiceDto dto, CancellationToken ct = default);
     Task<CustomerInvoiceDto> PostCustomerInvoiceAsync(Guid invoiceId, CancellationToken ct = default);

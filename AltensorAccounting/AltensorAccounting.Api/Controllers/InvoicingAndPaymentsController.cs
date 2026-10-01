@@ -61,3 +61,30 @@ public class PaymentsController : ControllerBase
         return Ok(result);
     }
 }
+
+[ApiController]
+[Route("api/customers")]
+[Authorize]
+public class CustomersController : ControllerBase
+{
+    private readonly IAccountingService _accountingService;
+
+    public CustomersController(IAccountingService accountingService)
+    {
+        _accountingService = accountingService;
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateCustomer([FromBody] CreateCustomerDto dto, CancellationToken ct)
+    {
+        var result = await _accountingService.CreateCustomerAsync(dto, ct);
+        return Ok(result);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetCustomers(CancellationToken ct)
+    {
+        var result = await _accountingService.GetCustomersAsync(ct);
+        return Ok(result);
+    }
+}
