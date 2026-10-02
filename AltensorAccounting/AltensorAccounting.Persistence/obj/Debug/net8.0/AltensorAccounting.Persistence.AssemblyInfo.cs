@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AltensorAccounting.Persistence")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e4ad4c62138dece7ea519693271f714eb3dd8646")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+96fc128abb7966ee97585cdce5e19ba486027266")]
 [assembly: System.Reflection.AssemblyProductAttribute("AltensorAccounting.Persistence")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AltensorAccounting.Persistence")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

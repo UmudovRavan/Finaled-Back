@@ -21,14 +21,16 @@ public class CustomerInvoicesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetInvoices(CancellationToken ct)
+    [ProducesResponseType(typeof(List<CustomerInvoiceDto>), 200)]
+    public async Task<ActionResult<List<CustomerInvoiceDto>>> GetInvoices(CancellationToken ct)
     {
         var result = await _accountingService.GetCustomerInvoicesAsync(ct);
         return Ok(result);
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateInvoice([FromBody] CreateCustomerInvoiceDto dto, CancellationToken ct)
+    [ProducesResponseType(typeof(CustomerInvoiceDto), 200)]
+    public async Task<ActionResult<CustomerInvoiceDto>> CreateInvoice([FromBody] CreateCustomerInvoiceDto dto, CancellationToken ct)
     {
         var result = await _accountingService.CreateCustomerInvoiceAsync(dto, ct);
         return Ok(result);

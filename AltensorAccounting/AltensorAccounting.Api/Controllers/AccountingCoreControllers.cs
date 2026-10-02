@@ -21,14 +21,16 @@ public class AccountsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAccounts(CancellationToken ct)
+    [ProducesResponseType(typeof(List<AccountDto>), 200)]
+    public async Task<ActionResult<List<AccountDto>>> GetAccounts(CancellationToken ct)
     {
         var result = await _accountingService.GetAccountsAsync(ct);
         return Ok(result);
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateAccount([FromBody] CreateAccountDto dto, CancellationToken ct)
+    [ProducesResponseType(typeof(AccountDto), 200)]
+    public async Task<ActionResult<AccountDto>> CreateAccount([FromBody] CreateAccountDto dto, CancellationToken ct)
     {
         var result = await _accountingService.CreateAccountAsync(dto, ct);
         return Ok(result);
