@@ -99,4 +99,97 @@ public static class DbSeeder
             }
         }
     }
+
+    public static async Task EnsureAllCompaniesHaveDefaultAccountsAsync(AppDbContext context, ILogger logger)
+    {
+        try
+        {
+            var companies = await context.Companies.IgnoreQueryFilters().ToListAsync();
+            if (!companies.Any()) return;
+
+            foreach (var company in companies)
+            {
+                var tenantAccounts = await context.Accounts
+                    .IgnoreQueryFilters()
+                    .Where(a => a.TenantId == company.TenantId)
+                    .ToListAsync();
+
+                if (!tenantAccounts.Any()) continue;
+
+                bool modified = false;
+
+                Guid? GetAccId(string code) => tenantAccounts.FirstOrDefault(a => a.Code == code)?.Id;
+
+                if (!company.DefaultRevenueAccountId.HasValue || company.DefaultRevenueAccountId == Guid.Empty)
+                {
+                    var id = GetAccId("6010");
+                    if (id.HasValue) { company.DefaultRevenueAccountId = id; modified = true; }
+                }
+
+                if (!company.DefaultStockAccountId.HasValue || company.DefaultStockAccountId == Guid.Empty)
+                {
+                    var id = GetAccId("1100");
+                    if (id.HasValue) { company.DefaultStockAccountId = id; modified = true; }
+                }
+
+                if (!company.DefaultGRNIAccountId.HasValue || company.DefaultGRNIAccountId == Guid.Empty)
+                {
+                    var id = GetAccId("2200");
+                    if (id.HasValue) { company.DefaultGRNIAccountId = id; modified = true; }
+                }
+
+                if (!company.DefaultReceivableAccountId.HasValue || company.DefaultReceivableAccountId == Guid.Empty)
+                {
+                    var id = GetAccId("1200");
+                    if (id.HasValue) { company.DefaultReceivableAccountId = id; modified = true; }
+                }
+
+                if (!company.DefaultPayableAccountId.HasValue || company.DefaultPayableAccountId == Guid.Empty)
+                {
+                    var id = GetAccId("2100");
+                    if (id.HasValue) { company.DefaultPayableAccountId = id; modified = true; }
+                }
+
+                if (!company.DefaultCOGSAccountId.HasValue || company.DefaultCOGSAccountId == Guid.Empty)
+                {
+                    var id = GetAccId("7010");
+                    if (id.HasValue) { company.DefaultCOGSAccountId = id; modified = true; }
+                }
+
+                if (!company.DefaultInputVatAccountId.HasValue || company.DefaultInputVatAccountId == Guid.Empty)
+                {
+                    var id = GetAccId("1250");
+                    if (id.HasValue) { company.DefaultInputVatAccountId = id; modified = true; }
+                }
+
+                if (!company.DefaultOutputVatAccountId.HasValue || company.DefaultOutputVatAccountId == Guid.Empty)
+                {
+                    var id = GetAccId("2250");
+                    if (id.HasValue) { company.DefaultOutputVatAccountId = id; modified = true; }
+                }
+
+                if (!company.DefaultRetainedEarningsAccountId.HasValue || company.DefaultRetainedEarningsAccountId == Guid.Empty)
+                {
+                    var id = GetAccId("3100");
+                    if (id.HasValue) { company.DefaultRetainedEarningsAccountId = id; modified = true; }
+                }
+
+                if (!company.DefaultFXGainLossAccountId.HasValue || company.DefaultFXGainLossAccountId == Guid.Empty)
+                {
+                    var id = GetAccId("7400");
+                    if (id.HasValue) { company.DefaultFXGainLossAccountId = id; modified = true; }
+                }
+
+                if (modified)
+                {
+                    await context.SaveChangesAsync();
+                    logger.LogInformation("Company defaults successfully patched for Tenant {TenantId}.", company.TenantId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to automatically patch company defaults: {Message}", ex.Message);
+        }
+    }
 }

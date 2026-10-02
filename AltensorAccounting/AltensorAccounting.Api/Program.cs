@@ -7,9 +7,10 @@ using AltensorAccounting.Infrastructure.Services;
 using AltensorAccounting.Persistence.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using AltensorAccounting.Persistence.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -85,6 +86,21 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // 2. Serilog HTTP Request Logging
 app.UseSerilogRequestLogging();
+
+// 3. Auto-patch Company Defaults for all tenants on startup
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var seederLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        await DbSeeder.EnsureAllCompaniesHaveDefaultAccountsAsync(db, seederLogger);
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Error while ensuring company default accounts on startup");
+    }
+}
 
 // Swagger is available across all environments
 app.UseSwagger();
