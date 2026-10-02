@@ -24,9 +24,17 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
 
     public IQueryable<T> Query() => _dbSet.Where(e => !e.IsDeleted);
 
-    public virtual async Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public virtual async Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default, params Expression<Func<T, object>>[] includes)
     {
-        return await Query().FirstOrDefaultAsync(e => e.Id == id, ct);
+        IQueryable<T> query = Query();
+        if (includes != null)
+        {
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+        }
+        return await query.FirstOrDefaultAsync(e => e.Id == id, ct);
     }
 
     public virtual async Task<List<T>> GetAllAsync(CancellationToken ct = default)

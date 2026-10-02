@@ -23,7 +23,20 @@ public class CurrentTenantService : ICurrentTenantService
         get
         {
             var val = User?.FindFirstValue("tenant_id");
-            return Guid.TryParse(val, out var id) ? id : null;
+            if (Guid.TryParse(val, out var id))
+            {
+                return id;
+            }
+
+            if (IsPlatformSuperAdmin && _httpContextAccessor.HttpContext?.Request.Headers.TryGetValue("X-Tenant-Id", out var headerVal) == true)
+            {
+                if (Guid.TryParse(headerVal, out var headerId))
+                {
+                    return headerId;
+                }
+            }
+
+            return null;
         }
     }
 

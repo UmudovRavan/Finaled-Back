@@ -20,6 +20,13 @@ public class CustomerInvoicesController : ControllerBase
         _accountingService = accountingService;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetInvoices(CancellationToken ct)
+    {
+        var result = await _accountingService.GetCustomerInvoicesAsync(ct);
+        return Ok(result);
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateInvoice([FromBody] CreateCustomerInvoiceDto dto, CancellationToken ct)
     {

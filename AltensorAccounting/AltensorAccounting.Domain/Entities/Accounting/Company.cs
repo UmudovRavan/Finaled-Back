@@ -23,5 +23,6 @@ public class Company : BaseEntity, ITenantEntity
     public Guid? DefaultRetainedEarningsAccountId { get; set; }
     public Guid? DefaultInputVatAccountId { get; set; }
     public Guid? DefaultOutputVatAccountId { get; set; }
+    public Guid? DefaultRevenueAccountId { get; set; }
     public Guid? DefaultFXGainLossAccountId { get; set; }
 }

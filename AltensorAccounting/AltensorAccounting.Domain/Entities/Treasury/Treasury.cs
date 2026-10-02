@@ -13,8 +13,8 @@ public class BankAccount : BaseEntity, ITenantEntity
     public string Currency { get; set; } = "AZN";
     public string? SwiftCode { get; set; }
 
-    public Guid GLAccountId { get; set; } // GL Asset account mapping
-    public Account GLAccount { get; set; } = default!;
+    public Guid? GLAccountId { get; set; } // GL Asset account mapping
+    public Account? GLAccount { get; set; }
 
     public decimal CurrentBalance { get; set; } = 0;
     public bool IsActive { get; set; } = true;
@@ -26,8 +26,8 @@ public class CashDesk : BaseEntity, ITenantEntity
     public string Name { get; set; } = default!; // e.g. "Baş Kassa"
     public string Currency { get; set; } = "AZN";
 
-    public Guid GLAccountId { get; set; } // GL Cash account mapping
-    public Account GLAccount { get; set; } = default!;
+    public Guid? GLAccountId { get; set; } // GL Cash account mapping
+    public Account? GLAccount { get; set; }
 
     public decimal CurrentBalance { get; set; } = 0;
     public bool IsActive { get; set; } = true;

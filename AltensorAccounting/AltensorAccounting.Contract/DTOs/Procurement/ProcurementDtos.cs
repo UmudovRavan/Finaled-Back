@@ -74,7 +74,7 @@ public class GoodsReceiptLineInputDto
 {
     public Guid? PurchaseOrderLineId { get; set; }
     public Guid ItemId { get; set; }
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; }
     public decimal ReceivedQuantity { get; set; }
     public decimal UnitCost { get; set; }
 }
@@ -94,7 +94,8 @@ public class GoodsReceiptDto
 public class CreateSupplierInvoiceDto
 {
     public Guid SupplierId { get; set; }
-    public string SupplierInvoiceNumber { get; set; } = default!;
+    public string? SupplierInvoiceNumber { get; set; }
+    public string? SupplierInvoiceReference { get; set; }
     public Guid? PurchaseOrderId { get; set; }
     public Guid? GoodsReceiptId { get; set; }
     public DateTime InvoiceDate { get; set; }
@@ -110,11 +111,11 @@ public class CreateSupplierInvoiceDto
 public class SupplierInvoiceLineInputDto
 {
     public Guid? ItemId { get; set; }
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; }
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public Guid? TaxCodeId { get; set; }
-    public Guid ExpenseOrAssetAccountId { get; set; }
+    public Guid? ExpenseOrAssetAccountId { get; set; }
     public Guid? CostCenterId { get; set; }
     public Guid? ProjectId { get; set; }
 }

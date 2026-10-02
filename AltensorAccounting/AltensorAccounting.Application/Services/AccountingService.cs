@@ -12,6 +12,8 @@ using AltensorAccounting.Domain.Entities.Accounting;
 using AltensorAccounting.Domain.Enums;
 using AltensorAccounting.Domain.Exceptions;
 
+using AltensorAccounting.Domain.Entities.Procurement;
+
 namespace AltensorAccounting.Application.Services;
 
 public class AccountingService : IAccountingService
@@ -22,6 +24,7 @@ public class AccountingService : IAccountingService
     private readonly IGenericRepository<ManualJournal> _journalRepo;
     private readonly IGenericRepository<Customer> _customerRepo;
     private readonly IGenericRepository<CustomerInvoice> _invoiceRepo;
+    private readonly IGenericRepository<SupplierInvoice> _suppInvoiceRepo;
     private readonly IGenericRepository<Payment> _paymentRepo;
     private readonly IGenericRepository<Company> _companyRepo;
     private readonly IPostingEngine _postingEngine;
@@ -36,6 +39,7 @@ public class AccountingService : IAccountingService
         IGenericRepository<ManualJournal> journalRepo,
         IGenericRepository<Customer> customerRepo,
         IGenericRepository<CustomerInvoice> invoiceRepo,
+        IGenericRepository<SupplierInvoice> suppInvoiceRepo,
         IGenericRepository<Payment> paymentRepo,
         IGenericRepository<Company> companyRepo,
         IPostingEngine postingEngine,
@@ -49,6 +53,7 @@ public class AccountingService : IAccountingService
         _journalRepo = journalRepo;
         _customerRepo = customerRepo;
         _invoiceRepo = invoiceRepo;
+        _suppInvoiceRepo = suppInvoiceRepo;
         _paymentRepo = paymentRepo;
         _companyRepo = companyRepo;
         _postingEngine = postingEngine;
@@ -133,16 +138,16 @@ public class AccountingService : IAccountingService
         {
             TenantId = tenantId,
             Name = dto.Name,
-            StartDate = dto.StartDate,
-            EndDate = dto.EndDate,
+            StartDate = DateTime.SpecifyKind(dto.StartDate, DateTimeKind.Utc),
+            EndDate = DateTime.SpecifyKind(dto.EndDate, DateTimeKind.Utc),
             IsClosed = false
         };
 
         // Create 12 monthly periods automatically
         for (int i = 1; i <= 12; i++)
         {
-            var periodStart = new DateTime(dto.StartDate.Year, i, 1);
-            var periodEnd = periodStart.AddMonths(1).AddDays(-1);
+            var periodStart = DateTime.SpecifyKind(new DateTime(dto.StartDate.Year, i, 1), DateTimeKind.Utc);
+            var periodEnd = DateTime.SpecifyKind(periodStart.AddMonths(1).AddDays(-1), DateTimeKind.Utc);
 
             year.Periods.Add(new AccountingPeriod
             {
@@ -269,7 +274,7 @@ public class AccountingService : IAccountingService
 
     public async Task<ManualJournalDto> PostManualJournalAsync(Guid journalId, CancellationToken ct = default)
     {
-        var journal = await _journalRepo.GetByIdAsync(journalId, ct)
+        var journal = await _journalRepo.GetByIdAsync(journalId, ct, j => j.Lines)
             ?? throw new BusinessRuleException("Journal tapılmadı.");
 
         if (journal.Status == DocumentStatus.Posted)
@@ -325,7 +330,7 @@ public class AccountingService : IAccountingService
 
     public async Task<ManualJournalDto> ReverseManualJournalAsync(Guid journalId, string reason, DateTime reversalDate, CancellationToken ct = default)
     {
-        var journal = await _journalRepo.GetByIdAsync(journalId, ct)
+        var journal = await _journalRepo.GetByIdAsync(journalId, ct, j => j.Lines)
             ?? throw new BusinessRuleException("Journal tapılmadı.");
 
         if (journal.Status != DocumentStatus.Posted)
@@ -478,6 +483,19 @@ public class AccountingService : IAccountingService
         var customer = await _customerRepo.GetByIdAsync(dto.CustomerId, ct)
             ?? throw new BusinessRuleException("Müştəri tapılmadı.");
 
+        if (dto.Lines == null || dto.Lines.Count == 0)
+        {
+            throw new BusinessRuleException("Fakturada ən azı bir sətir olmalıdır.");
+        }
+
+        foreach (var l in dto.Lines)
+        {
+            if (l.Quantity <= 0)
+                throw new BusinessRuleException("Məhsul və ya xidmət sayı 0-dan böyük olmalıdır.");
+            if (l.UnitPrice < 0)
+                throw new BusinessRuleException("Vahid qiymət mənfi ola bilməz.");
+        }
+
         var subTotal = dto.Lines.Sum(l => (l.Quantity * l.UnitPrice) * (1 - (l.DiscountPercent / 100m)));
         var taxTotal = subTotal * 0.18m; // Default VAT 18%
         var grandTotal = subTotal + taxTotal;
@@ -501,23 +519,35 @@ public class AccountingService : IAccountingService
             Notes = dto.Notes
         };
 
+        var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault();
+        var defaultRevenueAccount = company?.DefaultRevenueAccountId;
+        if (defaultRevenueAccount == null || defaultRevenueAccount == Guid.Empty)
+        {
+            var incomeAccount = (await _accountRepo.GetAllAsync(ct))
+                .FirstOrDefault(a => a.Category == AccountCategory.Income && a.IsActive);
+            defaultRevenueAccount = incomeAccount?.Id;
+        }
+
         foreach (var l in dto.Lines)
         {
             var lineSubTotal = (l.Quantity * l.UnitPrice) * (1 - (l.DiscountPercent / 100m));
             var lineTax = lineSubTotal * 0.18m;
+            var accountId = (l.RevenueAccountId.HasValue && l.RevenueAccountId.Value != Guid.Empty)
+                ? l.RevenueAccountId.Value
+                : (defaultRevenueAccount.HasValue && defaultRevenueAccount.Value != Guid.Empty ? defaultRevenueAccount : null);
 
             invoice.Lines.Add(new CustomerInvoiceLine
             {
                 TenantId = tenantId,
                 ItemId = l.ItemId,
-                Description = l.Description,
+                Description = string.IsNullOrWhiteSpace(l.Description) ? "Xidmət / Məhsul" : l.Description,
                 Quantity = l.Quantity,
                 UnitPrice = l.UnitPrice,
                 DiscountPercent = l.DiscountPercent,
                 LineSubTotal = lineSubTotal,
                 TaxAmount = lineTax,
                 LineTotal = lineSubTotal + lineTax,
-                RevenueAccountId = l.RevenueAccountId,
+                RevenueAccountId = accountId,
                 CostCenterId = l.CostCenterId,
                 ProjectId = l.ProjectId,
                 DepartmentId = l.DepartmentId
@@ -546,9 +576,33 @@ public class AccountingService : IAccountingService
         };
     }
 
+    public async Task<List<CustomerInvoiceDto>> GetCustomerInvoicesAsync(CancellationToken ct = default)
+    {
+        var invoices = await _invoiceRepo.GetAllAsync(ct);
+        var customers = (await _customerRepo.GetAllAsync(ct)).ToDictionary(c => c.Id, c => c.Name);
+
+        return invoices.Select(inv => new CustomerInvoiceDto
+        {
+            Id = inv.Id,
+            InvoiceNumber = inv.InvoiceNumber,
+            CustomerId = inv.CustomerId,
+            CustomerName = customers.TryGetValue(inv.CustomerId, out var cName) ? cName : string.Empty,
+            InvoiceDate = inv.InvoiceDate,
+            DueDate = inv.DueDate,
+            PostingDate = inv.PostingDate,
+            DocumentStatus = inv.DocumentStatus,
+            SettlementStatus = inv.SettlementStatus,
+            SubTotal = inv.SubTotal,
+            TaxTotal = inv.TaxTotal,
+            GrandTotal = inv.GrandTotal,
+            PaidAmount = inv.PaidAmount,
+            OutstandingAmount = inv.OutstandingAmount
+        }).OrderByDescending(i => i.InvoiceDate).ToList();
+    }
+
     public async Task<CustomerInvoiceDto> PostCustomerInvoiceAsync(Guid invoiceId, CancellationToken ct = default)
     {
-        var invoice = await _invoiceRepo.GetByIdAsync(invoiceId, ct)
+        var invoice = await _invoiceRepo.GetByIdAsync(invoiceId, ct, i => i.Lines)
             ?? throw new BusinessRuleException("Faktura tapılmadı.");
 
         if (invoice.DocumentStatus == DocumentStatus.Posted)
@@ -567,6 +621,9 @@ public class AccountingService : IAccountingService
 
         var vatAccountId = company.DefaultOutputVatAccountId
             ?? throw new BusinessRuleException("Hesablanmış ƏDV üçün default hesab təyin edilməyib.");
+
+        var defaultRevAccountId = company.DefaultRevenueAccountId 
+            ?? (await _accountRepo.FindAsync(a => a.Category == AccountCategory.Income, ct)).FirstOrDefault()?.Id;
 
         // Post to GL:
         // Dr Accounts Receivable (GrandTotal)
@@ -598,9 +655,14 @@ public class AccountingService : IAccountingService
         // Cr Revenue
         foreach (var line in invoice.Lines)
         {
+            var revAccId = (line.RevenueAccountId.HasValue && line.RevenueAccountId.Value != Guid.Empty
+                ? line.RevenueAccountId.Value
+                : defaultRevAccountId)
+                ?? throw new BusinessRuleException("Gəlir (Revenue) hesabı təyin edilməyib.");
+
             batch.Entries.Add(new LedgerEntry
             {
-                AccountId = line.RevenueAccountId,
+                AccountId = revAccId,
                 DebitBase = 0,
                 CreditBase = line.LineSubTotal * invoice.ExchangeRate,
                 TransactionCurrency = invoice.Currency,
@@ -658,6 +720,17 @@ public class AccountingService : IAccountingService
     {
         var tenantId = _tenantService.TenantId ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
 
+        if (dto.TotalAmount <= 0)
+        {
+            throw new BusinessRuleException("Ödəniş məbləği 0-dan böyük olmalıdır.");
+        }
+
+        foreach (var a in dto.Allocations)
+        {
+            if (a.AllocatedAmount <= 0)
+                throw new BusinessRuleException("Bölüşdürülən məbləğ 0-dan böyük olmalıdır.");
+        }
+
         var allocatedTotal = dto.Allocations.Sum(a => a.AllocatedAmount);
         var unallocated = dto.TotalAmount - allocatedTotal;
 
@@ -711,7 +784,7 @@ public class AccountingService : IAccountingService
 
     public async Task<PaymentDto> PostPaymentAsync(Guid paymentId, CancellationToken ct = default)
     {
-        var payment = await _paymentRepo.GetByIdAsync(paymentId, ct)
+        var payment = await _paymentRepo.GetByIdAsync(paymentId, ct, p => p.Allocations)
             ?? throw new BusinessRuleException("Ödəniş tapılmadı.");
 
         if (payment.Status == DocumentStatus.Posted)
@@ -774,6 +847,52 @@ public class AccountingService : IAccountingService
                     inv.OutstandingAmount = inv.GrandTotal - inv.PaidAmount;
                     inv.SettlementStatus = inv.OutstandingAmount <= 0 ? SettlementStatus.Paid : SettlementStatus.PartiallyPaid;
                     await _invoiceRepo.UpdateAsync(inv, ct);
+                }
+            }
+        }
+        else if (payment.Type == PaymentType.SupplierPayment || payment.Type == PaymentType.SupplierAdvance)
+        {
+            var apAccountId = company.DefaultPayableAccountId
+                ?? throw new BusinessRuleException("Kreditor borclar (AP) hesabı təyin edilməyib.");
+
+            // Dr AP
+            batch.Entries.Add(new LedgerEntry
+            {
+                AccountId = apAccountId,
+                DebitBase = payment.TotalAmount * payment.ExchangeRate,
+                CreditBase = 0,
+                TransactionCurrency = payment.Currency,
+                TransactionAmount = payment.TotalAmount,
+                ExchangeRate = payment.ExchangeRate,
+                PartyId = payment.PartyId,
+                PartyType = "Supplier",
+                LineDescription = "AP Settlement / Supplier Advance"
+            });
+
+            // Cr Bank/Cash
+            batch.Entries.Add(new LedgerEntry
+            {
+                AccountId = payment.BankOrCashAccountId,
+                DebitBase = 0,
+                CreditBase = payment.TotalAmount * payment.ExchangeRate,
+                TransactionCurrency = payment.Currency,
+                TransactionAmount = -payment.TotalAmount,
+                ExchangeRate = payment.ExchangeRate,
+                PartyId = payment.PartyId,
+                PartyType = "Supplier",
+                LineDescription = "Payment to supplier"
+            });
+
+            // Update allocated supplier invoices
+            foreach (var alloc in payment.Allocations.Where(a => a.TargetDocumentType == DocumentType.SupplierInvoice))
+            {
+                var suppInv = await _suppInvoiceRepo.GetByIdAsync(alloc.TargetDocumentId, ct);
+                if (suppInv != null)
+                {
+                    suppInv.PaidAmount += alloc.AllocatedAmount;
+                    suppInv.OutstandingAmount = suppInv.GrandTotal - suppInv.PaidAmount;
+                    suppInv.SettlementStatus = suppInv.OutstandingAmount <= 0 ? SettlementStatus.Paid : SettlementStatus.PartiallyPaid;
+                    await _suppInvoiceRepo.UpdateAsync(suppInv, ct);
                 }
             }
         }

@@ -66,7 +66,7 @@ public class TreasuryService : ITreasuryService
             AccountNumber = dto.AccountNumber,
             Currency = dto.Currency,
             SwiftCode = dto.SwiftCode,
-            GLAccountId = dto.GLAccountId,
+            GLAccountId = (dto.GLAccountId.HasValue && dto.GLAccountId.Value != Guid.Empty) ? dto.GLAccountId.Value : null,
             CurrentBalance = 0
         };
 
@@ -105,7 +105,7 @@ public class TreasuryService : ITreasuryService
             TenantId = tenantId,
             Name = dto.Name,
             Currency = dto.Currency,
-            GLAccountId = dto.GLAccountId,
+            GLAccountId = (dto.GLAccountId.HasValue && dto.GLAccountId.Value != Guid.Empty) ? dto.GLAccountId.Value : null,
             CurrentBalance = 0
         };
 
@@ -226,7 +226,7 @@ public class TreasuryService : ITreasuryService
 
     public async Task<PaymentRunDto> PostPaymentRunAsync(Guid runId, CancellationToken ct = default)
     {
-        var run = await _runRepo.GetByIdAsync(runId, ct)
+        var run = await _runRepo.GetByIdAsync(runId, ct, r => r.Items)
             ?? throw new BusinessRuleException("Ödəniş təklifi (Payment Run) tapılmadı.");
 
         if (run.Status == DocumentStatus.Posted)
@@ -236,6 +236,9 @@ public class TreasuryService : ITreasuryService
 
         var bank = await _bankRepo.GetByIdAsync(run.BankAccountId, ct)
             ?? throw new BusinessRuleException("Bank hesabı tapılmadı.");
+
+        var bankGlId = bank.GLAccountId 
+            ?? throw new BusinessRuleException("Bank hesabı üçün GL hesabı təyin edilməyib.");
 
         var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
             ?? throw new BusinessRuleException("Şirkət parametrləri qurulmayıb.");
@@ -259,7 +262,7 @@ public class TreasuryService : ITreasuryService
                 PostingDate = run.RunDate,
                 PartyId = item.SupplierId,
                 PartyType = "Supplier",
-                BankOrCashAccountId = bank.GLAccountId,
+                BankOrCashAccountId = bankGlId,
                 Currency = bank.Currency,
                 TotalAmount = item.ProposedPaymentAmount,
                 AllocatedAmount = item.ProposedPaymentAmount,
@@ -305,7 +308,7 @@ public class TreasuryService : ITreasuryService
             // Cr Bank
             batch.Entries.Add(new LedgerEntry
             {
-                AccountId = bank.GLAccountId,
+                AccountId = bankGlId,
                 DebitBase = 0,
                 CreditBase = item.ProposedPaymentAmount,
                 TransactionAmount = -item.ProposedPaymentAmount,

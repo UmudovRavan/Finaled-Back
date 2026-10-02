@@ -65,8 +65,8 @@ public class CustomerInvoiceLine : BaseEntity, ITenantEntity
     public decimal TaxAmount { get; set; }
     public decimal LineTotal { get; set; }
 
-    public Guid RevenueAccountId { get; set; } // Income GL account
-    public Account RevenueAccount { get; set; } = default!;
+    public Guid? RevenueAccountId { get; set; } // Income GL account
+    public Account? RevenueAccount { get; set; }
 
     // Dimensions
     public Guid? CostCenterId { get; set; }

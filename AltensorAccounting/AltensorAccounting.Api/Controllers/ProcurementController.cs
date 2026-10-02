@@ -34,6 +34,13 @@ public class ProcurementController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("purchase-orders")]
+    public async Task<IActionResult> GetPurchaseOrders(CancellationToken ct)
+    {
+        var result = await _procurementService.GetPurchaseOrdersAsync(ct);
+        return Ok(result);
+    }
+
     [HttpPost("purchase-orders")]
     public async Task<IActionResult> CreatePurchaseOrder([FromBody] CreatePurchaseOrderDto dto, CancellationToken ct)
     {
@@ -48,6 +55,13 @@ public class ProcurementController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("goods-receipts")]
+    public async Task<IActionResult> GetGoodsReceipts(CancellationToken ct)
+    {
+        var result = await _procurementService.GetGoodsReceiptsAsync(ct);
+        return Ok(result);
+    }
+
     [HttpPost("goods-receipts")]
     public async Task<IActionResult> CreateGoodsReceipt([FromBody] CreateGoodsReceiptDto dto, CancellationToken ct)
     {
@@ -59,6 +73,13 @@ public class ProcurementController : ControllerBase
     public async Task<IActionResult> PostGoodsReceipt([FromRoute] Guid receiptId, CancellationToken ct)
     {
         var result = await _procurementService.PostGoodsReceiptAsync(receiptId, ct);
+        return Ok(result);
+    }
+
+    [HttpGet("supplier-invoices")]
+    public async Task<IActionResult> GetSupplierInvoices(CancellationToken ct)
+    {
+        var result = await _procurementService.GetSupplierInvoicesAsync(ct);
         return Ok(result);
     }
 

@@ -129,12 +129,12 @@ public class CreateCustomerInvoiceDto
 public class CustomerInvoiceLineInputDto
 {
     public Guid? ItemId { get; set; }
-    public string Description { get; set; } = default!;
+    public string? Description { get; set; }
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal DiscountPercent { get; set; } = 0;
     public Guid? TaxCodeId { get; set; }
-    public Guid RevenueAccountId { get; set; }
+    public Guid? RevenueAccountId { get; set; }
     public Guid? CostCenterId { get; set; }
     public Guid? ProjectId { get; set; }
     public Guid? DepartmentId { get; set; }

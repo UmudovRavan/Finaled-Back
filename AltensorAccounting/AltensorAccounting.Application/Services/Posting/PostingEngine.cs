@@ -45,7 +45,12 @@ public class PostingEngine : IPostingEngine
         var period = (await _periodRepo.FindAsync(p => p.StartDate <= date && p.EndDate >= date, ct))
             .FirstOrDefault();
 
-        if (period != null && period.Status != FiscalPeriodStatus.Open)
+        if (period == null)
+        {
+            throw new BusinessRuleException($"Posting tarixi ({batch.PostingDate:yyyy-MM-dd}) üçün heç bir maliyyə dövrü təyin edilməyib.");
+        }
+
+        if (period.Status != FiscalPeriodStatus.Open)
         {
             throw new PeriodLockedException(batch.PostingDate, period.Status.ToString());
         }
@@ -105,7 +110,7 @@ public class PostingEngine : IPostingEngine
         var tenantId = _tenantService.TenantId
             ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
 
-        var originalBatch = await _batchRepo.GetByIdAsync(originalBatchId, ct)
+        var originalBatch = await _batchRepo.GetByIdAsync(originalBatchId, ct, b => b.Entries)
             ?? throw new BusinessRuleException("Orijinal posting batch tapılmadı.");
 
         if (originalBatch.IsReversed)
@@ -118,7 +123,12 @@ public class PostingEngine : IPostingEngine
         var period = (await _periodRepo.FindAsync(p => p.StartDate <= date && p.EndDate >= date, ct))
             .FirstOrDefault();
 
-        if (period != null && period.Status != FiscalPeriodStatus.Open)
+        if (period == null)
+        {
+            throw new BusinessRuleException($"Reversal tarixi ({reversalDate:yyyy-MM-dd}) üçün heç bir maliyyə dövrü təyin edilməyib.");
+        }
+
+        if (period.Status != FiscalPeriodStatus.Open)
         {
             throw new PeriodLockedException(reversalDate, period.Status.ToString());
         }

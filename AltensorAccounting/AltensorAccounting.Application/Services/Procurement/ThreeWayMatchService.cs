@@ -40,13 +40,13 @@ public class ThreeWayMatchService : IThreeWayMatchService
         PurchaseOrder? po = null;
         if (invoice.PurchaseOrderId.HasValue)
         {
-            po = await _poRepo.GetByIdAsync(invoice.PurchaseOrderId.Value, ct);
+            po = await _poRepo.GetByIdAsync(invoice.PurchaseOrderId.Value, ct, p => p.Lines);
         }
 
         GoodsReceipt? grn = null;
         if (invoice.GoodsReceiptId.HasValue)
         {
-            grn = await _grnRepo.GetByIdAsync(invoice.GoodsReceiptId.Value, ct);
+            grn = await _grnRepo.GetByIdAsync(invoice.GoodsReceiptId.Value, ct, g => g.Lines);
         }
 
         decimal totalQtyDiff = 0;

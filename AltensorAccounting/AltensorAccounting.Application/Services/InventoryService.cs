@@ -166,6 +166,19 @@ public class InventoryService : IInventoryService
     {
         var tenantId = _tenantService.TenantId ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
 
+        if (dto.Lines == null || dto.Lines.Count == 0)
+        {
+            throw new BusinessRuleException("Stok əməliyyatında ən azı bir sətir olmalıdır.");
+        }
+
+        foreach (var l in dto.Lines)
+        {
+            if (l.Quantity <= 0)
+                throw new BusinessRuleException("Məhsul sayı 0-dan böyük olmalıdır.");
+            if (l.UnitCost < 0)
+                throw new BusinessRuleException("Vahid maya dəyəri mənfi ola bilməz.");
+        }
+
         var totalValue = dto.Lines.Sum(l => l.Quantity * l.UnitCost);
 
         var tx = new StockTransaction
@@ -214,7 +227,7 @@ public class InventoryService : IInventoryService
 
     public async Task<StockTransactionDto> PostStockTransactionAsync(Guid transactionId, CancellationToken ct = default)
     {
-        var tx = await _stockTxRepo.GetByIdAsync(transactionId, ct)
+        var tx = await _stockTxRepo.GetByIdAsync(transactionId, ct, t => t.Lines)
             ?? throw new BusinessRuleException("Stok əməliyyatı tapılmadı.");
 
         if (tx.Status == DocumentStatus.Posted)

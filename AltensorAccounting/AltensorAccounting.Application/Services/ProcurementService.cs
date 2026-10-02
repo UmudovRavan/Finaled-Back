@@ -106,6 +106,19 @@ public class ProcurementService : IProcurementService
         var supplier = await _supplierRepo.GetByIdAsync(dto.SupplierId, ct)
             ?? throw new BusinessRuleException("Təchizatçı tapılmadı.");
 
+        if (dto.Lines == null || dto.Lines.Count == 0)
+        {
+            throw new BusinessRuleException("Sifarişdə ən azı bir sətir olmalıdır.");
+        }
+
+        foreach (var l in dto.Lines)
+        {
+            if (l.OrderedQuantity <= 0)
+                throw new BusinessRuleException("Sifariş sayı 0-dan böyük olmalıdır.");
+            if (l.UnitPrice < 0)
+                throw new BusinessRuleException("Vahid qiymət mənfi ola bilməz.");
+        }
+
         var subTotal = dto.Lines.Sum(l => (l.OrderedQuantity * l.UnitPrice) * (1 - (l.DiscountPercent / 100m)));
         var taxTotal = subTotal * 0.18m;
         var grandTotal = subTotal + taxTotal;
@@ -163,9 +176,26 @@ public class ProcurementService : IProcurementService
         };
     }
 
+    public async Task<List<PurchaseOrderDto>> GetPurchaseOrdersAsync(CancellationToken ct = default)
+    {
+        var orders = await _poRepo.GetAllAsync(ct);
+        var suppliers = (await _supplierRepo.GetAllAsync(ct)).ToDictionary(s => s.Id, s => s.Name);
+
+        return orders.Select(po => new PurchaseOrderDto
+        {
+            Id = po.Id,
+            OrderNumber = po.OrderNumber,
+            SupplierId = po.SupplierId,
+            SupplierName = suppliers.TryGetValue(po.SupplierId, out var sName) ? sName : string.Empty,
+            OrderDate = po.OrderDate,
+            Status = po.Status,
+            GrandTotal = po.GrandTotal
+        }).OrderByDescending(po => po.OrderDate).ToList();
+    }
+
     public async Task<PurchaseOrderDto> ApprovePurchaseOrderAsync(Guid orderId, CancellationToken ct = default)
     {
-        var po = await _poRepo.GetByIdAsync(orderId, ct)
+        var po = await _poRepo.GetByIdAsync(orderId, ct, p => p.Lines)
             ?? throw new BusinessRuleException("Sifariş (PO) tapılmadı.");
 
         po.Status = PurchaseOrderStatus.Approved;
@@ -186,12 +216,43 @@ public class ProcurementService : IProcurementService
         };
     }
 
+    public async Task<List<GoodsReceiptDto>> GetGoodsReceiptsAsync(CancellationToken ct = default)
+    {
+        var receipts = await _grnRepo.GetAllAsync(ct);
+        var suppliers = (await _supplierRepo.GetAllAsync(ct)).ToDictionary(s => s.Id, s => s.Name);
+
+        return receipts.Select(grn => new GoodsReceiptDto
+        {
+            Id = grn.Id,
+            ReceiptNumber = grn.ReceiptNumber,
+            SupplierId = grn.SupplierId,
+            SupplierName = suppliers.TryGetValue(grn.SupplierId, out var sName) ? sName : string.Empty,
+            ReceiptDate = grn.ReceiptDate,
+            PostingDate = grn.PostingDate,
+            Status = grn.Status,
+            TotalValue = grn.TotalValue
+        }).OrderByDescending(grn => grn.ReceiptDate).ToList();
+    }
+
     public async Task<GoodsReceiptDto> CreateGoodsReceiptAsync(CreateGoodsReceiptDto dto, CancellationToken ct = default)
     {
         var tenantId = _tenantService.TenantId ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
 
         var supplier = await _supplierRepo.GetByIdAsync(dto.SupplierId, ct)
             ?? throw new BusinessRuleException("Təchizatçı tapılmadı.");
+
+        if (dto.Lines == null || dto.Lines.Count == 0)
+        {
+            throw new BusinessRuleException("Qəbul sənədində ən azı bir sətir olmalıdır.");
+        }
+
+        foreach (var l in dto.Lines)
+        {
+            if (l.ReceivedQuantity <= 0)
+                throw new BusinessRuleException("Qəbul edilən say 0-dan böyük olmalıdır.");
+            if (l.UnitCost < 0)
+                throw new BusinessRuleException("Vahid maya dəyəri mənfi ola bilməz.");
+        }
 
         var totalValue = dto.Lines.Sum(l => l.ReceivedQuantity * l.UnitCost);
 
@@ -216,7 +277,7 @@ public class ProcurementService : IProcurementService
                 TenantId = tenantId,
                 PurchaseOrderLineId = l.PurchaseOrderLineId,
                 ItemId = l.ItemId,
-                Description = l.Description,
+                Description = string.IsNullOrWhiteSpace(l.Description) ? "Goods Receipt Item" : l.Description,
                 ReceivedQuantity = l.ReceivedQuantity,
                 UnitCost = l.UnitCost,
                 TotalCost = l.ReceivedQuantity * l.UnitCost,
@@ -242,7 +303,7 @@ public class ProcurementService : IProcurementService
 
     public async Task<GoodsReceiptDto> PostGoodsReceiptAsync(Guid receiptId, CancellationToken ct = default)
     {
-        var grn = await _grnRepo.GetByIdAsync(receiptId, ct)
+        var grn = await _grnRepo.GetByIdAsync(receiptId, ct, g => g.Lines)
             ?? throw new BusinessRuleException("Qəbul sənədi tapılmadı.");
 
         if (grn.Status == DocumentStatus.Posted)
@@ -329,6 +390,32 @@ public class ProcurementService : IProcurementService
         };
     }
 
+    public async Task<List<SupplierInvoiceDto>> GetSupplierInvoicesAsync(CancellationToken ct = default)
+    {
+        var invoices = await _invoiceRepo.GetAllAsync(ct);
+        var suppliers = (await _supplierRepo.GetAllAsync(ct)).ToDictionary(s => s.Id, s => s.Name);
+
+        return invoices.Select(inv => new SupplierInvoiceDto
+        {
+            Id = inv.Id,
+            InvoiceNumber = inv.InvoiceNumber,
+            SupplierInvoiceNumber = inv.SupplierInvoiceNumber,
+            SupplierId = inv.SupplierId,
+            SupplierName = suppliers.TryGetValue(inv.SupplierId, out var sName) ? sName : string.Empty,
+            InvoiceDate = inv.InvoiceDate,
+            DueDate = inv.DueDate,
+            PostingDate = inv.PostingDate,
+            DocumentStatus = inv.DocumentStatus,
+            SettlementStatus = inv.SettlementStatus,
+            ThreeWayMatchStatus = inv.ThreeWayMatchStatus,
+            SubTotal = inv.SubTotal,
+            TaxTotal = inv.TaxTotal,
+            GrandTotal = inv.GrandTotal,
+            PaidAmount = inv.PaidAmount,
+            OutstandingAmount = inv.OutstandingAmount
+        }).OrderByDescending(inv => inv.InvoiceDate).ToList();
+    }
+
     public async Task<SupplierInvoiceDto> CreateSupplierInvoiceAsync(CreateSupplierInvoiceDto dto, CancellationToken ct = default)
     {
         var tenantId = _tenantService.TenantId ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
@@ -336,14 +423,33 @@ public class ProcurementService : IProcurementService
         var supplier = await _supplierRepo.GetByIdAsync(dto.SupplierId, ct)
             ?? throw new BusinessRuleException("Təchizatçı tapılmadı.");
 
+        if (dto.Lines == null || dto.Lines.Count == 0)
+        {
+            throw new BusinessRuleException("Alış fakturasında ən azı bir sətir olmalıdır.");
+        }
+
+        foreach (var l in dto.Lines)
+        {
+            if (l.Quantity <= 0)
+                throw new BusinessRuleException("Faktura sayı 0-dan böyük olmalıdır.");
+            if (l.UnitPrice < 0)
+                throw new BusinessRuleException("Vahid qiymət mənfi ola bilməz.");
+        }
+
+        var supplierInvoiceNumber = !string.IsNullOrWhiteSpace(dto.SupplierInvoiceNumber)
+            ? dto.SupplierInvoiceNumber
+            : (!string.IsNullOrWhiteSpace(dto.SupplierInvoiceReference)
+                ? dto.SupplierInvoiceReference
+                : $"PINV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}");
+
         // Duplicate Invoice Check (Supplier + InvoiceNumber)
         var exists = await _invoiceRepo.ExistsAsync(i => 
             i.SupplierId == dto.SupplierId && 
-            i.SupplierInvoiceNumber == dto.SupplierInvoiceNumber, ct);
+            i.SupplierInvoiceNumber == supplierInvoiceNumber, ct);
 
         if (exists)
         {
-            throw new BusinessRuleException($"Bu təchizatçı üzrə '{dto.SupplierInvoiceNumber}' nömrəli faktura artıq mövcuddur.");
+            throw new BusinessRuleException($"Bu təchizatçı üzrə '{supplierInvoiceNumber}' nömrəli faktura artıq mövcuddur.");
         }
 
         var subTotal = dto.Lines.Sum(l => l.Quantity * l.UnitPrice);
@@ -354,7 +460,7 @@ public class ProcurementService : IProcurementService
         {
             TenantId = tenantId,
             InvoiceNumber = $"PINV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}",
-            SupplierInvoiceNumber = dto.SupplierInvoiceNumber,
+            SupplierInvoiceNumber = supplierInvoiceNumber,
             SupplierId = supplier.Id,
             PurchaseOrderId = dto.PurchaseOrderId,
             GoodsReceiptId = dto.GoodsReceiptId,
@@ -374,22 +480,28 @@ public class ProcurementService : IProcurementService
             Notes = dto.Notes
         };
 
+        var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault();
+        var defaultExpenseAccountId = company?.DefaultStockAccountId ?? company?.DefaultGRNIAccountId;
+
         foreach (var l in dto.Lines)
         {
             var lineSub = l.Quantity * l.UnitPrice;
             var lineTax = lineSub * 0.18m;
+            var accountId = (l.ExpenseOrAssetAccountId.HasValue && l.ExpenseOrAssetAccountId.Value != Guid.Empty)
+                ? l.ExpenseOrAssetAccountId.Value
+                : (defaultExpenseAccountId.HasValue && defaultExpenseAccountId.Value != Guid.Empty ? defaultExpenseAccountId : null);
 
             invoice.Lines.Add(new SupplierInvoiceLine
             {
                 TenantId = tenantId,
                 ItemId = l.ItemId,
-                Description = l.Description,
+                Description = string.IsNullOrWhiteSpace(l.Description) ? "Supplier Invoice Item" : l.Description,
                 Quantity = l.Quantity,
                 UnitPrice = l.UnitPrice,
                 LineSubTotal = lineSub,
                 TaxAmount = lineTax,
                 LineTotal = lineSub + lineTax,
-                ExpenseOrAssetAccountId = l.ExpenseOrAssetAccountId,
+                ExpenseOrAssetAccountId = accountId,
                 CostCenterId = l.CostCenterId,
                 ProjectId = l.ProjectId
             });
@@ -427,7 +539,7 @@ public class ProcurementService : IProcurementService
 
     public async Task<ThreeWayMatchResultDto> EvaluateThreeWayMatchAsync(Guid invoiceId, CancellationToken ct = default)
     {
-        var invoice = await _invoiceRepo.GetByIdAsync(invoiceId, ct)
+        var invoice = await _invoiceRepo.GetByIdAsync(invoiceId, ct, i => i.Lines)
             ?? throw new BusinessRuleException("Faktura tapılmadı.");
 
         return await _matchService.EvaluateMatchAsync(invoice, ct);
@@ -435,7 +547,7 @@ public class ProcurementService : IProcurementService
 
     public async Task<SupplierInvoiceDto> PostSupplierInvoiceAsync(Guid invoiceId, CancellationToken ct = default)
     {
-        var invoice = await _invoiceRepo.GetByIdAsync(invoiceId, ct)
+        var invoice = await _invoiceRepo.GetByIdAsync(invoiceId, ct, i => i.Lines)
             ?? throw new BusinessRuleException("Faktura tapılmadı.");
 
         if (invoice.DocumentStatus == DocumentStatus.Posted)
@@ -501,9 +613,13 @@ public class ProcurementService : IProcurementService
         {
             foreach (var line in invoice.Lines)
             {
+                var expenseAccountId = (line.ExpenseOrAssetAccountId.HasValue && line.ExpenseOrAssetAccountId.Value != Guid.Empty)
+                    ? line.ExpenseOrAssetAccountId.Value
+                    : (company.DefaultStockAccountId ?? grniAccountId);
+
                 batch.Entries.Add(new LedgerEntry
                 {
-                    AccountId = line.ExpenseOrAssetAccountId,
+                    AccountId = expenseAccountId,
                     DebitBase = line.LineSubTotal * invoice.ExchangeRate,
                     CreditBase = 0,
                     TransactionCurrency = invoice.Currency,

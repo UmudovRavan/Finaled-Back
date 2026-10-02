@@ -97,8 +97,8 @@ public class SupplierInvoiceLine : BaseEntity, ITenantEntity
     public decimal TaxAmount { get; set; }
     public decimal LineTotal { get; set; }
 
-    public Guid ExpenseOrAssetAccountId { get; set; } // GRNI, Expense or Inventory Asset account
-    public Account ExpenseOrAssetAccount { get; set; } = default!;
+    public Guid? ExpenseOrAssetAccountId { get; set; } // GRNI, Expense or Inventory Asset account
+    public Account? ExpenseOrAssetAccount { get; set; }
 
     // Dimensions
     public Guid? CostCenterId { get; set; }

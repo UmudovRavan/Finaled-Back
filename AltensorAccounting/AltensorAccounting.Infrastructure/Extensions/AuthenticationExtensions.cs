@@ -12,6 +12,11 @@ namespace AltensorAccounting.Infrastructure.Extensions;
 
 public static class AuthenticationExtensions
 {
+    private static readonly HttpClient _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, RsaSecurityKey> _keyCache = new();
+    private static DateTime _lastFetched = DateTime.MinValue;
+    private static readonly object _fetchLock = new();
+
     public static IServiceCollection AddAltensorAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         var issuer = configuration["Jwt:Issuer"] ?? "AltensorAuthService";
@@ -38,42 +43,64 @@ public static class AuthenticationExtensions
                 ClockSkew = TimeSpan.FromSeconds(30),
                 ValidateIssuerSigningKey = true,
 
-                // Dynamic JWKS Public Key Resolver from AltensorAuthService
+                // Cached Dynamic JWKS Public Key Resolver
                 IssuerSigningKeyResolver = (token, securityToken, kid, parameters) =>
                 {
-                    try
+                    // 1. Check in-memory cache first
+                    if (!string.IsNullOrEmpty(kid) && _keyCache.TryGetValue(kid, out var cachedKey))
                     {
-                        using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-                        var response = httpClient.GetStringAsync(jwksUrl).GetAwaiter().GetResult();
-                        using var doc = JsonDocument.Parse(response);
-                        var keys = doc.RootElement.GetProperty("keys");
+                        return new[] { cachedKey };
+                    }
 
-                        foreach (var key in keys.EnumerateArray())
+                    // 2. Fetch if not in cache or cache is older than 10 minutes
+                    if (_keyCache.IsEmpty || DateTime.UtcNow - _lastFetched > TimeSpan.FromMinutes(10))
+                    {
+                        lock (_fetchLock)
                         {
-                            var currentKid = key.GetProperty("kid").GetString();
-                            if (currentKid == kid || string.IsNullOrEmpty(kid))
+                            if (!string.IsNullOrEmpty(kid) && _keyCache.TryGetValue(kid, out var doubleCheckedKey))
                             {
-                                var n = key.GetProperty("n").GetString()!;
-                                var e = key.GetProperty("e").GetString()!;
+                                return new[] { doubleCheckedKey };
+                            }
 
-                                var rsaParams = new RSAParameters
+                            try
+                            {
+                                var response = _httpClient.GetStringAsync(jwksUrl).GetAwaiter().GetResult();
+                                using var doc = JsonDocument.Parse(response);
+                                var keys = doc.RootElement.GetProperty("keys");
+
+                                foreach (var key in keys.EnumerateArray())
                                 {
-                                    Modulus = Base64UrlEncoder.DecodeBytes(n),
-                                    Exponent = Base64UrlEncoder.DecodeBytes(e)
-                                };
+                                    var currentKid = key.GetProperty("kid").GetString() ?? string.Empty;
+                                    var n = key.GetProperty("n").GetString()!;
+                                    var e = key.GetProperty("e").GetString()!;
 
-                                var rsa = RSA.Create();
-                                rsa.ImportParameters(rsaParams);
-                                return new[] { new RsaSecurityKey(rsa) { KeyId = currentKid } };
+                                    var rsaParams = new RSAParameters
+                                    {
+                                        Modulus = Base64UrlEncoder.DecodeBytes(n),
+                                        Exponent = Base64UrlEncoder.DecodeBytes(e)
+                                    };
+
+                                    var rsa = RSA.Create();
+                                    rsa.ImportParameters(rsaParams);
+                                    var rsaKey = new RsaSecurityKey(rsa) { KeyId = currentKid };
+                                    _keyCache[currentKid] = rsaKey;
+                                }
+
+                                _lastFetched = DateTime.UtcNow;
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"[AltensorAccounting] JWKS açarları oxunarkən xəta: {ex.Message}");
                             }
                         }
                     }
-                    catch (Exception ex)
+
+                    if (!string.IsNullOrEmpty(kid) && _keyCache.TryGetValue(kid, out var resolvedKey))
                     {
-                        Console.WriteLine($"[AltensorAccounting] JWKS açarları oxunarkən xəta: {ex.Message}");
+                        return new[] { resolvedKey };
                     }
 
-                    return Enumerable.Empty<SecurityKey>();
+                    return _keyCache.Values.Cast<SecurityKey>();
                 }
             };
         });

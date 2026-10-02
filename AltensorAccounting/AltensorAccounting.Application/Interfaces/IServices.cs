@@ -33,6 +33,7 @@ public interface IAccountingService
 
     // Invoices & Payments
     Task<CustomerInvoiceDto> CreateCustomerInvoiceAsync(CreateCustomerInvoiceDto dto, CancellationToken ct = default);
+    Task<List<CustomerInvoiceDto>> GetCustomerInvoicesAsync(CancellationToken ct = default);
     Task<CustomerInvoiceDto> PostCustomerInvoiceAsync(Guid invoiceId, CancellationToken ct = default);
     Task<PaymentDto> CreatePaymentAsync(CreatePaymentDto dto, CancellationToken ct = default);
     Task<PaymentDto> PostPaymentAsync(Guid paymentId, CancellationToken ct = default);
@@ -44,12 +45,15 @@ public interface IProcurementService
     Task<List<SupplierDto>> GetSuppliersAsync(CancellationToken ct = default);
 
     Task<PurchaseOrderDto> CreatePurchaseOrderAsync(CreatePurchaseOrderDto dto, CancellationToken ct = default);
+    Task<List<PurchaseOrderDto>> GetPurchaseOrdersAsync(CancellationToken ct = default);
     Task<PurchaseOrderDto> ApprovePurchaseOrderAsync(Guid orderId, CancellationToken ct = default);
 
     Task<GoodsReceiptDto> CreateGoodsReceiptAsync(CreateGoodsReceiptDto dto, CancellationToken ct = default);
+    Task<List<GoodsReceiptDto>> GetGoodsReceiptsAsync(CancellationToken ct = default);
     Task<GoodsReceiptDto> PostGoodsReceiptAsync(Guid receiptId, CancellationToken ct = default);
 
     Task<SupplierInvoiceDto> CreateSupplierInvoiceAsync(CreateSupplierInvoiceDto dto, CancellationToken ct = default);
+    Task<List<SupplierInvoiceDto>> GetSupplierInvoicesAsync(CancellationToken ct = default);
     Task<ThreeWayMatchResultDto> EvaluateThreeWayMatchAsync(Guid invoiceId, CancellationToken ct = default);
     Task<SupplierInvoiceDto> PostSupplierInvoiceAsync(Guid invoiceId, CancellationToken ct = default);
 }

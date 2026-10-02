@@ -10,7 +10,7 @@ public class CreateBankAccountDto
     public string AccountNumber { get; set; } = default!;
     public string Currency { get; set; } = "AZN";
     public string? SwiftCode { get; set; }
-    public Guid GLAccountId { get; set; }
+    public Guid? GLAccountId { get; set; }
 }
 
 public class BankAccountDto
@@ -26,7 +26,7 @@ public class CreateCashDeskDto
 {
     public string Name { get; set; } = default!;
     public string Currency { get; set; } = "AZN";
-    public Guid GLAccountId { get; set; }
+    public Guid? GLAccountId { get; set; }
 }
 
 public class CashDeskDto

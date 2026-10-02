@@ -45,12 +45,20 @@ public class InternalWebhooksController : ControllerBase
         CancellationToken cancellationToken)
     {
         var expectedSecret = _configuration["Webhook:SharedSecret"] 
-                          ?? _configuration["InternalCommunication:ApiKey"]
-                          ?? "Altensor_Internal_Secret_Key_2026_Secure!";
+                          ?? _configuration["InternalCommunication:ApiKey"];
+
+        if (string.IsNullOrWhiteSpace(expectedSecret))
+        {
+            _logger.LogError("[AltensorAccounting] Webhook secret konfiqurasiya edilməyib (Webhook:SharedSecret və ya InternalCommunication:ApiKey).");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Webhook secret not configured." });
+        }
 
         var incomingSecret = !string.IsNullOrWhiteSpace(webhookSecret) ? webhookSecret : apiKey;
 
-        if (string.IsNullOrWhiteSpace(expectedSecret) || incomingSecret != expectedSecret)
+        if (string.IsNullOrWhiteSpace(incomingSecret) || 
+            !System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(
+                System.Text.Encoding.UTF8.GetBytes(incomingSecret), 
+                System.Text.Encoding.UTF8.GetBytes(expectedSecret)))
         {
             _logger.LogWarning("[AltensorAccounting] İcazəsiz webhook sorğusu cəhdi. UserId: {UserId}", @event?.UserId);
             return Unauthorized(new { message = "Unauthorized webhook request." });
