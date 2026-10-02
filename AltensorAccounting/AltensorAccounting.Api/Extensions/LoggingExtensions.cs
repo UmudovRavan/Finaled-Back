@@ -1,4 +1,3 @@
-
 using System;
 using System.IO;
 using Microsoft.Extensions.Configuration;
@@ -11,9 +10,10 @@ namespace AltensorAccounting.Api.Extensions
     {
         public static void ConfigureSerilog(IConfiguration? configuration = null)
         {
+            var baseDir = AppContext.BaseDirectory;
+            var logDirectory = Path.Combine(baseDir, "Logs");
             try
             {
-                var logDirectory = Path.Combine(AppContext.BaseDirectory, "Logs");
                 if (!Directory.Exists(logDirectory))
                 {
                     Directory.CreateDirectory(logDirectory);
@@ -21,8 +21,19 @@ namespace AltensorAccounting.Api.Extensions
             }
             catch
             {
-                // Ignore if process lacks directory creation rights
+                // Fallback to temp if BaseDirectory has no write permissions
+                try
+                {
+                    logDirectory = Path.Combine(Path.GetTempPath(), "AltensorAccounting", "Logs");
+                    Directory.CreateDirectory(logDirectory);
+                }
+                catch
+                {
+                    // Ignore
+                }
             }
+
+            var logFilePath = Path.Combine(logDirectory, "log-.txt");
 
             var loggerConfig = new LoggerConfiguration()
                 .MinimumLevel.Information()
@@ -32,35 +43,18 @@ namespace AltensorAccounting.Api.Extensions
                 .MinimumLevel.Override("Npgsql", LogEventLevel.Error)
                 .Enrich.FromLogContext()
                 .Enrich.WithProperty("Application", "AltensorAccounting")
-                .Enrich.WithProperty("MachineName", Environment.MachineName);
+                .Enrich.WithProperty("MachineName", Environment.MachineName)
+                .WriteTo.Console(
+                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+                .WriteTo.File(
+                    path: logFilePath,
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: 30,
+                    shared: true,
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
 
-            try
-            {
-                if (configuration != null && configuration.GetSection("Serilog").Exists())
-                {
-                    loggerConfig.ReadFrom.Configuration(configuration);
-                }
-                else
-                {
-                    loggerConfig
-                        .WriteTo.Console(
-                            outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-                        .WriteTo.File(
-                            path: Path.Combine("Logs", "log-.txt"),
-                            rollingInterval: RollingInterval.Day,
-                            retainedFileCountLimit: 30,
-                            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
-                }
-
-                Log.Logger = loggerConfig.CreateLogger();
-            }
-            catch
-            {
-                Log.Logger = new LoggerConfiguration()
-                    .MinimumLevel.Information()
-                    .WriteTo.Console()
-                    .CreateLogger();
-            }
+            Log.Logger = loggerConfig.CreateLogger();
+            Log.Information("Serilog logging initialized at: {LogFilePath}", logFilePath);
         }
     }
 }
