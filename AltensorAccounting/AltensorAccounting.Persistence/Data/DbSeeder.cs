@@ -79,6 +79,7 @@ public static class DbSeeder
             company.DefaultStockAccountId = accounts.First(a => a.Code == "1100").Id;
             company.DefaultGRNIAccountId = accounts.First(a => a.Code == "2200").Id;
             company.DefaultCOGSAccountId = accounts.First(a => a.Code == "7010").Id;
+            company.DefaultRevenueAccountId = accounts.First(a => a.Code == "6010").Id;
             company.DefaultRetainedEarningsAccountId = accounts.First(a => a.Code == "3100").Id;
             company.DefaultInputVatAccountId = accounts.First(a => a.Code == "1250").Id;
             company.DefaultOutputVatAccountId = accounts.First(a => a.Code == "2250").Id;
@@ -86,6 +87,16 @@ public static class DbSeeder
 
             await context.SaveChangesAsync();
             logger.LogInformation("Standard Chart of Accounts successfully seeded for Tenant {TenantId}.", tenantId);
+        }
+        else if (company.DefaultRevenueAccountId == null || company.DefaultRevenueAccountId == Guid.Empty)
+        {
+            var revAcc = existingAccounts.FirstOrDefault(a => a.Code == "6010");
+            if (revAcc != null)
+            {
+                company.DefaultRevenueAccountId = revAcc.Id;
+                await context.SaveChangesAsync();
+                logger.LogInformation("Company DefaultRevenueAccountId patched for Tenant {TenantId}.", tenantId);
+            }
         }
     }
 }

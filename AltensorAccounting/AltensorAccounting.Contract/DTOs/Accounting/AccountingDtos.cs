@@ -25,6 +25,7 @@ public class AccountDto
     public Guid? ParentAccountId { get; set; }
     public bool IsLeaf { get; set; }
     public bool IsControlAccount { get; set; }
+    public bool IsActive { get; set; } = true;
     public decimal CurrentBalance { get; set; }
     public string Currency { get; set; } = "AZN";
 }

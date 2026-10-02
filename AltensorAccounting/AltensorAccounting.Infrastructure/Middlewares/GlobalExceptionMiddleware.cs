@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AltensorAccounting.Domain.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -109,6 +110,18 @@ public class GlobalExceptionMiddleware
                 "Resurs Tapılmadı",
                 keyEx.Message,
                 "NOT_FOUND"
+            ),
+            DbUpdateConcurrencyException concEx => (
+                (int)HttpStatusCode.Conflict,
+                "Məlumat Ziddiyyəti Xətası",
+                concEx.InnerException?.Message ?? concEx.Message,
+                "CONCURRENCY_CONFLICT"
+            ),
+            DbUpdateException dbEx => (
+                (int)HttpStatusCode.BadRequest,
+                "Məlumat Bazası Xətası",
+                dbEx.InnerException?.Message ?? dbEx.Message,
+                "DB_UPDATE_ERROR"
             ),
             _ => (
                 (int)HttpStatusCode.InternalServerError,

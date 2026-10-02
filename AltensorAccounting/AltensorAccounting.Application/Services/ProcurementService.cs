@@ -23,6 +23,7 @@ public class ProcurementService : IProcurementService
     private readonly IGenericRepository<GoodsReceipt> _grnRepo;
     private readonly IGenericRepository<SupplierInvoice> _invoiceRepo;
     private readonly IGenericRepository<Company> _companyRepo;
+    private readonly IGenericRepository<Account> _accountRepo;
     private readonly IThreeWayMatchService _matchService;
     private readonly IStockValuationEngine _stockEngine;
     private readonly IPostingEngine _postingEngine;
@@ -36,6 +37,7 @@ public class ProcurementService : IProcurementService
         IGenericRepository<GoodsReceipt> grnRepo,
         IGenericRepository<SupplierInvoice> invoiceRepo,
         IGenericRepository<Company> companyRepo,
+        IGenericRepository<Account> accountRepo,
         IThreeWayMatchService matchService,
         IStockValuationEngine stockEngine,
         IPostingEngine postingEngine,
@@ -48,6 +50,7 @@ public class ProcurementService : IProcurementService
         _grnRepo = grnRepo;
         _invoiceRepo = invoiceRepo;
         _companyRepo = companyRepo;
+        _accountRepo = accountRepo;
         _matchService = matchService;
         _stockEngine = stockEngine;
         _postingEngine = postingEngine;
@@ -481,7 +484,16 @@ public class ProcurementService : IProcurementService
         };
 
         var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault();
-        var defaultExpenseAccountId = company?.DefaultStockAccountId ?? company?.DefaultGRNIAccountId;
+        var defaultExpenseAccountId = (company?.DefaultStockAccountId.HasValue == true && company.DefaultStockAccountId.Value != Guid.Empty)
+            ? company.DefaultStockAccountId
+            : ((company?.DefaultGRNIAccountId.HasValue == true && company.DefaultGRNIAccountId.Value != Guid.Empty) ? company.DefaultGRNIAccountId : null);
+
+        if (!defaultExpenseAccountId.HasValue)
+        {
+            var fallbackAccount = (await _accountRepo.GetAllAsync(ct))
+                .FirstOrDefault(a => (a.Category == AccountCategory.Expense || a.Category == AccountCategory.Asset) && a.IsLeaf && a.IsActive);
+            defaultExpenseAccountId = fallbackAccount?.Id;
+        }
 
         foreach (var l in dto.Lines)
         {
@@ -491,29 +503,34 @@ public class ProcurementService : IProcurementService
                 ? l.ExpenseOrAssetAccountId.Value
                 : (defaultExpenseAccountId.HasValue && defaultExpenseAccountId.Value != Guid.Empty ? defaultExpenseAccountId : null);
 
+            if (!accountId.HasValue || accountId == Guid.Empty)
+            {
+                throw new BusinessRuleException("Alış qaiməsi üçün xərc/stok hesabı (Expense/Asset Account) təyin edilməyib və standart hesab tapılmadı.");
+            }
+
             invoice.Lines.Add(new SupplierInvoiceLine
             {
                 TenantId = tenantId,
-                ItemId = l.ItemId,
+                ItemId = (l.ItemId.HasValue && l.ItemId.Value != Guid.Empty) ? l.ItemId : null,
                 Description = string.IsNullOrWhiteSpace(l.Description) ? "Supplier Invoice Item" : l.Description,
                 Quantity = l.Quantity,
                 UnitPrice = l.UnitPrice,
                 LineSubTotal = lineSub,
+                TaxCodeId = (l.TaxCodeId.HasValue && l.TaxCodeId.Value != Guid.Empty) ? l.TaxCodeId : null,
                 TaxAmount = lineTax,
                 LineTotal = lineSub + lineTax,
                 ExpenseOrAssetAccountId = accountId,
-                CostCenterId = l.CostCenterId,
-                ProjectId = l.ProjectId
+                CostCenterId = (l.CostCenterId.HasValue && l.CostCenterId.Value != Guid.Empty) ? l.CostCenterId : null,
+                ProjectId = (l.ProjectId.HasValue && l.ProjectId.Value != Guid.Empty) ? l.ProjectId : null,
+                DepartmentId = (l.DepartmentId.HasValue && l.DepartmentId.Value != Guid.Empty) ? l.DepartmentId : null
             });
         }
 
-        await _invoiceRepo.AddAsync(invoice, ct);
-        await _unitOfWork.SaveChangesAsync(ct);
-
-        // Run 3-Way Match Check
+        // Run 3-Way Match Check before saving to avoid duplicate SaveChanges & UpdateAsync tracking issues
         var matchResult = await _matchService.EvaluateMatchAsync(invoice, ct);
         invoice.ThreeWayMatchStatus = matchResult.Status;
-        await _invoiceRepo.UpdateAsync(invoice, ct);
+
+        await _invoiceRepo.AddAsync(invoice, ct);
         await _unitOfWork.SaveChangesAsync(ct);
 
         return new SupplierInvoiceDto

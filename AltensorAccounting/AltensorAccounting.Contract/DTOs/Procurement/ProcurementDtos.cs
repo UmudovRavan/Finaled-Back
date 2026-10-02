@@ -118,6 +118,7 @@ public class SupplierInvoiceLineInputDto
     public Guid? ExpenseOrAssetAccountId { get; set; }
     public Guid? CostCenterId { get; set; }
     public Guid? ProjectId { get; set; }
+    public Guid? DepartmentId { get; set; }
 }
 
 public class SupplierInvoiceDto

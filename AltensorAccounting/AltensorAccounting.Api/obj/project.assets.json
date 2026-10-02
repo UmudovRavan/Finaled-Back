@@ -1406,6 +1406,7 @@
         "dependencies": {
           "AltensorAccounting.Application": "1.0.0",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.11",
+          "Microsoft.EntityFrameworkCore": "8.0.11",
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": "7.5.1"
         },
         "compile": {

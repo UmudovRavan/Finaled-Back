@@ -76,6 +76,7 @@ public class AccountingService : IAccountingService
             ParentAccountId = a.ParentAccountId,
             IsLeaf = a.IsLeaf,
             IsControlAccount = a.IsControlAccount,
+            IsActive = a.IsActive,
             Currency = a.Currency
         }).OrderBy(a => a.Code).ToList();
     }
@@ -520,11 +521,14 @@ public class AccountingService : IAccountingService
         };
 
         var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault();
-        var defaultRevenueAccount = company?.DefaultRevenueAccountId;
-        if (defaultRevenueAccount == null || defaultRevenueAccount == Guid.Empty)
+        var defaultRevenueAccount = (company?.DefaultRevenueAccountId.HasValue == true && company.DefaultRevenueAccountId.Value != Guid.Empty)
+            ? company.DefaultRevenueAccountId
+            : null;
+
+        if (!defaultRevenueAccount.HasValue)
         {
             var incomeAccount = (await _accountRepo.GetAllAsync(ct))
-                .FirstOrDefault(a => a.Category == AccountCategory.Income && a.IsActive);
+                .FirstOrDefault(a => a.Category == AccountCategory.Income && a.IsLeaf && a.IsActive);
             defaultRevenueAccount = incomeAccount?.Id;
         }
 
@@ -536,21 +540,27 @@ public class AccountingService : IAccountingService
                 ? l.RevenueAccountId.Value
                 : (defaultRevenueAccount.HasValue && defaultRevenueAccount.Value != Guid.Empty ? defaultRevenueAccount : null);
 
+            if (!accountId.HasValue || accountId == Guid.Empty)
+            {
+                throw new BusinessRuleException("Faktura üçün gəlir hesabı (Revenue Account) təyin edilməyib və standart gəlir hesabı tapılmadı.");
+            }
+
             invoice.Lines.Add(new CustomerInvoiceLine
             {
                 TenantId = tenantId,
-                ItemId = l.ItemId,
+                ItemId = (l.ItemId.HasValue && l.ItemId.Value != Guid.Empty) ? l.ItemId : null,
                 Description = string.IsNullOrWhiteSpace(l.Description) ? "Xidmət / Məhsul" : l.Description,
                 Quantity = l.Quantity,
                 UnitPrice = l.UnitPrice,
                 DiscountPercent = l.DiscountPercent,
                 LineSubTotal = lineSubTotal,
+                TaxCodeId = (l.TaxCodeId.HasValue && l.TaxCodeId.Value != Guid.Empty) ? l.TaxCodeId : null,
                 TaxAmount = lineTax,
                 LineTotal = lineSubTotal + lineTax,
                 RevenueAccountId = accountId,
-                CostCenterId = l.CostCenterId,
-                ProjectId = l.ProjectId,
-                DepartmentId = l.DepartmentId
+                CostCenterId = (l.CostCenterId.HasValue && l.CostCenterId.Value != Guid.Empty) ? l.CostCenterId : null,
+                ProjectId = (l.ProjectId.HasValue && l.ProjectId.Value != Guid.Empty) ? l.ProjectId : null,
+                DepartmentId = (l.DepartmentId.HasValue && l.DepartmentId.Value != Guid.Empty) ? l.DepartmentId : null
             });
         }
 
