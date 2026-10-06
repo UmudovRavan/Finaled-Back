@@ -383,6 +383,17 @@ public class ProcurementService : IProcurementService
 
         grn.Status = DocumentStatus.Posted;
         await _grnRepo.UpdateAsync(grn, ct);
+
+        if (grn.PurchaseOrderId.HasValue)
+        {
+            var po = await _poRepo.GetByIdAsync(grn.PurchaseOrderId.Value, ct);
+            if (po != null && po.Status != PurchaseOrderStatus.FullyReceived)
+            {
+                po.Status = PurchaseOrderStatus.FullyReceived;
+                await _poRepo.UpdateAsync(po, ct);
+            }
+        }
+
         await _unitOfWork.SaveChangesAsync(ct);
 
         var supplier = await _supplierRepo.GetByIdAsync(grn.SupplierId, ct);
@@ -579,6 +590,11 @@ public class ProcurementService : IProcurementService
             throw new DuplicatePostingException(invoice.InvoiceNumber);
         }
 
+        if (invoice.Lines == null || !invoice.Lines.Any())
+        {
+            throw new BusinessRuleException("Fakturada ən azı bir sətir olmalıdır.");
+        }
+
         if (invoice.ThreeWayMatchStatus == ThreeWayMatchStatus.OnHoldToleranceExceeded)
         {
             throw new BusinessRuleException("3-Way Match toleransı aşıldığı üçün bu fakturanı birbaşa post etmək olmaz. Təsdiq tələb olunur.");
@@ -645,7 +661,9 @@ public class ProcurementService : IProcurementService
             {
                 var expenseAccountId = (line.ExpenseOrAssetAccountId.HasValue && line.ExpenseOrAssetAccountId.Value != Guid.Empty)
                     ? line.ExpenseOrAssetAccountId.Value
-                    : (company?.DefaultStockAccountId ?? grniAccountId);
+                    : (allAccounts.FirstOrDefault(a => (a.Code == "7100" || a.Category == AccountCategory.Expense) && a.IsLeaf)?.Id
+                       ?? company?.DefaultStockAccountId
+                       ?? grniAccountId);
 
                 batch.Entries.Add(new LedgerEntry
                 {

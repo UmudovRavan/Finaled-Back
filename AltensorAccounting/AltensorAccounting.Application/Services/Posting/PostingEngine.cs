@@ -180,25 +180,84 @@ public class PostingEngine : IPostingEngine
         }
 
         // Period check for reversal date
-        var date = reversalDate.Date;
+        var utcReversalDate = DateTime.SpecifyKind(reversalDate, DateTimeKind.Utc);
+        var date = utcReversalDate.Date;
         var period = (await _periodRepo.FindAsync(p => p.StartDate <= date && p.EndDate >= date, ct))
             .FirstOrDefault();
 
         if (period == null)
         {
-            throw new BusinessRuleException($"Reversal tarixi ({reversalDate:yyyy-MM-dd}) üçün heç bir maliyyə dövrü təyin edilməyib.");
+            var yearNum = date.Year;
+            var fiscalYear = (await _yearRepo.FindAsync(y => y.StartDate <= date && y.EndDate >= date, ct)).FirstOrDefault()
+                ?? (await _yearRepo.FindAsync(y => y.Name == $"FY-{yearNum}", ct)).FirstOrDefault();
+
+            if (fiscalYear == null)
+            {
+                fiscalYear = new FiscalYear
+                {
+                    TenantId = tenantId,
+                    Name = $"FY-{yearNum}",
+                    StartDate = DateTime.SpecifyKind(new DateTime(yearNum, 1, 1), DateTimeKind.Utc),
+                    EndDate = DateTime.SpecifyKind(new DateTime(yearNum, 12, 31), DateTimeKind.Utc),
+                    IsClosed = false
+                };
+
+                for (int i = 1; i <= 12; i++)
+                {
+                    var periodStart = DateTime.SpecifyKind(new DateTime(yearNum, i, 1), DateTimeKind.Utc);
+                    var periodEnd = DateTime.SpecifyKind(periodStart.AddMonths(1).AddDays(-1), DateTimeKind.Utc);
+                    fiscalYear.Periods.Add(new AccountingPeriod
+                    {
+                        TenantId = tenantId,
+                        Name = $"{yearNum}-{i:D2}",
+                        PeriodNumber = i,
+                        StartDate = periodStart,
+                        EndDate = periodEnd,
+                        Status = FiscalPeriodStatus.Open
+                    });
+                }
+
+                await _yearRepo.AddAsync(fiscalYear, ct);
+                await _unitOfWork.SaveChangesAsync(ct);
+                _logger.LogInformation("Reversal üçün Avtomatik Maliyyə İli və Dövrü yaradıldı: FY-{Year} (Tenant: {TenantId})", yearNum, tenantId);
+
+                period = fiscalYear.Periods.FirstOrDefault(p => p.StartDate <= date && p.EndDate >= date);
+            }
+            else
+            {
+                var periodStart = DateTime.SpecifyKind(new DateTime(yearNum, date.Month, 1), DateTimeKind.Utc);
+                var periodEnd = DateTime.SpecifyKind(periodStart.AddMonths(1).AddDays(-1), DateTimeKind.Utc);
+                period = new AccountingPeriod
+                {
+                    TenantId = tenantId,
+                    FiscalYearId = fiscalYear.Id,
+                    Name = $"{yearNum}-{date.Month:D2}",
+                    PeriodNumber = date.Month,
+                    StartDate = periodStart,
+                    EndDate = periodEnd,
+                    Status = FiscalPeriodStatus.Open
+                };
+                await _periodRepo.AddAsync(period, ct);
+                await _unitOfWork.SaveChangesAsync(ct);
+                _logger.LogInformation("Reversal üçün Avtomatik Maliyyə Dövrü yaradıldı: {PeriodName} (Tenant: {TenantId})", period.Name, tenantId);
+            }
+        }
+
+        if (period == null)
+        {
+            throw new BusinessRuleException($"Reversal tarixi ({utcReversalDate:yyyy-MM-dd}) üçün heç bir maliyyə dövrü təyin edilməyib.");
         }
 
         if (period.Status != FiscalPeriodStatus.Open)
         {
-            throw new PeriodLockedException(reversalDate, period.Status.ToString());
+            throw new PeriodLockedException(utcReversalDate, period.Status.ToString());
         }
 
         var reversalBatch = new PostingBatch
         {
             TenantId = tenantId,
             BatchNumber = $"REV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}",
-            PostingDate = reversalDate,
+            PostingDate = utcReversalDate,
             SourceDocumentType = originalBatch.SourceDocumentType,
             SourceDocumentId = originalBatch.SourceDocumentId,
             SourceDocumentNumber = originalBatch.SourceDocumentNumber,

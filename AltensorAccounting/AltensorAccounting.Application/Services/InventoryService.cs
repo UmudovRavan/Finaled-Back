@@ -22,6 +22,7 @@ public class InventoryService : IInventoryService
     private readonly IGenericRepository<StockTransaction> _stockTxRepo;
     private readonly IGenericRepository<StockLedgerEntry> _stockLedgerRepo;
     private readonly IGenericRepository<Company> _companyRepo;
+    private readonly IGenericRepository<Account> _accountRepo;
     private readonly IStockValuationEngine _stockEngine;
     private readonly IPostingEngine _postingEngine;
     private readonly ICurrentTenantService _tenantService;
@@ -34,6 +35,7 @@ public class InventoryService : IInventoryService
         IGenericRepository<StockTransaction> stockTxRepo,
         IGenericRepository<StockLedgerEntry> stockLedgerRepo,
         IGenericRepository<Company> companyRepo,
+        IGenericRepository<Account> accountRepo,
         IStockValuationEngine stockEngine,
         IPostingEngine postingEngine,
         ICurrentTenantService tenantService,
@@ -45,6 +47,7 @@ public class InventoryService : IInventoryService
         _stockTxRepo = stockTxRepo;
         _stockLedgerRepo = stockLedgerRepo;
         _companyRepo = companyRepo;
+        _accountRepo = accountRepo;
         _stockEngine = stockEngine;
         _postingEngine = postingEngine;
         _tenantService = tenantService;
@@ -238,10 +241,14 @@ public class InventoryService : IInventoryService
         var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
             ?? throw new BusinessRuleException("Şirkət parametrləri qurulmayıb.");
 
+        var allAccounts = await _accountRepo.GetAllAsync(ct);
+
         var stockAccountId = company.DefaultStockAccountId
-            ?? throw new BusinessRuleException("Anbar hesabı təyin edilməyib.");
+            ?? allAccounts.FirstOrDefault(a => a.Code == "1100" || a.Type == AccountType.Stock || (a.Category == AccountCategory.Asset && a.IsLeaf))?.Id
+            ?? throw new BusinessRuleException("Anbar (Inventory) hesabı təyin edilməyib.");
 
         var cogsAccountId = company.DefaultCOGSAccountId
+            ?? allAccounts.FirstOrDefault(a => a.Code == "7010" || a.Type == AccountType.COGS || (a.Category == AccountCategory.Expense && a.IsLeaf))?.Id
             ?? throw new BusinessRuleException("Maya dəyəri (COGS) hesabı təyin edilməyib.");
 
         decimal totalMovementCost = 0;
@@ -337,6 +344,43 @@ public class InventoryService : IInventoryService
                 CreditBase = totalMovementCost,
                 TransactionAmount = -totalMovementCost,
                 LineDescription = $"Inventory Reduction for {tx.TransactionNumber}"
+            });
+
+            await _postingEngine.PostBatchAsync(batch, ct);
+        }
+        else if (tx.Type == StockTransactionType.Receipt && totalMovementCost > 0)
+        {
+            var grniOrGainAccountId = company.DefaultGRNIAccountId
+                ?? allAccounts.FirstOrDefault(a => a.Code == "2200" || a.Type == AccountType.GRNI)?.Id
+                ?? cogsAccountId;
+
+            var batch = new PostingBatch
+            {
+                SourceDocumentType = DocumentType.StockAdjustment,
+                SourceDocumentId = tx.Id,
+                SourceDocumentNumber = tx.TransactionNumber,
+                PostingDate = tx.PostingDate,
+                Description = $"Stock Receipt {tx.TransactionNumber}"
+            };
+
+            // Dr Inventory
+            batch.Entries.Add(new LedgerEntry
+            {
+                AccountId = stockAccountId,
+                DebitBase = totalMovementCost,
+                CreditBase = 0,
+                TransactionAmount = totalMovementCost,
+                LineDescription = $"Inventory Inflow for {tx.TransactionNumber}"
+            });
+
+            // Cr GRNI / Adjustment
+            batch.Entries.Add(new LedgerEntry
+            {
+                AccountId = grniOrGainAccountId,
+                DebitBase = 0,
+                CreditBase = totalMovementCost,
+                TransactionAmount = -totalMovementCost,
+                LineDescription = $"Inventory Adjustment Inflow for {tx.TransactionNumber}"
             });
 
             await _postingEngine.PostBatchAsync(batch, ct);

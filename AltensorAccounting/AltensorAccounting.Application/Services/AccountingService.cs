@@ -341,11 +341,13 @@ public class AccountingService : IAccountingService
 
         var tenantId = _tenantService.TenantId ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
 
+        var utcReversalDate = DateTime.SpecifyKind(reversalDate, DateTimeKind.Utc);
+
         var reversalJournal = new ManualJournal
         {
             TenantId = tenantId,
             JournalNumber = $"REV-JV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}",
-            PostingDate = reversalDate,
+            PostingDate = utcReversalDate,
             ReferenceNumber = journal.JournalNumber,
             Description = $"Reversal of {journal.JournalNumber}: {reason}",
             Status = DocumentStatus.Posted,
@@ -382,7 +384,7 @@ public class AccountingService : IAccountingService
             SourceDocumentType = DocumentType.ManualJournal,
             SourceDocumentId = reversalJournal.Id,
             SourceDocumentNumber = reversalJournal.JournalNumber,
-            PostingDate = reversalDate,
+            PostingDate = utcReversalDate,
             Description = reversalJournal.Description
         };
 
@@ -678,6 +680,11 @@ public class AccountingService : IAccountingService
             throw new DuplicatePostingException(invoice.InvoiceNumber);
         }
 
+        if (invoice.Lines == null || !invoice.Lines.Any())
+        {
+            throw new BusinessRuleException("Fakturada ən azı bir sətir olmalıdır.");
+        }
+
         var customer = await _customerRepo.GetByIdAsync(invoice.CustomerId, ct)
             ?? throw new BusinessRuleException("Müştəri tapılmadı.");
 
@@ -884,7 +891,9 @@ public class AccountingService : IAccountingService
 
         var batch = new PostingBatch
         {
-            SourceDocumentType = payment.Type == PaymentType.CustomerReceipt ? DocumentType.CustomerPayment : DocumentType.SupplierPayment,
+            SourceDocumentType = (payment.Type == PaymentType.CustomerReceipt || payment.Type == PaymentType.CustomerAdvance)
+                ? DocumentType.CustomerPayment
+                : DocumentType.SupplierPayment,
             SourceDocumentId = payment.Id,
             SourceDocumentNumber = payment.PaymentNumber,
             PostingDate = payment.PostingDate,
@@ -932,7 +941,7 @@ public class AccountingService : IAccountingService
                 if (inv != null)
                 {
                     inv.PaidAmount += alloc.AllocatedAmount;
-                    inv.OutstandingAmount = inv.GrandTotal - inv.PaidAmount;
+                    inv.OutstandingAmount = Math.Max(0, inv.GrandTotal - inv.PaidAmount);
                     inv.SettlementStatus = inv.OutstandingAmount <= 0 ? SettlementStatus.Paid : SettlementStatus.PartiallyPaid;
                     await _invoiceRepo.UpdateAsync(inv, ct);
                 }
@@ -979,7 +988,7 @@ public class AccountingService : IAccountingService
                 if (suppInv != null)
                 {
                     suppInv.PaidAmount += alloc.AllocatedAmount;
-                    suppInv.OutstandingAmount = suppInv.GrandTotal - suppInv.PaidAmount;
+                    suppInv.OutstandingAmount = Math.Max(0, suppInv.GrandTotal - suppInv.PaidAmount);
                     suppInv.SettlementStatus = suppInv.OutstandingAmount <= 0 ? SettlementStatus.Paid : SettlementStatus.PartiallyPaid;
                     await _suppInvoiceRepo.UpdateAsync(suppInv, ct);
                 }

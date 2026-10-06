@@ -22,6 +22,7 @@ public class TreasuryService : ITreasuryService
     private readonly IGenericRepository<BankStatement> _statementRepo;
     private readonly IGenericRepository<PaymentRun> _runRepo;
     private readonly IGenericRepository<SupplierInvoice> _invoiceRepo;
+    private readonly IGenericRepository<Supplier> _supplierRepo;
     private readonly IGenericRepository<Payment> _paymentRepo;
     private readonly IGenericRepository<Company> _companyRepo;
     private readonly IGenericRepository<Account> _accountRepo;
@@ -36,6 +37,7 @@ public class TreasuryService : ITreasuryService
         IGenericRepository<BankStatement> statementRepo,
         IGenericRepository<PaymentRun> runRepo,
         IGenericRepository<SupplierInvoice> invoiceRepo,
+        IGenericRepository<Supplier> supplierRepo,
         IGenericRepository<Payment> paymentRepo,
         IGenericRepository<Company> companyRepo,
         IGenericRepository<Account> accountRepo,
@@ -49,6 +51,7 @@ public class TreasuryService : ITreasuryService
         _statementRepo = statementRepo;
         _runRepo = runRepo;
         _invoiceRepo = invoiceRepo;
+        _supplierRepo = supplierRepo;
         _paymentRepo = paymentRepo;
         _companyRepo = companyRepo;
         _accountRepo = accountRepo;
@@ -250,11 +253,17 @@ public class TreasuryService : ITreasuryService
             ?? (await _accountRepo.FindAsync(a => (a.Code == "2100" || a.Type == AccountType.Payable) && a.IsActive, ct)).FirstOrDefault()?.Id
             ?? throw new BusinessRuleException("Kreditor borclar (AP) hesabı təyin edilməyib.");
 
+        var utcRunDate = DateTime.SpecifyKind(run.RunDate, DateTimeKind.Utc);
+
         // Process each selected invoice item in the run
         foreach (var item in run.Items.Where(i => i.IsSelected))
         {
             var invoice = await _invoiceRepo.GetByIdAsync(item.SupplierInvoiceId, ct);
             if (invoice == null) continue;
+
+            var supplier = await _supplierRepo.GetByIdAsync(item.SupplierId, ct);
+            var effectiveApAccountId = supplier?.PayableAccountId ?? apAccountId;
+            var exchangeRate = invoice.ExchangeRate > 0 ? invoice.ExchangeRate : 1.0m;
 
             // Create individual payment voucher
             var payment = new Payment
@@ -262,12 +271,13 @@ public class TreasuryService : ITreasuryService
                 TenantId = run.TenantId,
                 PaymentNumber = $"PAY-RUN-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}",
                 Type = PaymentType.SupplierPayment,
-                PaymentDate = run.RunDate,
-                PostingDate = run.RunDate,
+                PaymentDate = utcRunDate,
+                PostingDate = utcRunDate,
                 PartyId = item.SupplierId,
                 PartyType = "Supplier",
                 BankOrCashAccountId = bankGlId,
                 Currency = bank.Currency,
+                ExchangeRate = exchangeRate,
                 TotalAmount = item.ProposedPaymentAmount,
                 AllocatedAmount = item.ProposedPaymentAmount,
                 UnallocatedAmount = 0,
@@ -293,17 +303,19 @@ public class TreasuryService : ITreasuryService
                 SourceDocumentType = DocumentType.SupplierPayment,
                 SourceDocumentId = payment.Id,
                 SourceDocumentNumber = payment.PaymentNumber,
-                PostingDate = run.RunDate,
+                PostingDate = utcRunDate,
                 Description = $"Payment Run {run.RunNumber} to Supplier for {invoice.SupplierInvoiceNumber}"
             };
 
             // Dr AP
             batch.Entries.Add(new LedgerEntry
             {
-                AccountId = apAccountId,
-                DebitBase = item.ProposedPaymentAmount,
+                AccountId = effectiveApAccountId,
+                DebitBase = item.ProposedPaymentAmount * exchangeRate,
                 CreditBase = 0,
+                TransactionCurrency = bank.Currency,
                 TransactionAmount = item.ProposedPaymentAmount,
+                ExchangeRate = exchangeRate,
                 PartyId = item.SupplierId,
                 PartyType = "Supplier",
                 LineDescription = $"Payable clear for {invoice.SupplierInvoiceNumber}"
@@ -314,8 +326,10 @@ public class TreasuryService : ITreasuryService
             {
                 AccountId = bankGlId,
                 DebitBase = 0,
-                CreditBase = item.ProposedPaymentAmount,
+                CreditBase = item.ProposedPaymentAmount * exchangeRate,
+                TransactionCurrency = bank.Currency,
                 TransactionAmount = -item.ProposedPaymentAmount,
+                ExchangeRate = exchangeRate,
                 LineDescription = $"Bank Payment for {invoice.SupplierInvoiceNumber}"
             });
 
@@ -323,7 +337,7 @@ public class TreasuryService : ITreasuryService
 
             // Update Supplier Invoice status
             invoice.PaidAmount += item.ProposedPaymentAmount;
-            invoice.OutstandingAmount = invoice.GrandTotal - invoice.PaidAmount;
+            invoice.OutstandingAmount = Math.Max(0, invoice.GrandTotal - invoice.PaidAmount);
             invoice.SettlementStatus = invoice.OutstandingAmount <= 0 ? SettlementStatus.Paid : SettlementStatus.PartiallyPaid;
             await _invoiceRepo.UpdateAsync(invoice, ct);
         }
