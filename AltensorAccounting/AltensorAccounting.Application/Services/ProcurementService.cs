@@ -583,13 +583,17 @@ public class ProcurementService : IProcurementService
         var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
             ?? throw new BusinessRuleException("Şirkət parametrləri qurulmayıb.");
 
-        var apAccountId = supplier.PayableAccountId ?? company.DefaultPayableAccountId
+        var apAccountId = supplier.PayableAccountId 
+            ?? company.DefaultPayableAccountId
+            ?? (await _accountRepo.FindAsync(a => a.Code == "2100", ct)).FirstOrDefault()?.Id
             ?? throw new BusinessRuleException("Kreditor borclar (AP) hesabı təyin edilməyib.");
 
         var vatAccountId = company.DefaultInputVatAccountId
+            ?? (await _accountRepo.FindAsync(a => a.Code == "1250", ct)).FirstOrDefault()?.Id
             ?? throw new BusinessRuleException("Əvəzləşdirilən ƏDV hesabı təyin edilməyib.");
 
         var grniAccountId = company.DefaultGRNIAccountId
+            ?? (await _accountRepo.FindAsync(a => a.Code == "2200", ct)).FirstOrDefault()?.Id
             ?? throw new BusinessRuleException("GRNI hesabı təyin edilməyib.");
 
         // Post to GL:

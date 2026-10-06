@@ -88,15 +88,25 @@ public static class DbSeeder
             await context.SaveChangesAsync();
             logger.LogInformation("Standard Chart of Accounts successfully seeded for Tenant {TenantId}.", tenantId);
         }
-        else if (company.DefaultRevenueAccountId == null || company.DefaultRevenueAccountId == Guid.Empty)
+        else
         {
-            var revAcc = existingAccounts.FirstOrDefault(a => a.Code == "6010");
-            if (revAcc != null)
-            {
-                company.DefaultRevenueAccountId = revAcc.Id;
-                await context.SaveChangesAsync();
-                logger.LogInformation("Company DefaultRevenueAccountId patched for Tenant {TenantId}.", tenantId);
-            }
+            // Əgər şirkət varsa, amma bəzi default hesabları boşdursa onları avtomatik bağla:
+            if (company.DefaultReceivableAccountId == null)
+                company.DefaultReceivableAccountId = existingAccounts.FirstOrDefault(a => a.Code == "1200")?.Id;
+
+            if (company.DefaultOutputVatAccountId == null)
+                company.DefaultOutputVatAccountId = existingAccounts.FirstOrDefault(a => a.Code == "2250")?.Id;
+
+            if (company.DefaultRevenueAccountId == null)
+                company.DefaultRevenueAccountId = existingAccounts.FirstOrDefault(a => a.Code == "6010")?.Id;
+
+            if (company.DefaultPayableAccountId == null)
+                company.DefaultPayableAccountId = existingAccounts.FirstOrDefault(a => a.Code == "2100")?.Id;
+
+            if (company.DefaultInputVatAccountId == null)
+                company.DefaultInputVatAccountId = existingAccounts.FirstOrDefault(a => a.Code == "1250")?.Id;
+
+            await context.SaveChangesAsync();
         }
     }
 

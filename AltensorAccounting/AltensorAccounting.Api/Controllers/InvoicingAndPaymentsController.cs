@@ -28,6 +28,16 @@ public class CustomerInvoicesController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("{invoiceId:guid}")]
+    [ProducesResponseType(typeof(CustomerInvoiceDto), 200)]
+    [ProducesResponseType(404)]
+    public async Task<IActionResult> GetInvoiceById([FromRoute] Guid invoiceId, CancellationToken ct)
+    {
+        var result = await _accountingService.GetCustomerInvoiceByIdAsync(invoiceId, ct);
+        if (result == null) return NotFound(new { message = "Qaimə tapılmadı." });
+        return Ok(result);
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(CustomerInvoiceDto), 200)]
     public async Task<ActionResult<CustomerInvoiceDto>> CreateInvoice([FromBody] CreateCustomerInvoiceDto dto, CancellationToken ct)

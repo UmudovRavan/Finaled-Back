@@ -582,7 +582,21 @@ public class AccountingService : IAccountingService
             TaxTotal = invoice.TaxTotal,
             GrandTotal = invoice.GrandTotal,
             PaidAmount = 0,
-            OutstandingAmount = invoice.OutstandingAmount
+            OutstandingAmount = invoice.OutstandingAmount,
+            Notes = invoice.Notes,
+            Lines = invoice.Lines.Select(l => new CustomerInvoiceLineDto
+            {
+                Id = l.Id,
+                ItemId = l.ItemId,
+                Description = l.Description,
+                Quantity = l.Quantity,
+                UnitPrice = l.UnitPrice,
+                DiscountPercent = l.DiscountPercent,
+                LineSubTotal = l.LineSubTotal,
+                TaxAmount = l.TaxAmount,
+                LineTotal = l.LineTotal,
+                RevenueAccountId = l.RevenueAccountId
+            }).ToList()
         };
     }
 
@@ -606,8 +620,49 @@ public class AccountingService : IAccountingService
             TaxTotal = inv.TaxTotal,
             GrandTotal = inv.GrandTotal,
             PaidAmount = inv.PaidAmount,
-            OutstandingAmount = inv.OutstandingAmount
+            OutstandingAmount = inv.OutstandingAmount,
+            Notes = inv.Notes
         }).OrderByDescending(i => i.InvoiceDate).ToList();
+    }
+
+    public async Task<CustomerInvoiceDto?> GetCustomerInvoiceByIdAsync(Guid invoiceId, CancellationToken ct = default)
+    {
+        var invoice = await _invoiceRepo.GetByIdAsync(invoiceId, ct, i => i.Lines);
+        if (invoice == null) return null;
+
+        var customer = await _customerRepo.GetByIdAsync(invoice.CustomerId, ct);
+
+        return new CustomerInvoiceDto
+        {
+            Id = invoice.Id,
+            InvoiceNumber = invoice.InvoiceNumber,
+            CustomerId = invoice.CustomerId,
+            CustomerName = customer?.Name ?? string.Empty,
+            InvoiceDate = invoice.InvoiceDate,
+            DueDate = invoice.DueDate,
+            PostingDate = invoice.PostingDate,
+            DocumentStatus = invoice.DocumentStatus,
+            SettlementStatus = invoice.SettlementStatus,
+            SubTotal = invoice.SubTotal,
+            TaxTotal = invoice.TaxTotal,
+            GrandTotal = invoice.GrandTotal,
+            PaidAmount = invoice.PaidAmount,
+            OutstandingAmount = invoice.OutstandingAmount,
+            Notes = invoice.Notes,
+            Lines = invoice.Lines.Select(l => new CustomerInvoiceLineDto
+            {
+                Id = l.Id,
+                ItemId = l.ItemId,
+                Description = l.Description,
+                Quantity = l.Quantity,
+                UnitPrice = l.UnitPrice,
+                DiscountPercent = l.DiscountPercent,
+                LineSubTotal = l.LineSubTotal,
+                TaxAmount = l.TaxAmount,
+                LineTotal = l.LineTotal,
+                RevenueAccountId = l.RevenueAccountId
+            }).ToList()
+        };
     }
 
     public async Task<CustomerInvoiceDto> PostCustomerInvoiceAsync(Guid invoiceId, CancellationToken ct = default)
@@ -626,10 +681,13 @@ public class AccountingService : IAccountingService
         var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
             ?? throw new BusinessRuleException("Şirkət parametrləri qurulmayıb.");
 
-        var arAccountId = customer.ReceivableAccountId ?? company.DefaultReceivableAccountId
+        var arAccountId = customer.ReceivableAccountId 
+            ?? company.DefaultReceivableAccountId
+            ?? (await _accountRepo.FindAsync(a => a.Code == "1200", ct)).FirstOrDefault()?.Id
             ?? throw new BusinessRuleException("Debitor borclar (AR) üçün default hesab təyin edilməyib.");
 
         var vatAccountId = company.DefaultOutputVatAccountId
+            ?? (await _accountRepo.FindAsync(a => a.Code == "2250", ct)).FirstOrDefault()?.Id
             ?? throw new BusinessRuleException("Hesablanmış ƏDV üçün default hesab təyin edilməyib.");
 
         var defaultRevAccountId = company.DefaultRevenueAccountId 
@@ -721,7 +779,21 @@ public class AccountingService : IAccountingService
             TaxTotal = invoice.TaxTotal,
             GrandTotal = invoice.GrandTotal,
             PaidAmount = invoice.PaidAmount,
-            OutstandingAmount = invoice.OutstandingAmount
+            OutstandingAmount = invoice.OutstandingAmount,
+            Notes = invoice.Notes,
+            Lines = invoice.Lines.Select(l => new CustomerInvoiceLineDto
+            {
+                Id = l.Id,
+                ItemId = l.ItemId,
+                Description = l.Description,
+                Quantity = l.Quantity,
+                UnitPrice = l.UnitPrice,
+                DiscountPercent = l.DiscountPercent,
+                LineSubTotal = l.LineSubTotal,
+                TaxAmount = l.TaxAmount,
+                LineTotal = l.LineTotal,
+                RevenueAccountId = l.RevenueAccountId
+            }).ToList()
         };
     }
 
@@ -817,6 +889,7 @@ public class AccountingService : IAccountingService
         if (payment.Type == PaymentType.CustomerReceipt || payment.Type == PaymentType.CustomerAdvance)
         {
             var arAccountId = company.DefaultReceivableAccountId
+                ?? (await _accountRepo.FindAsync(a => a.Code == "1200", ct)).FirstOrDefault()?.Id
                 ?? throw new BusinessRuleException("Debitor borclar (AR) hesabı təyin edilməyib.");
 
             // Dr Bank/Cash
@@ -863,6 +936,7 @@ public class AccountingService : IAccountingService
         else if (payment.Type == PaymentType.SupplierPayment || payment.Type == PaymentType.SupplierAdvance)
         {
             var apAccountId = company.DefaultPayableAccountId
+                ?? (await _accountRepo.FindAsync(a => a.Code == "2100", ct)).FirstOrDefault()?.Id
                 ?? throw new BusinessRuleException("Kreditor borclar (AP) hesabı təyin edilməyib.");
 
             // Dr AP

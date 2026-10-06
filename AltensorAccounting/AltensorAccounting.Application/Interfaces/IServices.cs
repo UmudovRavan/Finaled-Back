@@ -34,6 +34,7 @@ public interface IAccountingService
     // Invoices & Payments
     Task<CustomerInvoiceDto> CreateCustomerInvoiceAsync(CreateCustomerInvoiceDto dto, CancellationToken ct = default);
     Task<List<CustomerInvoiceDto>> GetCustomerInvoicesAsync(CancellationToken ct = default);
+    Task<CustomerInvoiceDto?> GetCustomerInvoiceByIdAsync(Guid invoiceId, CancellationToken ct = default);
     Task<CustomerInvoiceDto> PostCustomerInvoiceAsync(Guid invoiceId, CancellationToken ct = default);
     Task<PaymentDto> CreatePaymentAsync(CreatePaymentDto dto, CancellationToken ct = default);
     Task<PaymentDto> PostPaymentAsync(Guid paymentId, CancellationToken ct = default);

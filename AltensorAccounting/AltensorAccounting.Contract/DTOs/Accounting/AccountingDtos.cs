@@ -157,6 +157,24 @@ public class CustomerInvoiceDto
     public decimal GrandTotal { get; set; }
     public decimal PaidAmount { get; set; }
     public decimal OutstandingAmount { get; set; }
+    public string? Notes { get; set; }
+
+    // Qaimənin daxilindəki məhsul/xidmət sətirləri:
+    public List<CustomerInvoiceLineDto> Lines { get; set; } = new();
+}
+
+public class CustomerInvoiceLineDto
+{
+    public Guid Id { get; set; }
+    public Guid? ItemId { get; set; }
+    public string Description { get; set; } = default!;
+    public decimal Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal DiscountPercent { get; set; }
+    public decimal LineSubTotal { get; set; }
+    public decimal TaxAmount { get; set; }
+    public decimal LineTotal { get; set; }
+    public Guid? RevenueAccountId { get; set; }
 }
 
 public class CreatePaymentDto
