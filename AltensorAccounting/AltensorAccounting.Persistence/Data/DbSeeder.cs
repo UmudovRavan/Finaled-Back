@@ -90,25 +90,30 @@ public static class DbSeeder
         }
         else
         {
-            // Əgər şirkət varsa, amma bəzi default hesabları boşdursa onları avtomatik bağla:
             bool updated = false;
+            var accDict = existingAccounts.GroupBy(a => a.Code).ToDictionary(g => g.Key, g => g.First().Id);
+
             Guid? FindAccId(string code, AccountType? type = null, AccountCategory? category = null) =>
-                existingAccounts.FirstOrDefault(a => a.Code == code)?.Id
-                ?? (type.HasValue ? existingAccounts.FirstOrDefault(a => a.Type == type.Value)?.Id : null)
-                ?? (category.HasValue ? existingAccounts.FirstOrDefault(a => a.Category == category.Value && a.IsLeaf)?.Id : null);
+                accDict.TryGetValue(code, out var id) ? id
+                : (type.HasValue ? existingAccounts.FirstOrDefault(a => a.Type == type.Value)?.Id
+                : (category.HasValue ? existingAccounts.FirstOrDefault(a => a.Category == category.Value && a.IsLeaf)?.Id : null));
 
-            if (company.DefaultReceivableAccountId == null) { company.DefaultReceivableAccountId = FindAccId("1200", AccountType.Receivable); updated = true; }
-            if (company.DefaultPayableAccountId == null) { company.DefaultPayableAccountId = FindAccId("2100", AccountType.Payable); updated = true; }
-            if (company.DefaultStockAccountId == null) { company.DefaultStockAccountId = FindAccId("1100", AccountType.Stock); updated = true; }
-            if (company.DefaultGRNIAccountId == null) { company.DefaultGRNIAccountId = FindAccId("2200", AccountType.GRNI); updated = true; }
-            if (company.DefaultCOGSAccountId == null) { company.DefaultCOGSAccountId = FindAccId("7010", AccountType.COGS); updated = true; }
-            if (company.DefaultRevenueAccountId == null) { company.DefaultRevenueAccountId = FindAccId("6010", AccountType.Revenue, AccountCategory.Income); updated = true; }
-            if (company.DefaultOutputVatAccountId == null) { company.DefaultOutputVatAccountId = FindAccId("2250", AccountType.Tax); updated = true; }
-            if (company.DefaultInputVatAccountId == null) { company.DefaultInputVatAccountId = FindAccId("1250", AccountType.Tax); updated = true; }
-            if (company.DefaultRetainedEarningsAccountId == null) { company.DefaultRetainedEarningsAccountId = FindAccId("3100", AccountType.RetainedEarnings); updated = true; }
-            if (company.DefaultFXGainLossAccountId == null) { company.DefaultFXGainLossAccountId = FindAccId("7400", AccountType.Expense); updated = true; }
+            if (!company.DefaultReceivableAccountId.HasValue) { company.DefaultReceivableAccountId = FindAccId("1200", AccountType.Receivable); updated = true; }
+            if (!company.DefaultPayableAccountId.HasValue) { company.DefaultPayableAccountId = FindAccId("2100", AccountType.Payable); updated = true; }
+            if (!company.DefaultStockAccountId.HasValue) { company.DefaultStockAccountId = FindAccId("1100", AccountType.Stock); updated = true; }
+            if (!company.DefaultGRNIAccountId.HasValue) { company.DefaultGRNIAccountId = FindAccId("2200", AccountType.GRNI); updated = true; }
+            if (!company.DefaultCOGSAccountId.HasValue) { company.DefaultCOGSAccountId = FindAccId("7010", AccountType.COGS); updated = true; }
+            if (!company.DefaultRevenueAccountId.HasValue) { company.DefaultRevenueAccountId = FindAccId("6010", AccountType.Revenue, AccountCategory.Income); updated = true; }
+            if (!company.DefaultInputVatAccountId.HasValue) { company.DefaultInputVatAccountId = FindAccId("1250", AccountType.Tax); updated = true; }
+            if (!company.DefaultOutputVatAccountId.HasValue) { company.DefaultOutputVatAccountId = FindAccId("2250", AccountType.Tax); updated = true; }
+            if (!company.DefaultRetainedEarningsAccountId.HasValue) { company.DefaultRetainedEarningsAccountId = FindAccId("3100", AccountType.RetainedEarnings); updated = true; }
+            if (!company.DefaultFXGainLossAccountId.HasValue) { company.DefaultFXGainLossAccountId = FindAccId("7400", AccountType.Expense); updated = true; }
 
-            if (updated) await context.SaveChangesAsync();
+            if (updated)
+            {
+                await context.SaveChangesAsync();
+                logger.LogInformation("Company Default Accounts patched for Tenant {TenantId}.", tenantId);
+            }
         }
 
         // 3. Ensure Fiscal Year and Accounting Periods exist for tenant

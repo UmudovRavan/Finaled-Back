@@ -320,12 +320,14 @@ public class ProcurementService : IProcurementService
         var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
             ?? throw new BusinessRuleException("Şirkət parametrləri qurulmayıb.");
 
-        var inventoryAccountId = company.DefaultStockAccountId
-            ?? (await _accountRepo.FindAsync(a => (a.Code == "1100" || a.Type == AccountType.Stock) && a.IsActive, ct)).FirstOrDefault()?.Id
+        var allAccounts = await _accountRepo.GetAllAsync(ct);
+
+        var inventoryAccountId = company?.DefaultStockAccountId
+            ?? allAccounts.FirstOrDefault(a => a.Code == "1100" || a.Type == AccountType.Stock || (a.Category == AccountCategory.Asset && a.IsLeaf))?.Id
             ?? throw new BusinessRuleException("Anbar (Inventory) hesabı təyin edilməyib.");
 
-        var grniAccountId = company.DefaultGRNIAccountId
-            ?? (await _accountRepo.FindAsync(a => (a.Code == "2200" || a.Type == AccountType.GRNI) && a.IsActive, ct)).FirstOrDefault()?.Id
+        var grniAccountId = company?.DefaultGRNIAccountId
+            ?? allAccounts.FirstOrDefault(a => a.Code == "2200" || a.Type == AccountType.GRNI)?.Id
             ?? throw new BusinessRuleException("GRNI / Accrued Purchases hesabı təyin edilməyib.");
 
         // 1. Process Stock Ledger movements for each line via Valuation Engine
@@ -588,19 +590,19 @@ public class ProcurementService : IProcurementService
         var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
             ?? throw new BusinessRuleException("Şirkət parametrləri qurulmayıb.");
 
+        var allAccounts = await _accountRepo.GetAllAsync(ct);
+
         var apAccountId = supplier.PayableAccountId 
-            ?? company.DefaultPayableAccountId
-            ?? (await _accountRepo.FindAsync(a => (a.Code == "2100" || a.Type == AccountType.Payable) && a.IsActive, ct)).FirstOrDefault()?.Id
+            ?? company?.DefaultPayableAccountId
+            ?? allAccounts.FirstOrDefault(a => a.Code == "2100" || a.Type == AccountType.Payable || (a.Category == AccountCategory.Liability && a.IsLeaf))?.Id
             ?? throw new BusinessRuleException("Kreditor borclar (AP) hesabı təyin edilməyib.");
 
-        var vatAccountId = company.DefaultInputVatAccountId
-            ?? (await _accountRepo.FindAsync(a => a.Code == "1250" && a.IsActive, ct)).FirstOrDefault()?.Id
-            ?? (await _accountRepo.FindAsync(a => a.Type == AccountType.Tax && a.Category == AccountCategory.Asset && a.IsActive, ct)).FirstOrDefault()?.Id
-            ?? (await _accountRepo.FindAsync(a => (a.Code == "1250" || a.Type == AccountType.Tax) && a.IsActive, ct)).FirstOrDefault()?.Id
+        var vatAccountId = company?.DefaultInputVatAccountId
+            ?? allAccounts.FirstOrDefault(a => a.Code == "1250" || (a.Type == AccountType.Tax && a.Category == AccountCategory.Asset) || a.Type == AccountType.Tax)?.Id
             ?? throw new BusinessRuleException("Əvəzləşdirilən ƏDV hesabı təyin edilməyib.");
 
-        var grniAccountId = company.DefaultGRNIAccountId
-            ?? (await _accountRepo.FindAsync(a => (a.Code == "2200" || a.Type == AccountType.GRNI) && a.IsActive, ct)).FirstOrDefault()?.Id
+        var grniAccountId = company?.DefaultGRNIAccountId
+            ?? allAccounts.FirstOrDefault(a => a.Code == "2200" || a.Type == AccountType.GRNI)?.Id
             ?? throw new BusinessRuleException("GRNI hesabı təyin edilməyib.");
 
         // Post to GL:
@@ -643,7 +645,7 @@ public class ProcurementService : IProcurementService
             {
                 var expenseAccountId = (line.ExpenseOrAssetAccountId.HasValue && line.ExpenseOrAssetAccountId.Value != Guid.Empty)
                     ? line.ExpenseOrAssetAccountId.Value
-                    : (company.DefaultStockAccountId ?? grniAccountId);
+                    : (company?.DefaultStockAccountId ?? grniAccountId);
 
                 batch.Entries.Add(new LedgerEntry
                 {
