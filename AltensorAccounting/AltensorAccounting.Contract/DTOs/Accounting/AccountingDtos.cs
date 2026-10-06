@@ -101,6 +101,7 @@ public class CreateCustomerDto
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public string? Address { get; set; }
+    public Guid? ReceivableAccountId { get; set; }
     public decimal CreditLimit { get; set; }
     public int PaymentTermsDays { get; set; } = 30;
 }
@@ -112,6 +113,7 @@ public class CustomerDto
     public string Name { get; set; } = default!;
     public string? TaxNumber { get; set; }
     public string? Email { get; set; }
+    public Guid? ReceivableAccountId { get; set; }
     public decimal OutstandingBalance { get; set; }
 }
 

@@ -15,6 +15,7 @@ public class PostingEngine : IPostingEngine
 {
     private readonly IGenericRepository<PostingBatch> _batchRepo;
     private readonly IGenericRepository<AccountingPeriod> _periodRepo;
+    private readonly IGenericRepository<FiscalYear> _yearRepo;
     private readonly ICurrentTenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<PostingEngine> _logger;
@@ -22,12 +23,14 @@ public class PostingEngine : IPostingEngine
     public PostingEngine(
         IGenericRepository<PostingBatch> batchRepo,
         IGenericRepository<AccountingPeriod> periodRepo,
+        IGenericRepository<FiscalYear> yearRepo,
         ICurrentTenantService tenantService,
         IUnitOfWork unitOfWork,
         ILogger<PostingEngine> logger)
     {
         _batchRepo = batchRepo;
         _periodRepo = periodRepo;
+        _yearRepo = yearRepo;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -44,6 +47,64 @@ public class PostingEngine : IPostingEngine
         var date = batch.PostingDate.Date;
         var period = (await _periodRepo.FindAsync(p => p.StartDate <= date && p.EndDate >= date, ct))
             .FirstOrDefault();
+
+        if (period == null)
+        {
+            var yearNum = date.Year;
+            var fiscalYear = (await _yearRepo.FindAsync(y => y.StartDate <= date && y.EndDate >= date, ct)).FirstOrDefault()
+                ?? (await _yearRepo.FindAsync(y => y.Name == $"FY-{yearNum}", ct)).FirstOrDefault();
+
+            if (fiscalYear == null)
+            {
+                fiscalYear = new FiscalYear
+                {
+                    TenantId = tenantId,
+                    Name = $"FY-{yearNum}",
+                    StartDate = DateTime.SpecifyKind(new DateTime(yearNum, 1, 1), DateTimeKind.Utc),
+                    EndDate = DateTime.SpecifyKind(new DateTime(yearNum, 12, 31), DateTimeKind.Utc),
+                    IsClosed = false
+                };
+
+                for (int i = 1; i <= 12; i++)
+                {
+                    var periodStart = DateTime.SpecifyKind(new DateTime(yearNum, i, 1), DateTimeKind.Utc);
+                    var periodEnd = DateTime.SpecifyKind(periodStart.AddMonths(1).AddDays(-1), DateTimeKind.Utc);
+                    fiscalYear.Periods.Add(new AccountingPeriod
+                    {
+                        TenantId = tenantId,
+                        Name = $"{yearNum}-{i:D2}",
+                        PeriodNumber = i,
+                        StartDate = periodStart,
+                        EndDate = periodEnd,
+                        Status = FiscalPeriodStatus.Open
+                    });
+                }
+
+                await _yearRepo.AddAsync(fiscalYear, ct);
+                await _unitOfWork.SaveChangesAsync(ct);
+                _logger.LogInformation("Avtomatik Maliyyə İli və Dövrü yaradıldı: FY-{Year} (Tenant: {TenantId})", yearNum, tenantId);
+
+                period = fiscalYear.Periods.FirstOrDefault(p => p.StartDate <= date && p.EndDate >= date);
+            }
+            else
+            {
+                var periodStart = DateTime.SpecifyKind(new DateTime(yearNum, date.Month, 1), DateTimeKind.Utc);
+                var periodEnd = DateTime.SpecifyKind(periodStart.AddMonths(1).AddDays(-1), DateTimeKind.Utc);
+                period = new AccountingPeriod
+                {
+                    TenantId = tenantId,
+                    FiscalYearId = fiscalYear.Id,
+                    Name = $"{yearNum}-{date.Month:D2}",
+                    PeriodNumber = date.Month,
+                    StartDate = periodStart,
+                    EndDate = periodEnd,
+                    Status = FiscalPeriodStatus.Open
+                };
+                await _periodRepo.AddAsync(period, ct);
+                await _unitOfWork.SaveChangesAsync(ct);
+                _logger.LogInformation("Avtomatik Maliyyə Dövrü yaradıldı: {PeriodName} (Tenant: {TenantId})", period.Name, tenantId);
+            }
+        }
 
         if (period == null)
         {

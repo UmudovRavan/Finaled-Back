@@ -91,22 +91,59 @@ public static class DbSeeder
         else
         {
             // Əgər şirkət varsa, amma bəzi default hesabları boşdursa onları avtomatik bağla:
-            if (company.DefaultReceivableAccountId == null)
-                company.DefaultReceivableAccountId = existingAccounts.FirstOrDefault(a => a.Code == "1200")?.Id;
+            bool updated = false;
+            Guid? FindAccId(string code, AccountType? type = null, AccountCategory? category = null) =>
+                existingAccounts.FirstOrDefault(a => a.Code == code)?.Id
+                ?? (type.HasValue ? existingAccounts.FirstOrDefault(a => a.Type == type.Value)?.Id : null)
+                ?? (category.HasValue ? existingAccounts.FirstOrDefault(a => a.Category == category.Value && a.IsLeaf)?.Id : null);
 
-            if (company.DefaultOutputVatAccountId == null)
-                company.DefaultOutputVatAccountId = existingAccounts.FirstOrDefault(a => a.Code == "2250")?.Id;
+            if (company.DefaultReceivableAccountId == null) { company.DefaultReceivableAccountId = FindAccId("1200", AccountType.Receivable); updated = true; }
+            if (company.DefaultPayableAccountId == null) { company.DefaultPayableAccountId = FindAccId("2100", AccountType.Payable); updated = true; }
+            if (company.DefaultStockAccountId == null) { company.DefaultStockAccountId = FindAccId("1100", AccountType.Stock); updated = true; }
+            if (company.DefaultGRNIAccountId == null) { company.DefaultGRNIAccountId = FindAccId("2200", AccountType.GRNI); updated = true; }
+            if (company.DefaultCOGSAccountId == null) { company.DefaultCOGSAccountId = FindAccId("7010", AccountType.COGS); updated = true; }
+            if (company.DefaultRevenueAccountId == null) { company.DefaultRevenueAccountId = FindAccId("6010", AccountType.Revenue, AccountCategory.Income); updated = true; }
+            if (company.DefaultOutputVatAccountId == null) { company.DefaultOutputVatAccountId = FindAccId("2250", AccountType.Tax); updated = true; }
+            if (company.DefaultInputVatAccountId == null) { company.DefaultInputVatAccountId = FindAccId("1250", AccountType.Tax); updated = true; }
+            if (company.DefaultRetainedEarningsAccountId == null) { company.DefaultRetainedEarningsAccountId = FindAccId("3100", AccountType.RetainedEarnings); updated = true; }
+            if (company.DefaultFXGainLossAccountId == null) { company.DefaultFXGainLossAccountId = FindAccId("7400", AccountType.Expense); updated = true; }
 
-            if (company.DefaultRevenueAccountId == null)
-                company.DefaultRevenueAccountId = existingAccounts.FirstOrDefault(a => a.Code == "6010")?.Id;
+            if (updated) await context.SaveChangesAsync();
+        }
 
-            if (company.DefaultPayableAccountId == null)
-                company.DefaultPayableAccountId = existingAccounts.FirstOrDefault(a => a.Code == "2100")?.Id;
+        // 3. Ensure Fiscal Year and Accounting Periods exist for tenant
+        var currentYear = DateTime.UtcNow.Year;
+        var hasFiscalYear = await context.FiscalYears.IgnoreQueryFilters().AnyAsync(y => y.TenantId == tenantId);
+        if (!hasFiscalYear)
+        {
+            var fiscalYear = new FiscalYear
+            {
+                TenantId = tenantId,
+                Name = $"FY-{currentYear}",
+                StartDate = DateTime.SpecifyKind(new DateTime(currentYear, 1, 1), DateTimeKind.Utc),
+                EndDate = DateTime.SpecifyKind(new DateTime(currentYear, 12, 31), DateTimeKind.Utc),
+                IsClosed = false
+            };
 
-            if (company.DefaultInputVatAccountId == null)
-                company.DefaultInputVatAccountId = existingAccounts.FirstOrDefault(a => a.Code == "1250")?.Id;
+            for (int month = 1; month <= 12; month++)
+            {
+                var startDate = DateTime.SpecifyKind(new DateTime(currentYear, month, 1), DateTimeKind.Utc);
+                var endDate = DateTime.SpecifyKind(startDate.AddMonths(1).AddDays(-1), DateTimeKind.Utc);
 
+                fiscalYear.Periods.Add(new AccountingPeriod
+                {
+                    TenantId = tenantId,
+                    Name = $"{currentYear}-{month:D2}",
+                    PeriodNumber = month,
+                    StartDate = startDate,
+                    EndDate = endDate,
+                    Status = FiscalPeriodStatus.Open
+                });
+            }
+
+            await context.FiscalYears.AddAsync(fiscalYear);
             await context.SaveChangesAsync();
+            logger.LogInformation("Fiscal Year FY-{Year} and 12 monthly accounting periods seeded for Tenant {TenantId}.", currentYear, tenantId);
         }
     }
 
@@ -128,65 +165,68 @@ public static class DbSeeder
 
                 bool modified = false;
 
-                Guid? GetAccId(string code) => tenantAccounts.FirstOrDefault(a => a.Code == code)?.Id;
+                Guid? GetAccId(string code, AccountType? type = null, AccountCategory? category = null) => 
+                    tenantAccounts.FirstOrDefault(a => a.Code == code)?.Id
+                    ?? (type.HasValue ? tenantAccounts.FirstOrDefault(a => a.Type == type.Value)?.Id : null)
+                    ?? (category.HasValue ? tenantAccounts.FirstOrDefault(a => a.Category == category.Value && a.IsLeaf)?.Id : null);
 
                 if (!company.DefaultRevenueAccountId.HasValue || company.DefaultRevenueAccountId == Guid.Empty)
                 {
-                    var id = GetAccId("6010");
+                    var id = GetAccId("6010", AccountType.Revenue, AccountCategory.Income);
                     if (id.HasValue) { company.DefaultRevenueAccountId = id; modified = true; }
                 }
 
                 if (!company.DefaultStockAccountId.HasValue || company.DefaultStockAccountId == Guid.Empty)
                 {
-                    var id = GetAccId("1100");
+                    var id = GetAccId("1100", AccountType.Stock);
                     if (id.HasValue) { company.DefaultStockAccountId = id; modified = true; }
                 }
 
                 if (!company.DefaultGRNIAccountId.HasValue || company.DefaultGRNIAccountId == Guid.Empty)
                 {
-                    var id = GetAccId("2200");
+                    var id = GetAccId("2200", AccountType.GRNI);
                     if (id.HasValue) { company.DefaultGRNIAccountId = id; modified = true; }
                 }
 
                 if (!company.DefaultReceivableAccountId.HasValue || company.DefaultReceivableAccountId == Guid.Empty)
                 {
-                    var id = GetAccId("1200");
+                    var id = GetAccId("1200", AccountType.Receivable);
                     if (id.HasValue) { company.DefaultReceivableAccountId = id; modified = true; }
                 }
 
                 if (!company.DefaultPayableAccountId.HasValue || company.DefaultPayableAccountId == Guid.Empty)
                 {
-                    var id = GetAccId("2100");
+                    var id = GetAccId("2100", AccountType.Payable);
                     if (id.HasValue) { company.DefaultPayableAccountId = id; modified = true; }
                 }
 
                 if (!company.DefaultCOGSAccountId.HasValue || company.DefaultCOGSAccountId == Guid.Empty)
                 {
-                    var id = GetAccId("7010");
+                    var id = GetAccId("7010", AccountType.COGS);
                     if (id.HasValue) { company.DefaultCOGSAccountId = id; modified = true; }
                 }
 
                 if (!company.DefaultInputVatAccountId.HasValue || company.DefaultInputVatAccountId == Guid.Empty)
                 {
-                    var id = GetAccId("1250");
+                    var id = GetAccId("1250", AccountType.Tax);
                     if (id.HasValue) { company.DefaultInputVatAccountId = id; modified = true; }
                 }
 
                 if (!company.DefaultOutputVatAccountId.HasValue || company.DefaultOutputVatAccountId == Guid.Empty)
                 {
-                    var id = GetAccId("2250");
+                    var id = GetAccId("2250", AccountType.Tax);
                     if (id.HasValue) { company.DefaultOutputVatAccountId = id; modified = true; }
                 }
 
                 if (!company.DefaultRetainedEarningsAccountId.HasValue || company.DefaultRetainedEarningsAccountId == Guid.Empty)
                 {
-                    var id = GetAccId("3100");
+                    var id = GetAccId("3100", AccountType.RetainedEarnings);
                     if (id.HasValue) { company.DefaultRetainedEarningsAccountId = id; modified = true; }
                 }
 
                 if (!company.DefaultFXGainLossAccountId.HasValue || company.DefaultFXGainLossAccountId == Guid.Empty)
                 {
-                    var id = GetAccId("7400");
+                    var id = GetAccId("7400", AccountType.Expense);
                     if (id.HasValue) { company.DefaultFXGainLossAccountId = id; modified = true; }
                 }
 
@@ -194,6 +234,41 @@ public static class DbSeeder
                 {
                     await context.SaveChangesAsync();
                     logger.LogInformation("Company defaults successfully patched for Tenant {TenantId}.", company.TenantId);
+                }
+
+                // Ensure Fiscal Year and Periods exist for this company/tenant on startup
+                var hasFiscalYear = await context.FiscalYears.IgnoreQueryFilters().AnyAsync(y => y.TenantId == company.TenantId);
+                if (!hasFiscalYear)
+                {
+                    var currentYear = DateTime.UtcNow.Year;
+                    var fiscalYear = new FiscalYear
+                    {
+                        TenantId = company.TenantId,
+                        Name = $"FY-{currentYear}",
+                        StartDate = DateTime.SpecifyKind(new DateTime(currentYear, 1, 1), DateTimeKind.Utc),
+                        EndDate = DateTime.SpecifyKind(new DateTime(currentYear, 12, 31), DateTimeKind.Utc),
+                        IsClosed = false
+                    };
+
+                    for (int month = 1; month <= 12; month++)
+                    {
+                        var startDate = DateTime.SpecifyKind(new DateTime(currentYear, month, 1), DateTimeKind.Utc);
+                        var endDate = DateTime.SpecifyKind(startDate.AddMonths(1).AddDays(-1), DateTimeKind.Utc);
+
+                        fiscalYear.Periods.Add(new AccountingPeriod
+                        {
+                            TenantId = company.TenantId,
+                            Name = $"{currentYear}-{month:D2}",
+                            PeriodNumber = month,
+                            StartDate = startDate,
+                            EndDate = endDate,
+                            Status = FiscalPeriodStatus.Open
+                        });
+                    }
+
+                    await context.FiscalYears.AddAsync(fiscalYear);
+                    await context.SaveChangesAsync();
+                    logger.LogInformation("Startup: Fiscal Year FY-{Year} and 12 monthly periods seeded for Tenant {TenantId}.", currentYear, company.TenantId);
                 }
             }
         }

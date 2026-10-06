@@ -24,6 +24,7 @@ public class TreasuryService : ITreasuryService
     private readonly IGenericRepository<SupplierInvoice> _invoiceRepo;
     private readonly IGenericRepository<Payment> _paymentRepo;
     private readonly IGenericRepository<Company> _companyRepo;
+    private readonly IGenericRepository<Account> _accountRepo;
     private readonly IPostingEngine _postingEngine;
     private readonly ICurrentTenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
@@ -37,6 +38,7 @@ public class TreasuryService : ITreasuryService
         IGenericRepository<SupplierInvoice> invoiceRepo,
         IGenericRepository<Payment> paymentRepo,
         IGenericRepository<Company> companyRepo,
+        IGenericRepository<Account> accountRepo,
         IPostingEngine postingEngine,
         ICurrentTenantService tenantService,
         IUnitOfWork unitOfWork,
@@ -49,6 +51,7 @@ public class TreasuryService : ITreasuryService
         _invoiceRepo = invoiceRepo;
         _paymentRepo = paymentRepo;
         _companyRepo = companyRepo;
+        _accountRepo = accountRepo;
         _postingEngine = postingEngine;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
@@ -244,6 +247,7 @@ public class TreasuryService : ITreasuryService
             ?? throw new BusinessRuleException("Şirkət parametrləri qurulmayıb.");
 
         var apAccountId = company.DefaultPayableAccountId
+            ?? (await _accountRepo.FindAsync(a => (a.Code == "2100" || a.Type == AccountType.Payable) && a.IsActive, ct)).FirstOrDefault()?.Id
             ?? throw new BusinessRuleException("Kreditor borclar (AP) hesabı təyin edilməyib.");
 
         // Process each selected invoice item in the run

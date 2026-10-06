@@ -441,6 +441,7 @@ public class AccountingService : IAccountingService
             Email = dto.Email,
             Phone = dto.Phone,
             Address = dto.Address,
+            ReceivableAccountId = (dto.ReceivableAccountId.HasValue && dto.ReceivableAccountId.Value != Guid.Empty) ? dto.ReceivableAccountId : null,
             CreditLimit = dto.CreditLimit,
             PaymentTermsDays = dto.PaymentTermsDays,
             IsActive = true
@@ -458,6 +459,7 @@ public class AccountingService : IAccountingService
             Name = customer.Name,
             TaxNumber = customer.TaxNumber,
             Email = customer.Email,
+            ReceivableAccountId = customer.ReceivableAccountId,
             OutstandingBalance = 0m
         };
     }
@@ -472,6 +474,7 @@ public class AccountingService : IAccountingService
             Name = c.Name,
             TaxNumber = c.TaxNumber,
             Email = c.Email,
+            ReceivableAccountId = c.ReceivableAccountId,
             OutstandingBalance = 0m
         }).ToList();
     }
@@ -527,8 +530,8 @@ public class AccountingService : IAccountingService
 
         if (!defaultRevenueAccount.HasValue)
         {
-            var incomeAccount = (await _accountRepo.GetAllAsync(ct))
-                .FirstOrDefault(a => a.Category == AccountCategory.Income && a.IsLeaf && a.IsActive);
+            var incomeAccount = (await _accountRepo.FindAsync(a => (a.Code == "6010" || a.Type == AccountType.Revenue || a.Category == AccountCategory.Income) && a.IsLeaf && a.IsActive, ct))
+                .FirstOrDefault();
             defaultRevenueAccount = incomeAccount?.Id;
         }
 
@@ -683,15 +686,17 @@ public class AccountingService : IAccountingService
 
         var arAccountId = customer.ReceivableAccountId 
             ?? company.DefaultReceivableAccountId
-            ?? (await _accountRepo.FindAsync(a => a.Code == "1200", ct)).FirstOrDefault()?.Id
+            ?? (await _accountRepo.FindAsync(a => (a.Code == "1200" || a.Type == AccountType.Receivable) && a.IsActive, ct)).FirstOrDefault()?.Id
             ?? throw new BusinessRuleException("Debitor borclar (AR) üçün default hesab təyin edilməyib.");
 
         var vatAccountId = company.DefaultOutputVatAccountId
-            ?? (await _accountRepo.FindAsync(a => a.Code == "2250", ct)).FirstOrDefault()?.Id
+            ?? (await _accountRepo.FindAsync(a => a.Code == "2250" && a.IsActive, ct)).FirstOrDefault()?.Id
+            ?? (await _accountRepo.FindAsync(a => a.Type == AccountType.Tax && a.Category == AccountCategory.Liability && a.IsActive, ct)).FirstOrDefault()?.Id
+            ?? (await _accountRepo.FindAsync(a => (a.Code == "2250" || a.Type == AccountType.Tax) && a.IsActive, ct)).FirstOrDefault()?.Id
             ?? throw new BusinessRuleException("Hesablanmış ƏDV üçün default hesab təyin edilməyib.");
 
         var defaultRevAccountId = company.DefaultRevenueAccountId 
-            ?? (await _accountRepo.FindAsync(a => a.Category == AccountCategory.Income, ct)).FirstOrDefault()?.Id;
+            ?? (await _accountRepo.FindAsync(a => (a.Code == "6010" || a.Type == AccountType.Revenue || a.Category == AccountCategory.Income) && a.IsActive, ct)).FirstOrDefault()?.Id;
 
         // Post to GL:
         // Dr Accounts Receivable (GrandTotal)
@@ -889,7 +894,7 @@ public class AccountingService : IAccountingService
         if (payment.Type == PaymentType.CustomerReceipt || payment.Type == PaymentType.CustomerAdvance)
         {
             var arAccountId = company.DefaultReceivableAccountId
-                ?? (await _accountRepo.FindAsync(a => a.Code == "1200", ct)).FirstOrDefault()?.Id
+                ?? (await _accountRepo.FindAsync(a => (a.Code == "1200" || a.Type == AccountType.Receivable) && a.IsActive, ct)).FirstOrDefault()?.Id
                 ?? throw new BusinessRuleException("Debitor borclar (AR) hesabı təyin edilməyib.");
 
             // Dr Bank/Cash
@@ -936,7 +941,7 @@ public class AccountingService : IAccountingService
         else if (payment.Type == PaymentType.SupplierPayment || payment.Type == PaymentType.SupplierAdvance)
         {
             var apAccountId = company.DefaultPayableAccountId
-                ?? (await _accountRepo.FindAsync(a => a.Code == "2100", ct)).FirstOrDefault()?.Id
+                ?? (await _accountRepo.FindAsync(a => (a.Code == "2100" || a.Type == AccountType.Payable) && a.IsActive, ct)).FirstOrDefault()?.Id
                 ?? throw new BusinessRuleException("Kreditor borclar (AP) hesabı təyin edilməyib.");
 
             // Dr AP
