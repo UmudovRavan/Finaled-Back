@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "c2mrocCsEcM=",
+  "dgSpecHash": "UQknu0HALYM=",
   "success": true,
   "projectFilePath": "C:\\Users\\Huawei\\Desktop\\Finaled-Back\\AltensorAccounting\\AltensorAccounting.Api\\AltensorAccounting.Api.csproj",
   "expectedPackageFiles": [
@@ -41,7 +41,7 @@
     "C:\\Users\\Huawei\\.nuget\\packages\\microsoft.identitymodel.tokens\\7.5.1\\microsoft.identitymodel.tokens.7.5.1.nupkg.sha512",
     "C:\\Users\\Huawei\\.nuget\\packages\\microsoft.openapi\\1.6.14\\microsoft.openapi.1.6.14.nupkg.sha512",
     "C:\\Users\\Huawei\\.nuget\\packages\\mono.texttemplating\\2.2.1\\mono.texttemplating.2.2.1.nupkg.sha512",
-    "C:\\Users\\Huawei\\.nuget\\packages\\npgsql\\8.0.6\\npgsql.8.0.6.nupkg.sha512",
+    "C:\\Users\\Huawei\\.nuget\\packages\\npgsql\\8.0.9\\npgsql.8.0.9.nupkg.sha512",
     "C:\\Users\\Huawei\\.nuget\\packages\\npgsql.entityframeworkcore.postgresql\\8.0.11\\npgsql.entityframeworkcore.postgresql.8.0.11.nupkg.sha512",
     "C:\\Users\\Huawei\\.nuget\\packages\\serilog\\4.4.0\\serilog.4.4.0.nupkg.sha512",
     "C:\\Users\\Huawei\\.nuget\\packages\\serilog.aspnetcore\\10.0.0\\serilog.aspnetcore.10.0.0.nupkg.sha512",

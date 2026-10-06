@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "YtqGXvY/VxI=",
+  "dgSpecHash": "iFbiJohyqC0=",
   "success": true,
   "projectFilePath": "C:\\Users\\Huawei\\Desktop\\Finaled-Back\\AltensorAccounting\\AltensorAccounting.Infrastructure\\AltensorAccounting.Infrastructure.csproj",
   "expectedPackageFiles": [
@@ -22,6 +22,7 @@
     "C:\\Users\\Huawei\\.nuget\\packages\\microsoft.identitymodel.protocols\\7.5.1\\microsoft.identitymodel.protocols.7.5.1.nupkg.sha512",
     "C:\\Users\\Huawei\\.nuget\\packages\\microsoft.identitymodel.protocols.openidconnect\\7.5.1\\microsoft.identitymodel.protocols.openidconnect.7.5.1.nupkg.sha512",
     "C:\\Users\\Huawei\\.nuget\\packages\\microsoft.identitymodel.tokens\\7.5.1\\microsoft.identitymodel.tokens.7.5.1.nupkg.sha512",
+    "C:\\Users\\Huawei\\.nuget\\packages\\npgsql\\8.0.9\\npgsql.8.0.9.nupkg.sha512",
     "C:\\Users\\Huawei\\.nuget\\packages\\system.identitymodel.tokens.jwt\\7.5.1\\system.identitymodel.tokens.jwt.7.5.1.nupkg.sha512",
     "C:\\Users\\Huawei\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.27\\microsoft.netcore.app.ref.8.0.27.nupkg.sha512",
     "C:\\Users\\Huawei\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.27\\microsoft.windowsdesktop.app.ref.8.0.27.nupkg.sha512",

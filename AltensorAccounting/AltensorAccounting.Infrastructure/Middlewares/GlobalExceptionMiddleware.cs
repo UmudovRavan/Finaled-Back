@@ -123,6 +123,22 @@ public class GlobalExceptionMiddleware
                 dbEx.InnerException?.Message ?? dbEx.Message,
                 "DB_UPDATE_ERROR"
             ),
+            InvalidCastException castEx => (
+                (int)HttpStatusCode.BadRequest,
+                "Məlumat Tipi Uyğunsuzluğu",
+                env.IsDevelopment()
+                    ? $"Məlumat tipi uyğunsuzluğu: {castEx.Message}"
+                    : "Göndərilən məlumatların formatı (tarix, rəqəm və s.) düzgün deyil. Zəhmət olmasa dəyərləri yoxlayın.",
+                "DATA_TYPE_MISMATCH"
+            ),
+            Npgsql.PostgresException pgEx => (
+                (int)HttpStatusCode.BadRequest,
+                "Verilənlər Bazası Xətası",
+                env.IsDevelopment()
+                    ? $"PostgreSQL xətası [{pgEx.SqlState}]: {pgEx.MessageText}"
+                    : "Verilənlər bazası əməliyyatında xəta baş verdi. Zəhmət olmasa administratora müraciət edin.",
+                $"PG_{pgEx.SqlState}"
+            ),
             _ => (
                 (int)HttpStatusCode.InternalServerError,
                 "Daxili Server Xətası",

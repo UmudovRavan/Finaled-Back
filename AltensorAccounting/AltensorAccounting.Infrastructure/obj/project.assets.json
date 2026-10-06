@@ -312,6 +312,22 @@
           }
         }
       },
+      "Npgsql/8.0.9": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.0"
+        },
+        "compile": {
+          "lib/net8.0/Npgsql.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/Npgsql.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "System.IdentityModel.Tokens.Jwt/7.5.1": {
         "type": "package",
         "dependencies": {
@@ -875,6 +891,29 @@
         "microsoft.identitymodel.tokens.nuspec"
       ]
     },
+    "Npgsql/8.0.9": {
+      "sha512": "H7O9NrvSO+BaojUOK59YmSOi7+RabnBoNPw1F7NgtZhw5uBeAA3bCjTH2VjgacUVHe8K1asPyj/a/mnhJ/e1yA==",
+      "type": "package",
+      "path": "npgsql/8.0.9",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/net6.0/Npgsql.dll",
+        "lib/net6.0/Npgsql.xml",
+        "lib/net7.0/Npgsql.dll",
+        "lib/net7.0/Npgsql.xml",
+        "lib/net8.0/Npgsql.dll",
+        "lib/net8.0/Npgsql.xml",
+        "lib/netstandard2.0/Npgsql.dll",
+        "lib/netstandard2.0/Npgsql.xml",
+        "lib/netstandard2.1/Npgsql.dll",
+        "lib/netstandard2.1/Npgsql.xml",
+        "npgsql.8.0.9.nupkg.sha512",
+        "npgsql.nuspec",
+        "postgresql.png"
+      ]
+    },
     "System.IdentityModel.Tokens.Jwt/7.5.1": {
       "sha512": "UUw+E0R73lZLlXgneYIJQxNs1kfbcxjVzw64JQyiwjqCd4HMpAbjn+xRo86QZT84uHq8/MkqvfH82tgjgPzpuw==",
       "type": "package",
@@ -919,7 +958,8 @@
       "AltensorAccounting.Application >= 1.0.0",
       "Microsoft.AspNetCore.Authentication.JwtBearer >= 8.0.11",
       "Microsoft.EntityFrameworkCore >= 8.0.11",
-      "Microsoft.IdentityModel.Protocols.OpenIdConnect >= 7.5.1"
+      "Microsoft.IdentityModel.Protocols.OpenIdConnect >= 7.5.1",
+      "Npgsql >= 8.0.*"
     ]
   },
   "packageFolders": {
@@ -987,6 +1027,10 @@
           "Microsoft.IdentityModel.Protocols.OpenIdConnect": {
             "target": "Package",
             "version": "[7.5.1, )"
+          },
+          "Npgsql": {
+            "target": "Package",
+            "version": "[8.0.*, )"
           }
         },
         "imports": [

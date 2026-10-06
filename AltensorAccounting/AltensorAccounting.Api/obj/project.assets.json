@@ -803,7 +803,7 @@
           "lib/netstandard2.0/Mono.TextTemplating.dll": {}
         }
       },
-      "Npgsql/8.0.6": {
+      "Npgsql/8.0.9": {
         "type": "package",
         "dependencies": {
           "Microsoft.Extensions.Logging.Abstractions": "8.0.0"
@@ -1407,7 +1407,8 @@
           "AltensorAccounting.Application": "1.0.0",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.11",
           "Microsoft.EntityFrameworkCore": "8.0.11",
-          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "7.5.1"
+          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "7.5.1",
+          "Npgsql": "8.0.0"
         },
         "compile": {
           "bin/placeholder/AltensorAccounting.Infrastructure.dll": {}
@@ -2908,10 +2909,10 @@
         "mono.texttemplating.nuspec"
       ]
     },
-    "Npgsql/8.0.6": {
-      "sha512": "KaS6CY5kY2Sd0P00MSeFcOI3t2DiQ4UWG8AuRpVOUeDWITOKfoEEG91DP3cmT6aerixPkjwKgXxnpDxIkDpO6g==",
+    "Npgsql/8.0.9": {
+      "sha512": "H7O9NrvSO+BaojUOK59YmSOi7+RabnBoNPw1F7NgtZhw5uBeAA3bCjTH2VjgacUVHe8K1asPyj/a/mnhJ/e1yA==",
       "type": "package",
-      "path": "npgsql/8.0.6",
+      "path": "npgsql/8.0.9",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2926,7 +2927,7 @@
         "lib/netstandard2.0/Npgsql.xml",
         "lib/netstandard2.1/Npgsql.dll",
         "lib/netstandard2.1/Npgsql.xml",
-        "npgsql.8.0.6.nupkg.sha512",
+        "npgsql.8.0.9.nupkg.sha512",
         "npgsql.nuspec",
         "postgresql.png"
       ]

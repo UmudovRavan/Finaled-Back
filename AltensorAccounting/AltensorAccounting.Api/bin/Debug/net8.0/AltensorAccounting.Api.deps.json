@@ -557,14 +557,14 @@
           }
         }
       },
-      "Npgsql/8.0.6": {
+      "Npgsql/8.0.9": {
         "dependencies": {
           "Microsoft.Extensions.Logging.Abstractions": "10.0.0"
         },
         "runtime": {
           "lib/net8.0/Npgsql.dll": {
-            "assemblyVersion": "8.0.6.0",
-            "fileVersion": "8.0.6.0"
+            "assemblyVersion": "8.0.9.0",
+            "fileVersion": "8.0.9.0"
           }
         }
       },
@@ -573,7 +573,7 @@
           "Microsoft.EntityFrameworkCore": "8.0.11",
           "Microsoft.EntityFrameworkCore.Abstractions": "8.0.11",
           "Microsoft.EntityFrameworkCore.Relational": "8.0.11",
-          "Npgsql": "8.0.6"
+          "Npgsql": "8.0.9"
         },
         "runtime": {
           "lib/net8.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll": {
@@ -889,7 +889,8 @@
           "AltensorAccounting.Application": "1.0.0",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "8.0.11",
           "Microsoft.EntityFrameworkCore": "8.0.11",
-          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "7.5.1"
+          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "7.5.1",
+          "Npgsql": "8.0.9"
         },
         "runtime": {
           "AltensorAccounting.Infrastructure.dll": {
@@ -1150,12 +1151,12 @@
       "path": "mono.texttemplating/2.2.1",
       "hashPath": "mono.texttemplating.2.2.1.nupkg.sha512"
     },
-    "Npgsql/8.0.6": {
+    "Npgsql/8.0.9": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-KaS6CY5kY2Sd0P00MSeFcOI3t2DiQ4UWG8AuRpVOUeDWITOKfoEEG91DP3cmT6aerixPkjwKgXxnpDxIkDpO6g==",
-      "path": "npgsql/8.0.6",
-      "hashPath": "npgsql.8.0.6.nupkg.sha512"
+      "sha512": "sha512-H7O9NrvSO+BaojUOK59YmSOi7+RabnBoNPw1F7NgtZhw5uBeAA3bCjTH2VjgacUVHe8K1asPyj/a/mnhJ/e1yA==",
+      "path": "npgsql/8.0.9",
+      "hashPath": "npgsql.8.0.9.nupkg.sha512"
     },
     "Npgsql.EntityFrameworkCore.PostgreSQL/8.0.11": {
       "type": "package",

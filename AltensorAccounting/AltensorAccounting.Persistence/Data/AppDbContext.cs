@@ -87,10 +87,10 @@ public class AppDbContext : DbContext
             if (typeof(ITenantEntity).IsAssignableFrom(entityType.ClrType))
             {
                 var method = typeof(AppDbContext)
-                    .GetMethod(nameof(ConfigureTenantFilter), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)?
+                    .GetMethod(nameof(ConfigureTenantFilter), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?
                     .MakeGenericMethod(entityType.ClrType);
 
-                method?.Invoke(null, new object[] { modelBuilder, this });
+                method?.Invoke(this, new object[] { modelBuilder });
             }
         }
 
@@ -109,11 +109,12 @@ public class AppDbContext : DbContext
             .HasIndex(e => new { e.TenantId, e.ItemId, e.WarehouseId, e.TransactionTime });
     }
 
-    private static void ConfigureTenantFilter<T>(ModelBuilder modelBuilder, AppDbContext context) where T : class, ITenantEntity
+    // Non-static method — closure dynamically accesses _tenantService of the active scoped context
+    private void ConfigureTenantFilter<T>(ModelBuilder modelBuilder) where T : class, ITenantEntity
     {
         modelBuilder.Entity<T>().HasQueryFilter(e => 
-            context._tenantService.IsPlatformSuperAdmin || 
-            (context._tenantService.TenantId != null && e.TenantId == context._tenantService.TenantId));
+            _tenantService.IsPlatformSuperAdmin || 
+            (_tenantService.TenantId != null && e.TenantId == _tenantService.TenantId));
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

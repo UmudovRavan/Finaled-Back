@@ -11,6 +11,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using AltensorAccounting.Persistence.Data;
+using Microsoft.EntityFrameworkCore;
+
+// 0. PostgreSQL Npgsql Timestamp Compatibility (solves DateTimeKind.Unspecified vs timestamptz InvalidCastException)
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -87,18 +91,22 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 // 2. Serilog HTTP Request Logging
 app.UseSerilogRequestLogging();
 
-// 3. Auto-patch Company Defaults for all tenants on startup
+// 3. Auto-apply migrations & Auto-patch Company Defaults on startup
 using (var scope = app.Services.CreateScope())
 {
     try
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        if (db.Database.CanConnect())
+        {
+            await db.Database.MigrateAsync();
+        }
         var seederLogger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         await DbSeeder.EnsureAllCompaniesHaveDefaultAccountsAsync(db, seederLogger);
     }
     catch (Exception ex)
     {
-        Log.Error(ex, "Error while ensuring company default accounts on startup");
+        Log.Error(ex, "Error while applying migrations or ensuring company default accounts on startup");
     }
 }
 
