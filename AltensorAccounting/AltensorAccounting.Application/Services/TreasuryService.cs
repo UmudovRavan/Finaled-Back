@@ -85,7 +85,8 @@ public class TreasuryService : ITreasuryService
             BankName = bank.BankName,
             AccountNumber = bank.AccountNumber,
             Currency = bank.Currency,
-            CurrentBalance = bank.CurrentBalance
+            CurrentBalance = bank.CurrentBalance,
+            GLAccountId = bank.GLAccountId
         };
     }
 
@@ -98,7 +99,8 @@ public class TreasuryService : ITreasuryService
             BankName = b.BankName,
             AccountNumber = b.AccountNumber,
             Currency = b.Currency,
-            CurrentBalance = b.CurrentBalance
+            CurrentBalance = b.CurrentBalance,
+            GLAccountId = b.GLAccountId
         }).ToList();
     }
 
@@ -123,8 +125,22 @@ public class TreasuryService : ITreasuryService
             Id = cash.Id,
             Name = cash.Name,
             Currency = cash.Currency,
-            CurrentBalance = cash.CurrentBalance
+            CurrentBalance = cash.CurrentBalance,
+            GLAccountId = cash.GLAccountId
         };
+    }
+
+    public async Task<List<CashDeskDto>> GetCashDesksAsync(CancellationToken ct = default)
+    {
+        var cashes = await _cashRepo.GetAllAsync(ct);
+        return cashes.Select(c => new CashDeskDto
+        {
+            Id = c.Id,
+            Name = c.Name,
+            Currency = c.Currency,
+            CurrentBalance = c.CurrentBalance,
+            GLAccountId = c.GLAccountId
+        }).ToList();
     }
 
     public async Task<BankStatementDto> ImportBankStatementAsync(ImportBankStatementDto dto, CancellationToken ct = default)

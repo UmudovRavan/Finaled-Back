@@ -13,6 +13,7 @@ using AltensorAccounting.Domain.Enums;
 using AltensorAccounting.Domain.Exceptions;
 
 using AltensorAccounting.Domain.Entities.Procurement;
+using AltensorAccounting.Domain.Entities.Treasury;
 
 namespace AltensorAccounting.Application.Services;
 
@@ -27,6 +28,8 @@ public class AccountingService : IAccountingService
     private readonly IGenericRepository<SupplierInvoice> _suppInvoiceRepo;
     private readonly IGenericRepository<Payment> _paymentRepo;
     private readonly IGenericRepository<Company> _companyRepo;
+    private readonly IGenericRepository<BankAccount> _bankRepo;
+    private readonly IGenericRepository<CashDesk> _cashRepo;
     private readonly IPostingEngine _postingEngine;
     private readonly ICurrentTenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
@@ -43,6 +46,8 @@ public class AccountingService : IAccountingService
         IGenericRepository<SupplierInvoice> suppInvoiceRepo,
         IGenericRepository<Payment> paymentRepo,
         IGenericRepository<Company> companyRepo,
+        IGenericRepository<BankAccount> bankRepo,
+        IGenericRepository<CashDesk> cashRepo,
         IPostingEngine postingEngine,
         ICurrentTenantService tenantService,
         IUnitOfWork unitOfWork,
@@ -58,6 +63,8 @@ public class AccountingService : IAccountingService
         _suppInvoiceRepo = suppInvoiceRepo;
         _paymentRepo = paymentRepo;
         _companyRepo = companyRepo;
+        _bankRepo = bankRepo;
+        _cashRepo = cashRepo;
         _postingEngine = postingEngine;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
@@ -832,6 +839,79 @@ public class AccountingService : IAccountingService
                 throw new BusinessRuleException("Bölüşdürülən məbləğ 0-dan böyük olmalıdır.");
         }
 
+        // ─── SENIOR FIX: Resolve GL Account for BankOrCashAccountId ───
+        Guid effectiveGlAccountId = Guid.Empty;
+
+        if (dto.BankOrCashAccountId != Guid.Empty)
+        {
+            // 1. Birbaşa Accounts (GL) cədvəlində mövcudluğunu yoxla
+            var directAccount = await _accountRepo.GetByIdAsync(dto.BankOrCashAccountId, ct);
+            if (directAccount != null && directAccount.IsActive)
+            {
+                effectiveGlAccountId = directAccount.Id;
+            }
+            else
+            {
+                // 2. Əgər GL Account tapılmadısa, bəlkə bu Treasury BankAccount ID-sidir?
+                var bankAccount = await _bankRepo.GetByIdAsync(dto.BankOrCashAccountId, ct);
+                if (bankAccount != null)
+                {
+                    if (bankAccount.GLAccountId.HasValue && bankAccount.GLAccountId.Value != Guid.Empty)
+                    {
+                        var linkedGl = await _accountRepo.GetByIdAsync(bankAccount.GLAccountId.Value, ct);
+                        if (linkedGl != null && linkedGl.IsActive)
+                        {
+                            effectiveGlAccountId = linkedGl.Id;
+                        }
+                    }
+
+                    if (effectiveGlAccountId == Guid.Empty)
+                    {
+                        // Bank hesabına GL bağlanmayıbsa və ya aktiv deyilsə, standart 1020 hesabına yönləndir
+                        var defaultBankGl = (await _accountRepo.FindAsync(a => (a.Code == "1020" || a.Code.StartsWith("102")) && a.IsActive, ct)).FirstOrDefault();
+                        if (defaultBankGl != null) effectiveGlAccountId = defaultBankGl.Id;
+                    }
+                }
+                else
+                {
+                    // 3. Bəlkə bu Treasury CashDesk (Kassa) ID-sidir?
+                    var cashDesk = await _cashRepo.GetByIdAsync(dto.BankOrCashAccountId, ct);
+                    if (cashDesk != null)
+                    {
+                        if (cashDesk.GLAccountId.HasValue && cashDesk.GLAccountId.Value != Guid.Empty)
+                        {
+                            var linkedGl = await _accountRepo.GetByIdAsync(cashDesk.GLAccountId.Value, ct);
+                            if (linkedGl != null && linkedGl.IsActive)
+                            {
+                                effectiveGlAccountId = linkedGl.Id;
+                            }
+                        }
+
+                        if (effectiveGlAccountId == Guid.Empty)
+                        {
+                            // Kassa hesabına GL bağlanmayıbsa və ya aktiv deyilsə, standart 1010 hesabına yönləndir
+                            var defaultCashGl = (await _accountRepo.FindAsync(a => (a.Code == "1010" || a.Code.StartsWith("101")) && a.IsActive, ct)).FirstOrDefault();
+                            if (defaultCashGl != null) effectiveGlAccountId = defaultCashGl.Id;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Əgər hələ də tapılmadısa, son fallback olaraq sistemdəki ilk aktiv Aktiv (Asset/Bank/Cash) hesabını tap
+        if (effectiveGlAccountId == Guid.Empty)
+        {
+            var fallbackGl = (await _accountRepo.FindAsync(a => (a.Code == "1020" || a.Code == "1010" || a.Category == AccountCategory.Asset) && a.IsActive, ct)).FirstOrDefault();
+            if (fallbackGl != null)
+            {
+                effectiveGlAccountId = fallbackGl.Id;
+            }
+            else
+            {
+                throw new BusinessRuleException("Seçilmiş Bank/Kassa hesabı üçün Mühasibatlıq Hesabı (GL Account) tapılmadı. Zəhmət olmasa Hesablar Planında 1020 və ya 1010 hesabını yoxlayın.");
+            }
+        }
+
         var allocatedTotal = dto.Allocations.Sum(a => a.AllocatedAmount);
         var unallocated = dto.TotalAmount - allocatedTotal;
 
@@ -844,7 +924,7 @@ public class AccountingService : IAccountingService
             PostingDate = DateTime.SpecifyKind(dto.PostingDate, DateTimeKind.Utc),
             PartyId = dto.PartyId,
             PartyType = dto.PartyType,
-            BankOrCashAccountId = dto.BankOrCashAccountId,
+            BankOrCashAccountId = effectiveGlAccountId,
             Currency = dto.Currency,
             ExchangeRate = dto.ExchangeRate,
             TotalAmount = dto.TotalAmount,

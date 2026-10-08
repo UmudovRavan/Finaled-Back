@@ -34,6 +34,13 @@ public class TreasuryController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("cash-desks")]
+    public async Task<IActionResult> GetCashDesks(CancellationToken ct)
+    {
+        var result = await _treasuryService.GetCashDesksAsync(ct);
+        return Ok(result);
+    }
+
     [HttpPost("cash-desks")]
     public async Task<IActionResult> CreateCashDesk([FromBody] CreateCashDeskDto dto, CancellationToken ct)
     {

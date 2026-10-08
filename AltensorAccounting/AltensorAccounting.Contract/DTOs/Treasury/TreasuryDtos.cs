@@ -20,6 +20,7 @@ public class BankAccountDto
     public string AccountNumber { get; set; } = default!;
     public string Currency { get; set; } = "AZN";
     public decimal CurrentBalance { get; set; }
+    public Guid? GLAccountId { get; set; }
 }
 
 public class CreateCashDeskDto
@@ -35,6 +36,7 @@ public class CashDeskDto
     public string Name { get; set; } = default!;
     public string Currency { get; set; } = "AZN";
     public decimal CurrentBalance { get; set; }
+    public Guid? GLAccountId { get; set; }
 }
 
 public class ImportBankStatementDto

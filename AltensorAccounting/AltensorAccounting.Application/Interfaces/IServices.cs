@@ -81,6 +81,7 @@ public interface ITreasuryService
     Task<BankAccountDto> CreateBankAccountAsync(CreateBankAccountDto dto, CancellationToken ct = default);
     Task<List<BankAccountDto>> GetBankAccountsAsync(CancellationToken ct = default);
     Task<CashDeskDto> CreateCashDeskAsync(CreateCashDeskDto dto, CancellationToken ct = default);
+    Task<List<CashDeskDto>> GetCashDesksAsync(CancellationToken ct = default);
     Task<BankStatementDto> ImportBankStatementAsync(ImportBankStatementDto dto, CancellationToken ct = default);
     Task<PaymentRunDto> CreatePaymentRunAsync(CreatePaymentRunDto dto, CancellationToken ct = default);
     Task<PaymentRunDto> PostPaymentRunAsync(Guid runId, CancellationToken ct = default);
