@@ -61,7 +61,7 @@ public class GlobalExceptionMiddleware
                 (int)HttpStatusCode.BadRequest,
                 "Biznes Qaydası Xətası",
                 busEx.Message,
-                "BUSINESS_RULE_ERROR"
+                !string.IsNullOrWhiteSpace(busEx.ErrorCode) ? busEx.ErrorCode : "BUSINESS_RULE_ERROR"
             ),
             ArgumentException argEx => (
                 (int)HttpStatusCode.BadRequest,

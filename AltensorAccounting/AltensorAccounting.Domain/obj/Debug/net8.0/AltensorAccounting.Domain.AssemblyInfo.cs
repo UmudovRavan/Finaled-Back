@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AltensorAccounting.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5db07acb815ec193dc242a007e4dd84a4ccaeec2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+32cd3f8a010f626b31af12d4fac45c8ad56c39d2")]
 [assembly: System.Reflection.AssemblyProductAttribute("AltensorAccounting.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AltensorAccounting.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -30,6 +30,7 @@ public class AccountingService : IAccountingService
     private readonly IPostingEngine _postingEngine;
     private readonly ICurrentTenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ITenantSeeder _tenantSeeder;
     private readonly Microsoft.Extensions.Logging.ILogger<AccountingService> _logger;
 
     public AccountingService(
@@ -45,6 +46,7 @@ public class AccountingService : IAccountingService
         IPostingEngine postingEngine,
         ICurrentTenantService tenantService,
         IUnitOfWork unitOfWork,
+        ITenantSeeder tenantSeeder,
         Microsoft.Extensions.Logging.ILogger<AccountingService> logger)
     {
         _accountRepo = accountRepo;
@@ -59,6 +61,7 @@ public class AccountingService : IAccountingService
         _postingEngine = postingEngine;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
+        _tenantSeeder = tenantSeeder;
         _logger = logger;
     }
 
@@ -688,22 +691,26 @@ public class AccountingService : IAccountingService
         var customer = await _customerRepo.GetByIdAsync(invoice.CustomerId, ct)
             ?? throw new BusinessRuleException("Müştəri tapılmadı.");
 
-        var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
-            ?? throw new BusinessRuleException("Şirkət parametrləri qurulmayıb.");
+        var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault();
+        if (company == null || !company.DefaultOutputVatAccountId.HasValue || !company.DefaultReceivableAccountId.HasValue || !company.DefaultRevenueAccountId.HasValue)
+        {
+            await _tenantSeeder.SeedTenantDefaultsAsync(invoice.TenantId, ct);
+            company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
+                ?? throw new BusinessRuleException("Şirkət parametrləri qurulmayıb.");
+        }
 
         var arAccountId = customer.ReceivableAccountId 
             ?? company.DefaultReceivableAccountId
             ?? (await _accountRepo.FindAsync(a => (a.Code == "1200" || a.Type == AccountType.Receivable) && a.IsActive, ct)).FirstOrDefault()?.Id
-            ?? throw new BusinessRuleException("Debitor borclar (AR) üçün default hesab təyin edilməyib.");
+            ?? throw new MissingDefaultAccountException("Debitor borclar (AR) üçün default hesab təyin edilməyib.");
 
         var vatAccountId = company.DefaultOutputVatAccountId
             ?? (await _accountRepo.FindAsync(a => a.Code == "2250" && a.IsActive, ct)).FirstOrDefault()?.Id
             ?? (await _accountRepo.FindAsync(a => a.Type == AccountType.Tax && a.Category == AccountCategory.Liability && a.IsActive, ct)).FirstOrDefault()?.Id
-            ?? (await _accountRepo.FindAsync(a => (a.Code == "2250" || a.Type == AccountType.Tax) && a.IsActive, ct)).FirstOrDefault()?.Id
-            ?? throw new BusinessRuleException("Hesablanmış ƏDV üçün default hesab təyin edilməyib.");
+            ?? throw new MissingDefaultAccountException("Hesablanmış ƏDV üçün default hesab təyin edilməyib.");
 
         var defaultRevAccountId = company.DefaultRevenueAccountId 
-            ?? (await _accountRepo.FindAsync(a => (a.Code == "6010" || a.Type == AccountType.Revenue || a.Category == AccountCategory.Income) && a.IsActive, ct)).FirstOrDefault()?.Id;
+            ?? (await _accountRepo.FindAsync(a => (a.Code == "6010" || a.Type == AccountType.Revenue) && a.IsActive, ct)).FirstOrDefault()?.Id;
 
         // Post to GL:
         // Dr Accounts Receivable (GrandTotal)
@@ -738,7 +745,7 @@ public class AccountingService : IAccountingService
             var revAccId = (line.RevenueAccountId.HasValue && line.RevenueAccountId.Value != Guid.Empty
                 ? line.RevenueAccountId.Value
                 : defaultRevAccountId)
-                ?? throw new BusinessRuleException("Gəlir (Revenue) hesabı təyin edilməyib.");
+                ?? throw new MissingDefaultAccountException("Gəlir (Revenue) hesabı təyin edilməyib.");
 
             batch.Entries.Add(new LedgerEntry
             {
@@ -904,7 +911,7 @@ public class AccountingService : IAccountingService
         {
             var arAccountId = company.DefaultReceivableAccountId
                 ?? (await _accountRepo.FindAsync(a => (a.Code == "1200" || a.Type == AccountType.Receivable) && a.IsActive, ct)).FirstOrDefault()?.Id
-                ?? throw new BusinessRuleException("Debitor borclar (AR) hesabı təyin edilməyib.");
+                ?? throw new MissingDefaultAccountException("Debitor borclar (AR) hesabı təyin edilməyib.");
 
             // Dr Bank/Cash
             batch.Entries.Add(new LedgerEntry
@@ -951,7 +958,7 @@ public class AccountingService : IAccountingService
         {
             var apAccountId = company.DefaultPayableAccountId
                 ?? (await _accountRepo.FindAsync(a => (a.Code == "2100" || a.Type == AccountType.Payable) && a.IsActive, ct)).FirstOrDefault()?.Id
-                ?? throw new BusinessRuleException("Kreditor borclar (AP) hesabı təyin edilməyib.");
+                ?? throw new MissingDefaultAccountException("Kreditor borclar (AP) hesabı təyin edilməyib.");
 
             // Dr AP
             batch.Entries.Add(new LedgerEntry
@@ -1013,5 +1020,70 @@ public class AccountingService : IAccountingService
             UnallocatedAmount = payment.UnallocatedAmount,
             Status = payment.Status
         };
+    }
+
+    public async Task SeedTemplateAsync(CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.TenantId 
+            ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
+        await _tenantSeeder.SeedTenantDefaultsAsync(tenantId, ct);
+    }
+
+    public async Task<CompanyDefaultAccountsDto> GetDefaultAccountsAsync(CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.TenantId 
+            ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
+
+        var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault();
+        if (company == null)
+        {
+            await _tenantSeeder.SeedTenantDefaultsAsync(tenantId, ct);
+            company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
+                ?? throw new BusinessRuleException("Şirkət parametrləri qurulmayıb.");
+        }
+
+        return new CompanyDefaultAccountsDto
+        {
+            DefaultReceivableAccountId = company.DefaultReceivableAccountId,
+            DefaultPayableAccountId = company.DefaultPayableAccountId,
+            DefaultStockAccountId = company.DefaultStockAccountId,
+            DefaultGRNIAccountId = company.DefaultGRNIAccountId,
+            DefaultCOGSAccountId = company.DefaultCOGSAccountId,
+            DefaultRetainedEarningsAccountId = company.DefaultRetainedEarningsAccountId,
+            DefaultInputVatAccountId = company.DefaultInputVatAccountId,
+            DefaultOutputVatAccountId = company.DefaultOutputVatAccountId,
+            DefaultRevenueAccountId = company.DefaultRevenueAccountId,
+            DefaultFXGainLossAccountId = company.DefaultFXGainLossAccountId
+        };
+    }
+
+    public async Task<CompanyDefaultAccountsDto> UpdateDefaultAccountsAsync(CompanyDefaultAccountsDto dto, CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.TenantId 
+            ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
+
+        var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault();
+        if (company == null)
+        {
+            await _tenantSeeder.SeedTenantDefaultsAsync(tenantId, ct);
+            company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
+                ?? throw new BusinessRuleException("Şirkət parametrləri qurulmayıb.");
+        }
+
+        company.DefaultReceivableAccountId = dto.DefaultReceivableAccountId;
+        company.DefaultPayableAccountId = dto.DefaultPayableAccountId;
+        company.DefaultStockAccountId = dto.DefaultStockAccountId;
+        company.DefaultGRNIAccountId = dto.DefaultGRNIAccountId;
+        company.DefaultCOGSAccountId = dto.DefaultCOGSAccountId;
+        company.DefaultRetainedEarningsAccountId = dto.DefaultRetainedEarningsAccountId;
+        company.DefaultInputVatAccountId = dto.DefaultInputVatAccountId;
+        company.DefaultOutputVatAccountId = dto.DefaultOutputVatAccountId;
+        company.DefaultRevenueAccountId = dto.DefaultRevenueAccountId;
+        company.DefaultFXGainLossAccountId = dto.DefaultFXGainLossAccountId;
+
+        await _companyRepo.UpdateAsync(company, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return dto;
     }
 }

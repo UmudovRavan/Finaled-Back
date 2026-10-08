@@ -251,7 +251,7 @@ public class TreasuryService : ITreasuryService
 
         var apAccountId = company.DefaultPayableAccountId
             ?? (await _accountRepo.FindAsync(a => (a.Code == "2100" || a.Type == AccountType.Payable) && a.IsActive, ct)).FirstOrDefault()?.Id
-            ?? throw new BusinessRuleException("Kreditor borclar (AP) hesabı təyin edilməyib.");
+            ?? throw new MissingDefaultAccountException("Kreditor borclar (AP) hesabı təyin edilməyib.");
 
         var utcRunDate = DateTime.SpecifyKind(run.RunDate, DateTimeKind.Utc);
 

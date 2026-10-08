@@ -73,7 +73,14 @@ public class InternalWebhooksController : ControllerBase
             @event.UserId, @event.TenantId, @event.Email);
 
         // 1. Sync User into local table
-        await _userSyncService.SyncUserCreatedAsync(@event, cancellationToken);
+        try
+        {
+            await _userSyncService.SyncUserCreatedAsync(@event, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[AltensorAccounting] User sync xətası (UserId={UserId}): {Message}", @event.UserId, ex.Message);
+        }
 
         // 2. Ensure Tenant Defaults (Chart of Accounts, Company) are seeded
         try

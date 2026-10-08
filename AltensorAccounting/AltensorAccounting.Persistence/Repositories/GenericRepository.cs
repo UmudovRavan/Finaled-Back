@@ -23,6 +23,7 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
     }
 
     public IQueryable<T> Query() => _dbSet.Where(e => !e.IsDeleted);
+    public IQueryable<T> QueryIgnoreFilters() => _dbSet.IgnoreQueryFilters().Where(e => !e.IsDeleted);
 
     public virtual async Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default, params Expression<Func<T, object>>[] includes)
     {
@@ -35,6 +36,11 @@ public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
             }
         }
         return await query.FirstOrDefaultAsync(e => e.Id == id, ct);
+    }
+
+    public virtual async Task<T?> GetByIdIgnoreFiltersAsync(Guid id, CancellationToken ct = default)
+    {
+        return await QueryIgnoreFilters().FirstOrDefaultAsync(e => e.Id == id, ct);
     }
 
     public virtual async Task<List<T>> GetAllAsync(CancellationToken ct = default)

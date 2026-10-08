@@ -214,3 +214,17 @@ public class PaymentDto
     public decimal UnallocatedAmount { get; set; }
     public DocumentStatus Status { get; set; }
 }
+
+public class CompanyDefaultAccountsDto
+{
+    public Guid? DefaultReceivableAccountId { get; set; }
+    public Guid? DefaultPayableAccountId { get; set; }
+    public Guid? DefaultStockAccountId { get; set; }
+    public Guid? DefaultGRNIAccountId { get; set; }
+    public Guid? DefaultCOGSAccountId { get; set; }
+    public Guid? DefaultRetainedEarningsAccountId { get; set; }
+    public Guid? DefaultInputVatAccountId { get; set; }
+    public Guid? DefaultOutputVatAccountId { get; set; }
+    public Guid? DefaultRevenueAccountId { get; set; }
+    public Guid? DefaultFXGainLossAccountId { get; set; }
+}

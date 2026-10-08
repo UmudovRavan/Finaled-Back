@@ -6,6 +6,7 @@ using AltensorAccounting.Application.Services.Procurement;
 using AltensorAccounting.Application.Services.Valuation;
 using AltensorAccounting.Persistence.Data;
 using AltensorAccounting.Persistence.Repositories;
+using AltensorAccounting.Persistence.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,7 @@ public static class PersistenceServiceRegistration
         services.AddScoped<IThreeWayMatchService, ThreeWayMatchService>();
 
         // Application Services
+        services.AddScoped<ITenantSeeder, TenantSeeder>();
         services.AddScoped<IAccountingService, AccountingService>();
         services.AddScoped<IProcurementService, ProcurementService>();
         services.AddScoped<IInventoryService, InventoryService>();

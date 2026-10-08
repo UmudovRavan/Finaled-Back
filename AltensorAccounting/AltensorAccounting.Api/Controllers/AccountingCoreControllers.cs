@@ -35,6 +35,14 @@ public class AccountsController : ControllerBase
         var result = await _accountingService.CreateAccountAsync(dto, ct);
         return Ok(result);
     }
+
+    [HttpPost("seed-template")]
+    [ProducesResponseType(200)]
+    public async Task<IActionResult> SeedTemplate(CancellationToken ct)
+    {
+        await _accountingService.SeedTemplateAsync(ct);
+        return Ok(new { success = true, message = "Standart hesab planı və şirkət default hesabları uğurla quruldu." });
+    }
 }
 
 [ApiController]

@@ -11,6 +11,49 @@ namespace AltensorAccounting.Persistence.Data;
 
 public static class DbSeeder
 {
+    public record StandardAccountDefinition(
+        string Code,
+        string Name,
+        AccountCategory Category,
+        AccountType Type,
+        bool IsLeaf,
+        bool IsControl = false);
+
+    public static readonly StandardAccountDefinition[] StandardChart = new[]
+    {
+        // Assets (1000)
+        new StandardAccountDefinition("1000", "Dövriyyə Aktivləri", AccountCategory.Asset, AccountType.CurrentAsset, false),
+        new StandardAccountDefinition("1010", "Kassa", AccountCategory.Asset, AccountType.Cash, true, true),
+        new StandardAccountDefinition("1020", "Bank Hesablaşma Hesabı", AccountCategory.Asset, AccountType.Bank, true, true),
+        new StandardAccountDefinition("1100", "Mallar və Materiallar (Stok)", AccountCategory.Asset, AccountType.Stock, true, true),
+        new StandardAccountDefinition("1200", "Alıcıların Debitor Borcları (AR)", AccountCategory.Asset, AccountType.Receivable, true, true),
+        new StandardAccountDefinition("1250", "Əvəzləşdirilən ƏDV (Input VAT)", AccountCategory.Asset, AccountType.Tax, true, true),
+
+        // Liabilities (2000)
+        new StandardAccountDefinition("2000", "Qısamüddətli Öhdəliklər", AccountCategory.Liability, AccountType.CurrentLiability, false),
+        new StandardAccountDefinition("2100", "Təchizatçılara Kreditor Borclar (AP)", AccountCategory.Liability, AccountType.Payable, true, true),
+        new StandardAccountDefinition("2200", "Fakturalaşdırılmamış Mallar (GRNI)", AccountCategory.Liability, AccountType.GRNI, true, true),
+        new StandardAccountDefinition("2250", "Büdcəyə Hesablanmış ƏDV (Output VAT)", AccountCategory.Liability, AccountType.Tax, true, true),
+        new StandardAccountDefinition("2300", "Alınmış Müştəri Avansları", AccountCategory.Liability, AccountType.Payable, true, true),
+
+        // Equity (3000)
+        new StandardAccountDefinition("3000", "Kapital", AccountCategory.Equity, AccountType.Standard, false),
+        new StandardAccountDefinition("3010", "Nizamnamə Kapitalı", AccountCategory.Equity, AccountType.Standard, true),
+        new StandardAccountDefinition("3100", "Bölüşdürülməmiş Mənfəət / Zərər", AccountCategory.Equity, AccountType.RetainedEarnings, true, true),
+
+        // Revenue (6000)
+        new StandardAccountDefinition("6000", "Əsas Əməliyyat Gəlirləri", AccountCategory.Income, AccountType.Revenue, false),
+        new StandardAccountDefinition("6010", "Malların və Xidmətlərin Satış Gəliri", AccountCategory.Income, AccountType.Revenue, true),
+
+        // Expense (7000)
+        new StandardAccountDefinition("7000", "Əməliyyat Xərcləri", AccountCategory.Expense, AccountType.Expense, false),
+        new StandardAccountDefinition("7010", "Satılmış Malların Maya Dəyəri (COGS)", AccountCategory.Expense, AccountType.COGS, true, true),
+        new StandardAccountDefinition("7100", "Ümumi və İnzibati Xərclər", AccountCategory.Expense, AccountType.Expense, true),
+        new StandardAccountDefinition("7200", "Satış Xərcləri", AccountCategory.Expense, AccountType.Expense, true),
+        new StandardAccountDefinition("7300", "Bank Xidmət Xərcləri", AccountCategory.Expense, AccountType.Expense, true),
+        new StandardAccountDefinition("7400", "Məzənnə Fərqi Xərci / Zərəri", AccountCategory.Expense, AccountType.Expense, true)
+    };
+
     public static async Task SeedTenantAccountingDefaultsAsync(AppDbContext context, Guid tenantId, ILogger logger)
     {
         // 1. Company Defaults
@@ -29,94 +72,72 @@ public static class DbSeeder
             await context.SaveChangesAsync();
         }
 
-        // 2. Default Chart of Accounts for Azerbaijan Accounting Standards
-        var existingAccounts = await context.Accounts.IgnoreQueryFilters().Where(a => a.TenantId == tenantId).ToListAsync();
-        if (!existingAccounts.Any())
+        // 2. Default Chart of Accounts for Azerbaijan Accounting Standards (Idempotent: adds missing accounts)
+        var existingAccounts = await context.Accounts
+            .IgnoreQueryFilters()
+            .Where(a => a.TenantId == tenantId && !a.IsDeleted)
+            .ToListAsync();
+
+        var byCode = existingAccounts.GroupBy(a => a.Code).ToDictionary(g => g.Key, g => g.First());
+
+        bool accountsAdded = false;
+        foreach (var def in StandardChart)
         {
-            logger.LogInformation("Seeding standard Chart of Accounts for Tenant {TenantId}...", tenantId);
-
-            var accounts = new List<Account>
+            if (!byCode.ContainsKey(def.Code))
             {
-                // Assets (1000)
-                new Account { TenantId = tenantId, Code = "1000", Name = "Dövriyyə Aktivləri", Category = AccountCategory.Asset, Type = AccountType.CurrentAsset, IsLeaf = false },
-                new Account { TenantId = tenantId, Code = "1010", Name = "Kassa", Category = AccountCategory.Asset, Type = AccountType.Cash, IsLeaf = true, IsControlAccount = true },
-                new Account { TenantId = tenantId, Code = "1020", Name = "Bank Hesablaşma Hesabı", Category = AccountCategory.Asset, Type = AccountType.Bank, IsLeaf = true, IsControlAccount = true },
-                new Account { TenantId = tenantId, Code = "1100", Name = "Mallar və Materiallar (Stok)", Category = AccountCategory.Asset, Type = AccountType.Stock, IsLeaf = true, IsControlAccount = true },
-                new Account { TenantId = tenantId, Code = "1200", Name = "Alıcıların Debitor Borcları (AR)", Category = AccountCategory.Asset, Type = AccountType.Receivable, IsLeaf = true, IsControlAccount = true },
-                new Account { TenantId = tenantId, Code = "1250", Name = "Əvəzləşdirilən ƏDV (Input VAT)", Category = AccountCategory.Asset, Type = AccountType.Tax, IsLeaf = true, IsControlAccount = true },
-
-                // Liabilities (2000)
-                new Account { TenantId = tenantId, Code = "2000", Name = "Qısamüddətli Öhdəliklər", Category = AccountCategory.Liability, Type = AccountType.CurrentLiability, IsLeaf = false },
-                new Account { TenantId = tenantId, Code = "2100", Name = "Təchizatçılara Kreditor Borclar (AP)", Category = AccountCategory.Liability, Type = AccountType.Payable, IsLeaf = true, IsControlAccount = true },
-                new Account { TenantId = tenantId, Code = "2200", Name = "Fakturalaşdırılmamış Mallar (GRNI)", Category = AccountCategory.Liability, Type = AccountType.GRNI, IsLeaf = true, IsControlAccount = true },
-                new Account { TenantId = tenantId, Code = "2250", Name = "Büdcəyə Hesablanmış ƏDV (Output VAT)", Category = AccountCategory.Liability, Type = AccountType.Tax, IsLeaf = true, IsControlAccount = true },
-                new Account { TenantId = tenantId, Code = "2300", Name = "Alınmış Müştəri Avansları", Category = AccountCategory.Liability, Type = AccountType.Payable, IsLeaf = true, IsControlAccount = true },
-
-                // Equity (3000)
-                new Account { TenantId = tenantId, Code = "3000", Name = "Kapital", Category = AccountCategory.Equity, Type = AccountType.Standard, IsLeaf = false },
-                new Account { TenantId = tenantId, Code = "3010", Name = "Nizamnamə Kapitalı", Category = AccountCategory.Equity, Type = AccountType.Standard, IsLeaf = true },
-                new Account { TenantId = tenantId, Code = "3100", Name = "Bölüşdürülməmiş Mənfəət / Zərər", Category = AccountCategory.Equity, Type = AccountType.RetainedEarnings, IsLeaf = true, IsControlAccount = true },
-
-                // Revenue (6000)
-                new Account { TenantId = tenantId, Code = "6000", Name = "Əsas Əməliyyat Gəlirləri", Category = AccountCategory.Income, Type = AccountType.Revenue, IsLeaf = false },
-                new Account { TenantId = tenantId, Code = "6010", Name = "Malların və Xidmətlərin Satış Gəliri", Category = AccountCategory.Income, Type = AccountType.Revenue, IsLeaf = true },
-
-                // Expense (7000)
-                new Account { TenantId = tenantId, Code = "7000", Name = "Əməliyyat Xərcləri", Category = AccountCategory.Expense, Type = AccountType.Expense, IsLeaf = false },
-                new Account { TenantId = tenantId, Code = "7010", Name = "Satılmış Malların Maya Dəyəri (COGS)", Category = AccountCategory.Expense, Type = AccountType.COGS, IsLeaf = true, IsControlAccount = true },
-                new Account { TenantId = tenantId, Code = "7100", Name = "Ümumi və İnzibati Xərclər", Category = AccountCategory.Expense, Type = AccountType.Expense, IsLeaf = true },
-                new Account { TenantId = tenantId, Code = "7200", Name = "Satış Xərcləri", Category = AccountCategory.Expense, Type = AccountType.Expense, IsLeaf = true },
-                new Account { TenantId = tenantId, Code = "7300", Name = "Bank Xidmət Xərcləri", Category = AccountCategory.Expense, Type = AccountType.Expense, IsLeaf = true },
-                new Account { TenantId = tenantId, Code = "7400", Name = "Məzənnə Fərqi Xərci / Zərəri", Category = AccountCategory.Expense, Type = AccountType.Expense, IsLeaf = true }
-            };
-
-            await context.Accounts.AddRangeAsync(accounts);
-            await context.SaveChangesAsync();
-
-            // Link Company Default Control Accounts
-            company.DefaultReceivableAccountId = accounts.First(a => a.Code == "1200").Id;
-            company.DefaultPayableAccountId = accounts.First(a => a.Code == "2100").Id;
-            company.DefaultStockAccountId = accounts.First(a => a.Code == "1100").Id;
-            company.DefaultGRNIAccountId = accounts.First(a => a.Code == "2200").Id;
-            company.DefaultCOGSAccountId = accounts.First(a => a.Code == "7010").Id;
-            company.DefaultRevenueAccountId = accounts.First(a => a.Code == "6010").Id;
-            company.DefaultRetainedEarningsAccountId = accounts.First(a => a.Code == "3100").Id;
-            company.DefaultInputVatAccountId = accounts.First(a => a.Code == "1250").Id;
-            company.DefaultOutputVatAccountId = accounts.First(a => a.Code == "2250").Id;
-            company.DefaultFXGainLossAccountId = accounts.First(a => a.Code == "7400").Id;
-
-            await context.SaveChangesAsync();
-            logger.LogInformation("Standard Chart of Accounts successfully seeded for Tenant {TenantId}.", tenantId);
-        }
-        else
-        {
-            bool updated = false;
-            var accDict = existingAccounts.GroupBy(a => a.Code).ToDictionary(g => g.Key, g => g.First().Id);
-
-            Guid? FindAccId(string code, AccountType? type = null, AccountCategory? category = null) =>
-                accDict.TryGetValue(code, out var id) ? id
-                : (type.HasValue ? existingAccounts.FirstOrDefault(a => a.Type == type.Value)?.Id
-                : (category.HasValue ? existingAccounts.FirstOrDefault(a => a.Category == category.Value && a.IsLeaf)?.Id : null));
-
-            if (!company.DefaultReceivableAccountId.HasValue) { company.DefaultReceivableAccountId = FindAccId("1200", AccountType.Receivable); updated = true; }
-            if (!company.DefaultPayableAccountId.HasValue) { company.DefaultPayableAccountId = FindAccId("2100", AccountType.Payable); updated = true; }
-            if (!company.DefaultStockAccountId.HasValue) { company.DefaultStockAccountId = FindAccId("1100", AccountType.Stock); updated = true; }
-            if (!company.DefaultGRNIAccountId.HasValue) { company.DefaultGRNIAccountId = FindAccId("2200", AccountType.GRNI); updated = true; }
-            if (!company.DefaultCOGSAccountId.HasValue) { company.DefaultCOGSAccountId = FindAccId("7010", AccountType.COGS); updated = true; }
-            if (!company.DefaultRevenueAccountId.HasValue) { company.DefaultRevenueAccountId = FindAccId("6010", AccountType.Revenue, AccountCategory.Income); updated = true; }
-            if (!company.DefaultInputVatAccountId.HasValue) { company.DefaultInputVatAccountId = FindAccId("1250", AccountType.Tax); updated = true; }
-            if (!company.DefaultOutputVatAccountId.HasValue) { company.DefaultOutputVatAccountId = FindAccId("2250", AccountType.Tax); updated = true; }
-            if (!company.DefaultRetainedEarningsAccountId.HasValue) { company.DefaultRetainedEarningsAccountId = FindAccId("3100", AccountType.RetainedEarnings); updated = true; }
-            if (!company.DefaultFXGainLossAccountId.HasValue) { company.DefaultFXGainLossAccountId = FindAccId("7400", AccountType.Expense); updated = true; }
-
-            if (updated)
-            {
-                await context.SaveChangesAsync();
-                logger.LogInformation("Company Default Accounts patched for Tenant {TenantId}.", tenantId);
+                var acc = new Account
+                {
+                    TenantId = tenantId,
+                    Code = def.Code,
+                    Name = def.Name,
+                    Category = def.Category,
+                    Type = def.Type,
+                    IsLeaf = def.IsLeaf,
+                    IsControlAccount = def.IsControl,
+                    IsActive = true
+                };
+                await context.Accounts.AddAsync(acc);
+                byCode[def.Code] = acc;
+                accountsAdded = true;
             }
         }
 
-        // 3. Ensure Fiscal Year and Accounting Periods exist for tenant
+        if (accountsAdded)
+        {
+            await context.SaveChangesAsync();
+            logger.LogInformation("Added missing standard accounts for Tenant {TenantId}.", tenantId);
+        }
+
+        // 3. Link Company Default Control Accounts (Idempotent: fills any empty defaults)
+        bool companyUpdated = false;
+
+        void EnsureDefault(ref Guid? current, string code)
+        {
+            if ((!current.HasValue || current.Value == Guid.Empty) && byCode.TryGetValue(code, out var acc))
+            {
+                current = acc.Id;
+                companyUpdated = true;
+            }
+        }
+
+        var recv = company.DefaultReceivableAccountId; EnsureDefault(ref recv, "1200"); company.DefaultReceivableAccountId = recv;
+        var pay = company.DefaultPayableAccountId; EnsureDefault(ref pay, "2100"); company.DefaultPayableAccountId = pay;
+        var stock = company.DefaultStockAccountId; EnsureDefault(ref stock, "1100"); company.DefaultStockAccountId = stock;
+        var grni = company.DefaultGRNIAccountId; EnsureDefault(ref grni, "2200"); company.DefaultGRNIAccountId = grni;
+        var cogs = company.DefaultCOGSAccountId; EnsureDefault(ref cogs, "7010"); company.DefaultCOGSAccountId = cogs;
+        var rev = company.DefaultRevenueAccountId; EnsureDefault(ref rev, "6010"); company.DefaultRevenueAccountId = rev;
+        var re = company.DefaultRetainedEarningsAccountId; EnsureDefault(ref re, "3100"); company.DefaultRetainedEarningsAccountId = re;
+        var inVat = company.DefaultInputVatAccountId; EnsureDefault(ref inVat, "1250"); company.DefaultInputVatAccountId = inVat;
+        var outVat = company.DefaultOutputVatAccountId; EnsureDefault(ref outVat, "2250"); company.DefaultOutputVatAccountId = outVat;
+        var fx = company.DefaultFXGainLossAccountId; EnsureDefault(ref fx, "7400"); company.DefaultFXGainLossAccountId = fx;
+
+        if (companyUpdated)
+        {
+            await context.SaveChangesAsync();
+            logger.LogInformation("Company Default Accounts linked for Tenant {TenantId}.", tenantId);
+        }
+
+        // 4. Ensure Fiscal Year and Accounting Periods exist for tenant
         var currentYear = DateTime.UtcNow.Year;
         var hasFiscalYear = await context.FiscalYears.IgnoreQueryFilters().AnyAsync(y => y.TenantId == tenantId);
         if (!hasFiscalYear)
@@ -156,130 +177,27 @@ public static class DbSeeder
     {
         try
         {
-            var companies = await context.Companies.IgnoreQueryFilters().ToListAsync();
-            if (!companies.Any()) return;
+            var companyTenantIds = await context.Companies.IgnoreQueryFilters().Select(c => c.TenantId).ToListAsync();
+            var userTenantIds = await context.Users.IgnoreQueryFilters().Select(u => u.TenantId).ToListAsync();
+            var accountTenantIds = await context.Accounts.IgnoreQueryFilters().Select(a => a.TenantId).ToListAsync();
 
-            foreach (var company in companies)
+            var allTenantIds = companyTenantIds
+                .Concat(userTenantIds)
+                .Concat(accountTenantIds)
+                .Where(id => id != Guid.Empty)
+                .Distinct()
+                .ToList();
+
+            if (!allTenantIds.Any()) return;
+
+            foreach (var tenantId in allTenantIds)
             {
-                var tenantAccounts = await context.Accounts
-                    .IgnoreQueryFilters()
-                    .Where(a => a.TenantId == company.TenantId)
-                    .ToListAsync();
-
-                if (!tenantAccounts.Any()) continue;
-
-                bool modified = false;
-
-                Guid? GetAccId(string code, AccountType? type = null, AccountCategory? category = null) => 
-                    tenantAccounts.FirstOrDefault(a => a.Code == code)?.Id
-                    ?? (type.HasValue ? tenantAccounts.FirstOrDefault(a => a.Type == type.Value)?.Id : null)
-                    ?? (category.HasValue ? tenantAccounts.FirstOrDefault(a => a.Category == category.Value && a.IsLeaf)?.Id : null);
-
-                if (!company.DefaultRevenueAccountId.HasValue || company.DefaultRevenueAccountId == Guid.Empty)
-                {
-                    var id = GetAccId("6010", AccountType.Revenue, AccountCategory.Income);
-                    if (id.HasValue) { company.DefaultRevenueAccountId = id; modified = true; }
-                }
-
-                if (!company.DefaultStockAccountId.HasValue || company.DefaultStockAccountId == Guid.Empty)
-                {
-                    var id = GetAccId("1100", AccountType.Stock);
-                    if (id.HasValue) { company.DefaultStockAccountId = id; modified = true; }
-                }
-
-                if (!company.DefaultGRNIAccountId.HasValue || company.DefaultGRNIAccountId == Guid.Empty)
-                {
-                    var id = GetAccId("2200", AccountType.GRNI);
-                    if (id.HasValue) { company.DefaultGRNIAccountId = id; modified = true; }
-                }
-
-                if (!company.DefaultReceivableAccountId.HasValue || company.DefaultReceivableAccountId == Guid.Empty)
-                {
-                    var id = GetAccId("1200", AccountType.Receivable);
-                    if (id.HasValue) { company.DefaultReceivableAccountId = id; modified = true; }
-                }
-
-                if (!company.DefaultPayableAccountId.HasValue || company.DefaultPayableAccountId == Guid.Empty)
-                {
-                    var id = GetAccId("2100", AccountType.Payable);
-                    if (id.HasValue) { company.DefaultPayableAccountId = id; modified = true; }
-                }
-
-                if (!company.DefaultCOGSAccountId.HasValue || company.DefaultCOGSAccountId == Guid.Empty)
-                {
-                    var id = GetAccId("7010", AccountType.COGS);
-                    if (id.HasValue) { company.DefaultCOGSAccountId = id; modified = true; }
-                }
-
-                if (!company.DefaultInputVatAccountId.HasValue || company.DefaultInputVatAccountId == Guid.Empty)
-                {
-                    var id = GetAccId("1250", AccountType.Tax);
-                    if (id.HasValue) { company.DefaultInputVatAccountId = id; modified = true; }
-                }
-
-                if (!company.DefaultOutputVatAccountId.HasValue || company.DefaultOutputVatAccountId == Guid.Empty)
-                {
-                    var id = GetAccId("2250", AccountType.Tax);
-                    if (id.HasValue) { company.DefaultOutputVatAccountId = id; modified = true; }
-                }
-
-                if (!company.DefaultRetainedEarningsAccountId.HasValue || company.DefaultRetainedEarningsAccountId == Guid.Empty)
-                {
-                    var id = GetAccId("3100", AccountType.RetainedEarnings);
-                    if (id.HasValue) { company.DefaultRetainedEarningsAccountId = id; modified = true; }
-                }
-
-                if (!company.DefaultFXGainLossAccountId.HasValue || company.DefaultFXGainLossAccountId == Guid.Empty)
-                {
-                    var id = GetAccId("7400", AccountType.Expense);
-                    if (id.HasValue) { company.DefaultFXGainLossAccountId = id; modified = true; }
-                }
-
-                if (modified)
-                {
-                    await context.SaveChangesAsync();
-                    logger.LogInformation("Company defaults successfully patched for Tenant {TenantId}.", company.TenantId);
-                }
-
-                // Ensure Fiscal Year and Periods exist for this company/tenant on startup
-                var hasFiscalYear = await context.FiscalYears.IgnoreQueryFilters().AnyAsync(y => y.TenantId == company.TenantId);
-                if (!hasFiscalYear)
-                {
-                    var currentYear = DateTime.UtcNow.Year;
-                    var fiscalYear = new FiscalYear
-                    {
-                        TenantId = company.TenantId,
-                        Name = $"FY-{currentYear}",
-                        StartDate = DateTime.SpecifyKind(new DateTime(currentYear, 1, 1), DateTimeKind.Utc),
-                        EndDate = DateTime.SpecifyKind(new DateTime(currentYear, 12, 31), DateTimeKind.Utc),
-                        IsClosed = false
-                    };
-
-                    for (int month = 1; month <= 12; month++)
-                    {
-                        var startDate = DateTime.SpecifyKind(new DateTime(currentYear, month, 1), DateTimeKind.Utc);
-                        var endDate = DateTime.SpecifyKind(startDate.AddMonths(1).AddDays(-1), DateTimeKind.Utc);
-
-                        fiscalYear.Periods.Add(new AccountingPeriod
-                        {
-                            TenantId = company.TenantId,
-                            Name = $"{currentYear}-{month:D2}",
-                            PeriodNumber = month,
-                            StartDate = startDate,
-                            EndDate = endDate,
-                            Status = FiscalPeriodStatus.Open
-                        });
-                    }
-
-                    await context.FiscalYears.AddAsync(fiscalYear);
-                    await context.SaveChangesAsync();
-                    logger.LogInformation("Startup: Fiscal Year FY-{Year} and 12 monthly periods seeded for Tenant {TenantId}.", currentYear, company.TenantId);
-                }
+                await SeedTenantAccountingDefaultsAsync(context, tenantId, logger);
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to automatically patch company defaults: {Message}", ex.Message);
+            logger.LogError(ex, "Failed to automatically patch tenant defaults on startup: {Message}", ex.Message);
         }
     }
 }

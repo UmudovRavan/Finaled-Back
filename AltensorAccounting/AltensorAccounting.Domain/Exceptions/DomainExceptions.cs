@@ -4,8 +4,25 @@ namespace AltensorAccounting.Domain.Exceptions;
 
 public class BusinessRuleException : Exception
 {
-    public BusinessRuleException(string message) : base(message) { }
-    public BusinessRuleException(string message, Exception innerException) : base(message, innerException) { }
+    public string ErrorCode { get; set; }
+
+    public BusinessRuleException(string message, string errorCode = "BUSINESS_RULE_ERROR") : base(message)
+    {
+        ErrorCode = errorCode;
+    }
+
+    public BusinessRuleException(string message, Exception innerException, string errorCode = "BUSINESS_RULE_ERROR") : base(message, innerException)
+    {
+        ErrorCode = errorCode;
+    }
+}
+
+public class MissingDefaultAccountException : BusinessRuleException
+{
+    public MissingDefaultAccountException(string message)
+        : base(message, "MISSING_DEFAULT_ACCOUNT")
+    {
+    }
 }
 
 public class PostingUnbalancedException : BusinessRuleException

@@ -38,6 +38,11 @@ public interface IAccountingService
     Task<CustomerInvoiceDto> PostCustomerInvoiceAsync(Guid invoiceId, CancellationToken ct = default);
     Task<PaymentDto> CreatePaymentAsync(CreatePaymentDto dto, CancellationToken ct = default);
     Task<PaymentDto> PostPaymentAsync(Guid paymentId, CancellationToken ct = default);
+
+    // Tenant Defaults & Seed Template
+    Task SeedTemplateAsync(CancellationToken ct = default);
+    Task<CompanyDefaultAccountsDto> GetDefaultAccountsAsync(CancellationToken ct = default);
+    Task<CompanyDefaultAccountsDto> UpdateDefaultAccountsAsync(CompanyDefaultAccountsDto dto, CancellationToken ct = default);
 }
 
 public interface IProcurementService

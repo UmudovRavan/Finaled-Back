@@ -27,6 +27,7 @@ public class InventoryService : IInventoryService
     private readonly IPostingEngine _postingEngine;
     private readonly ICurrentTenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ITenantSeeder _tenantSeeder;
     private readonly Microsoft.Extensions.Logging.ILogger<InventoryService> _logger;
 
     public InventoryService(
@@ -40,6 +41,7 @@ public class InventoryService : IInventoryService
         IPostingEngine postingEngine,
         ICurrentTenantService tenantService,
         IUnitOfWork unitOfWork,
+        ITenantSeeder tenantSeeder,
         Microsoft.Extensions.Logging.ILogger<InventoryService> logger)
     {
         _itemRepo = itemRepo;
@@ -52,6 +54,7 @@ public class InventoryService : IInventoryService
         _postingEngine = postingEngine;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
+        _tenantSeeder = tenantSeeder;
         _logger = logger;
     }
 
@@ -238,18 +241,27 @@ public class InventoryService : IInventoryService
             throw new DuplicatePostingException(tx.TransactionNumber);
         }
 
-        var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
-            ?? throw new BusinessRuleException("Şirkət parametrləri qurulmayıb.");
+        var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault();
+        if (company == null || !company.DefaultStockAccountId.HasValue || (tx.Type == StockTransactionType.Issue && !company.DefaultCOGSAccountId.HasValue))
+        {
+            await _tenantSeeder.SeedTenantDefaultsAsync(tx.TenantId, ct);
+            company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
+                ?? throw new BusinessRuleException("Şirkət parametrləri qurulmayıb.");
+        }
 
         var allAccounts = await _accountRepo.GetAllAsync(ct);
 
-        var stockAccountId = company.DefaultStockAccountId
-            ?? allAccounts.FirstOrDefault(a => a.Code == "1100" || a.Type == AccountType.Stock || (a.Category == AccountCategory.Asset && a.IsLeaf))?.Id
-            ?? throw new BusinessRuleException("Anbar (Inventory) hesabı təyin edilməyib.");
+        var stockAccountId = company?.DefaultStockAccountId
+            ?? allAccounts.FirstOrDefault(a => a.Code == "1100" || a.Type == AccountType.Stock)?.Id
+            ?? throw new MissingDefaultAccountException("Anbar (Inventory) hesabı təyin edilməyib.");
 
-        var cogsAccountId = company.DefaultCOGSAccountId
-            ?? allAccounts.FirstOrDefault(a => a.Code == "7010" || a.Type == AccountType.COGS || (a.Category == AccountCategory.Expense && a.IsLeaf))?.Id
-            ?? throw new BusinessRuleException("Maya dəyəri (COGS) hesabı təyin edilməyib.");
+        Guid? cogsAccountId = null;
+        if (tx.Type == StockTransactionType.Issue)
+        {
+            cogsAccountId = company?.DefaultCOGSAccountId
+                ?? allAccounts.FirstOrDefault(a => a.Code == "7010" || a.Type == AccountType.COGS)?.Id
+                ?? throw new MissingDefaultAccountException("Maya dəyəri (COGS) hesabı təyin edilməyib.");
+        }
 
         decimal totalMovementCost = 0;
 
@@ -329,10 +341,12 @@ public class InventoryService : IInventoryService
             // Dr COGS
             batch.Entries.Add(new LedgerEntry
             {
-                AccountId = cogsAccountId,
+                AccountId = cogsAccountId!.Value,
                 DebitBase = totalMovementCost,
                 CreditBase = 0,
+                TransactionCurrency = company?.BaseCurrency ?? "AZN",
                 TransactionAmount = totalMovementCost,
+                ExchangeRate = 1.0m,
                 LineDescription = $"COGS for Issue {tx.TransactionNumber}"
             });
 
@@ -342,7 +356,9 @@ public class InventoryService : IInventoryService
                 AccountId = stockAccountId,
                 DebitBase = 0,
                 CreditBase = totalMovementCost,
+                TransactionCurrency = company?.BaseCurrency ?? "AZN",
                 TransactionAmount = -totalMovementCost,
+                ExchangeRate = 1.0m,
                 LineDescription = $"Inventory Reduction for {tx.TransactionNumber}"
             });
 
@@ -350,9 +366,9 @@ public class InventoryService : IInventoryService
         }
         else if (tx.Type == StockTransactionType.Receipt && totalMovementCost > 0)
         {
-            var grniOrGainAccountId = company.DefaultGRNIAccountId
+            var grniOrGainAccountId = company?.DefaultGRNIAccountId
                 ?? allAccounts.FirstOrDefault(a => a.Code == "2200" || a.Type == AccountType.GRNI)?.Id
-                ?? cogsAccountId;
+                ?? throw new MissingDefaultAccountException("Mədaxil korrespondensiyası üçün GRNI və ya tənzimləmə hesabı təyin edilməyib.");
 
             var batch = new PostingBatch
             {
@@ -369,7 +385,9 @@ public class InventoryService : IInventoryService
                 AccountId = stockAccountId,
                 DebitBase = totalMovementCost,
                 CreditBase = 0,
+                TransactionCurrency = company?.BaseCurrency ?? "AZN",
                 TransactionAmount = totalMovementCost,
+                ExchangeRate = 1.0m,
                 LineDescription = $"Inventory Inflow for {tx.TransactionNumber}"
             });
 
@@ -379,7 +397,9 @@ public class InventoryService : IInventoryService
                 AccountId = grniOrGainAccountId,
                 DebitBase = 0,
                 CreditBase = totalMovementCost,
+                TransactionCurrency = company?.BaseCurrency ?? "AZN",
                 TransactionAmount = -totalMovementCost,
+                ExchangeRate = 1.0m,
                 LineDescription = $"Inventory Adjustment Inflow for {tx.TransactionNumber}"
             });
 
