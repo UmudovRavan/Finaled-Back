@@ -19,6 +19,30 @@ public class CompanyController : ControllerBase
         _accountingService = accountingService;
     }
 
+    [HttpGet]
+    [ProducesResponseType(typeof(CompanyProfileDto), 200)]
+    public async Task<ActionResult<CompanyProfileDto>> GetProfile(CancellationToken ct)
+    {
+        var result = await _accountingService.GetCompanyProfileAsync(ct);
+        return Ok(result);
+    }
+
+    [HttpPut]
+    [ProducesResponseType(typeof(CompanyProfileDto), 200)]
+    public async Task<ActionResult<CompanyProfileDto>> UpdateProfile([FromBody] UpdateCompanyProfileDto dto, CancellationToken ct)
+    {
+        var result = await _accountingService.UpdateCompanyProfileAsync(dto, ct);
+        return Ok(result);
+    }
+
+    [HttpGet("header")]
+    [ProducesResponseType(typeof(CompanyHeaderDto), 200)]
+    public async Task<ActionResult<CompanyHeaderDto>> GetHeader(CancellationToken ct)
+    {
+        var result = await _accountingService.GetCompanyHeaderAsync(ct);
+        return Ok(result);
+    }
+
     [HttpGet("default-accounts")]
     [ProducesResponseType(typeof(CompanyDefaultAccountsDto), 200)]
     public async Task<ActionResult<CompanyDefaultAccountsDto>> GetDefaultAccounts(CancellationToken ct)

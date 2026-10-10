@@ -34,7 +34,11 @@ builder.Services.AddPersistenceServices(builder.Configuration);
 builder.Services.AddAltensorAuthentication(builder.Configuration);
 
 // 4. Controllers & JSON Options
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 // 4b. CORS
 builder.Services.AddCors(options =>

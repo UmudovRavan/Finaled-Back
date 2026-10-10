@@ -28,12 +28,58 @@ public class AccountsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("tree")]
+    [ProducesResponseType(typeof(List<AccountTreeNodeDto>), 200)]
+    public async Task<ActionResult<List<AccountTreeNodeDto>>> GetAccountTree(CancellationToken ct)
+    {
+        var result = await _accountingService.GetAccountTreeAsync(ct);
+        return Ok(result);
+    }
+
+    [HttpGet("balances")]
+    [ProducesResponseType(typeof(List<AccountBalanceRowDto>), 200)]
+    public async Task<ActionResult<List<AccountBalanceRowDto>>> GetAccountBalances(
+        [FromQuery] DateTime? fromDate,
+        [FromQuery] DateTime? toDate,
+        [FromQuery] string? search,
+        [FromQuery] bool includeZeroBalance = false,
+        [FromQuery] string? currency = "AZN",
+        CancellationToken ct = default)
+    {
+        var result = await _accountingService.GetAccountBalancesAsync(fromDate, toDate, search, includeZeroBalance, currency, ct);
+        return Ok(result);
+    }
+
+    [HttpGet("types")]
+    [ProducesResponseType(typeof(List<AccountTypeOptionDto>), 200)]
+    public async Task<ActionResult<List<AccountTypeOptionDto>>> GetAccountTypes(CancellationToken ct)
+    {
+        var result = await _accountingService.GetAccountTypesAsync(ct);
+        return Ok(result);
+    }
+
+    [HttpGet("subcategories")]
+    [ProducesResponseType(typeof(List<CategorySubcategoryMappingDto>), 200)]
+    public async Task<ActionResult<List<CategorySubcategoryMappingDto>>> GetSubcategories(CancellationToken ct)
+    {
+        var result = await _accountingService.GetSubcategoriesAsync(ct);
+        return Ok(result);
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(AccountDto), 200)]
     public async Task<ActionResult<AccountDto>> CreateAccount([FromBody] CreateAccountDto dto, CancellationToken ct)
     {
         var result = await _accountingService.CreateAccountAsync(dto, ct);
         return Ok(result);
+    }
+
+    [HttpPost("initial-balances")]
+    [ProducesResponseType(200)]
+    public async Task<IActionResult> SetInitialBalances([FromBody] SetInitialBalancesDto dto, CancellationToken ct)
+    {
+        await _accountingService.SetInitialBalancesAsync(dto, ct);
+        return Ok(new { success = true, message = "İlkin qalıqlar uğurla daxil edildi və audit qeydi yaradıldı." });
     }
 
     [HttpPost("seed-template")]

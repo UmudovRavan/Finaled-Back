@@ -30,6 +30,8 @@ public class AccountingService : IAccountingService
     private readonly IGenericRepository<Company> _companyRepo;
     private readonly IGenericRepository<BankAccount> _bankRepo;
     private readonly IGenericRepository<CashDesk> _cashRepo;
+    private readonly IGenericRepository<LedgerEntry> _ledgerRepo;
+    private readonly IGenericRepository<InitialBalanceAuditLog> _auditLogRepo;
     private readonly IPostingEngine _postingEngine;
     private readonly ICurrentTenantService _tenantService;
     private readonly IUnitOfWork _unitOfWork;
@@ -48,6 +50,8 @@ public class AccountingService : IAccountingService
         IGenericRepository<Company> companyRepo,
         IGenericRepository<BankAccount> bankRepo,
         IGenericRepository<CashDesk> cashRepo,
+        IGenericRepository<LedgerEntry> ledgerRepo,
+        IGenericRepository<InitialBalanceAuditLog> auditLogRepo,
         IPostingEngine postingEngine,
         ICurrentTenantService tenantService,
         IUnitOfWork unitOfWork,
@@ -65,6 +69,8 @@ public class AccountingService : IAccountingService
         _companyRepo = companyRepo;
         _bankRepo = bankRepo;
         _cashRepo = cashRepo;
+        _ledgerRepo = ledgerRepo;
+        _auditLogRepo = auditLogRepo;
         _postingEngine = postingEngine;
         _tenantService = tenantService;
         _unitOfWork = unitOfWork;
@@ -76,19 +82,214 @@ public class AccountingService : IAccountingService
     public async Task<List<AccountDto>> GetAccountsAsync(CancellationToken ct = default)
     {
         var accounts = await _accountRepo.GetAllAsync(ct);
-        return accounts.Select(a => new AccountDto
+        var entries = await _ledgerRepo.GetAllAsync(ct);
+
+        var accountDict = accounts.ToDictionary(a => a.Id);
+        var childrenLookup = accounts.Where(a => a.ParentAccountId.HasValue).ToLookup(a => a.ParentAccountId!.Value);
+
+        int CalculateLevel(Account a)
         {
-            Id = a.Id,
-            Code = a.Code,
-            Name = a.Name,
-            Category = a.Category,
-            Type = a.Type,
-            ParentAccountId = a.ParentAccountId,
-            IsLeaf = a.IsLeaf,
-            IsControlAccount = a.IsControlAccount,
-            IsActive = a.IsActive,
-            Currency = a.Currency
-        }).OrderBy(a => a.Code).ToList();
+            int lvl = 0;
+            var current = a;
+            while (current.ParentAccountId.HasValue && accountDict.TryGetValue(current.ParentAccountId.Value, out var parent))
+            {
+                lvl++;
+                current = parent;
+                if (lvl > 10) break;
+            }
+            return lvl;
+        }
+
+        var result = new List<AccountDto>();
+        foreach (var a in accounts.OrderBy(a => a.Code))
+        {
+            var accEntries = entries.Where(e => e.AccountId == a.Id).ToList();
+            var debit = accEntries.Sum(e => e.DebitBase);
+            var credit = accEntries.Sum(e => e.CreditBase);
+            var balance = (a.Category == AccountCategory.Asset || a.Category == AccountCategory.Expense)
+                ? (debit - credit)
+                : (credit - debit);
+
+            result.Add(new AccountDto
+            {
+                Id = a.Id,
+                Code = a.Code,
+                Name = a.Name,
+                Category = a.Category,
+                CategoryName = AccountingMetadataHelper.GetCategoryName(a.Category),
+                Subcategory = a.Subcategory,
+                SubcategoryName = AccountingMetadataHelper.GetSubcategoryName(a.Subcategory),
+                Type = a.Type,
+                TypeName = AccountingMetadataHelper.GetAccountTypeName(a.Type),
+                ParentAccountId = a.ParentAccountId,
+                Level = CalculateLevel(a),
+                HasChildren = childrenLookup.Contains(a.Id),
+                IsLeaf = a.IsLeaf,
+                IsControlAccount = a.IsControlAccount,
+                IsActive = a.IsActive,
+                CurrentBalance = balance,
+                OpeningDebit = 0,
+                OpeningCredit = 0,
+                TurnoverDebit = debit,
+                TurnoverCredit = credit,
+                ClosingDebit = (balance > 0 && (a.Category == AccountCategory.Asset || a.Category == AccountCategory.Expense)) ? balance : 0,
+                ClosingCredit = (balance > 0 && (a.Category == AccountCategory.Liability || a.Category == AccountCategory.Equity || a.Category == AccountCategory.Income)) ? balance : 0,
+                Currency = a.Currency
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<List<AccountTreeNodeDto>> GetAccountTreeAsync(CancellationToken ct = default)
+    {
+        var accounts = await _accountRepo.GetAllAsync(ct);
+        var entries = await _ledgerRepo.GetAllAsync(ct);
+        var entriesByAccount = entries.GroupBy(e => e.AccountId).ToDictionary(g => g.Key, g => g.ToList());
+
+        var nodeMap = accounts.ToDictionary(a => a.Id, a =>
+        {
+            entriesByAccount.TryGetValue(a.Id, out var accEntries);
+            var debit = accEntries?.Sum(e => e.DebitBase) ?? 0m;
+            var credit = accEntries?.Sum(e => e.CreditBase) ?? 0m;
+            var balance = (a.Category == AccountCategory.Asset || a.Category == AccountCategory.Expense)
+                ? (debit - credit)
+                : (credit - debit);
+
+            return new AccountTreeNodeDto
+            {
+                Id = a.Id,
+                Code = a.Code,
+                Name = a.Name,
+                Category = a.Category,
+                CategoryName = AccountingMetadataHelper.GetCategoryName(a.Category),
+                Subcategory = a.Subcategory,
+                SubcategoryName = AccountingMetadataHelper.GetSubcategoryName(a.Subcategory),
+                Type = a.Type,
+                TypeName = AccountingMetadataHelper.GetAccountTypeName(a.Type),
+                ParentAccountId = a.ParentAccountId,
+                IsLeaf = a.IsLeaf,
+                IsControlAccount = a.IsControlAccount,
+                IsActive = a.IsActive,
+                Currency = a.Currency,
+                TurnoverDebit = debit,
+                TurnoverCredit = credit,
+                CurrentBalance = balance,
+                Children = new List<AccountTreeNodeDto>()
+            };
+        });
+
+        var rootNodes = new List<AccountTreeNodeDto>();
+        foreach (var node in nodeMap.Values.OrderBy(n => n.Code))
+        {
+            if (node.ParentAccountId.HasValue && nodeMap.TryGetValue(node.ParentAccountId.Value, out var parentNode))
+            {
+                node.Level = parentNode.Level + 1;
+                parentNode.Children.Add(node);
+            }
+            else
+            {
+                node.Level = 0;
+                rootNodes.Add(node);
+            }
+        }
+
+        void Rollup(AccountTreeNodeDto node)
+        {
+            foreach (var child in node.Children)
+            {
+                Rollup(child);
+                node.TurnoverDebit += child.TurnoverDebit;
+                node.TurnoverCredit += child.TurnoverCredit;
+                node.CurrentBalance += child.CurrentBalance;
+            }
+        }
+
+        foreach (var root in rootNodes)
+        {
+            Rollup(root);
+        }
+
+        return rootNodes;
+    }
+
+    public async Task<List<AccountBalanceRowDto>> GetAccountBalancesAsync(
+        DateTime? fromDate,
+        DateTime? toDate,
+        string? search,
+        bool includeZeroBalance,
+        string? currency,
+        CancellationToken ct = default)
+    {
+        var accounts = await _accountRepo.GetAllAsync(ct);
+        var entries = await _ledgerRepo.GetAllAsync(ct);
+
+        var from = fromDate?.Date ?? new DateTime(DateTime.UtcNow.Year, 1, 1);
+        var to = toDate?.Date ?? DateTime.UtcNow.Date;
+
+        var result = new List<AccountBalanceRowDto>();
+        foreach (var a in accounts.OrderBy(a => a.Code))
+        {
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var match = a.Code.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                            a.Name.Contains(search, StringComparison.OrdinalIgnoreCase);
+                if (!match) continue;
+            }
+
+            var accEntries = entries.Where(e => e.AccountId == a.Id).ToList();
+            var openingEntries = accEntries.Where(e => e.PostingDate.Date < from).ToList();
+            var periodEntries = accEntries.Where(e => e.PostingDate.Date >= from && e.PostingDate.Date <= to).ToList();
+
+            var openingDebitSum = openingEntries.Sum(e => e.DebitBase);
+            var openingCreditSum = openingEntries.Sum(e => e.CreditBase);
+            var openingNet = openingDebitSum - openingCreditSum;
+
+            decimal opDr = openingNet > 0 ? openingNet : 0m;
+            decimal opCr = openingNet < 0 ? -openingNet : 0m;
+
+            var turnDr = periodEntries.Sum(e => e.DebitBase);
+            var turnCr = periodEntries.Sum(e => e.CreditBase);
+
+            var closingNet = openingNet + turnDr - turnCr;
+            decimal clDr = closingNet > 0 ? closingNet : 0m;
+            decimal clCr = closingNet < 0 ? -closingNet : 0m;
+
+            if (!includeZeroBalance && opDr == 0 && opCr == 0 && turnDr == 0 && turnCr == 0 && clDr == 0 && clCr == 0)
+            {
+                continue;
+            }
+
+            result.Add(new AccountBalanceRowDto
+            {
+                AccountId = a.Id,
+                Code = a.Code,
+                Name = a.Name,
+                Category = a.Category,
+                CategoryName = AccountingMetadataHelper.GetCategoryName(a.Category),
+                Subcategory = a.Subcategory,
+                SubcategoryName = AccountingMetadataHelper.GetSubcategoryName(a.Subcategory),
+                IsLeaf = a.IsLeaf,
+                OpeningDebit = opDr,
+                OpeningCredit = opCr,
+                TurnoverDebit = turnDr,
+                TurnoverCredit = turnCr,
+                ClosingDebit = clDr,
+                ClosingCredit = clCr
+            });
+        }
+
+        return result;
+    }
+
+    public Task<List<AccountTypeOptionDto>> GetAccountTypesAsync(CancellationToken ct = default)
+    {
+        return Task.FromResult(AccountingMetadataHelper.GetActiveAccountTypeOptions());
+    }
+
+    public Task<List<CategorySubcategoryMappingDto>> GetSubcategoriesAsync(CancellationToken ct = default)
+    {
+        return Task.FromResult(AccountingMetadataHelper.GetCategorySubcategoryMappings());
     }
 
     public async Task<AccountDto> CreateAccountAsync(CreateAccountDto dto, CancellationToken ct = default)
@@ -100,12 +301,18 @@ public class AccountingService : IAccountingService
             throw new BusinessRuleException($"'{dto.Code}' kodlu hesab artıq mövcuddur.");
         }
 
+        if (dto.Subcategory.HasValue && !AccountingMetadataHelper.ValidateSubcategoryForCategory(dto.Category, dto.Subcategory.Value))
+        {
+            throw new BusinessRuleException($"Seçilmiş subkateqoriya ({AccountingMetadataHelper.GetSubcategoryName(dto.Subcategory.Value)}) '{AccountingMetadataHelper.GetCategoryName(dto.Category)}' kateqoriyasına uyğun deyil.");
+        }
+
         var account = new Account
         {
             TenantId = tenantId,
             Code = dto.Code,
             Name = dto.Name,
             Category = dto.Category,
+            Subcategory = dto.Subcategory,
             Type = dto.Type,
             ParentAccountId = dto.ParentAccountId,
             IsControlAccount = dto.IsControlAccount,
@@ -118,7 +325,7 @@ public class AccountingService : IAccountingService
             var parent = await _accountRepo.GetByIdAsync(dto.ParentAccountId.Value, ct);
             if (parent != null && parent.IsLeaf)
             {
-                parent.IsLeaf = false; // Parent cannot be leaf anymore
+                parent.IsLeaf = false;
                 await _accountRepo.UpdateAsync(parent, ct);
             }
         }
@@ -132,12 +339,97 @@ public class AccountingService : IAccountingService
             Code = account.Code,
             Name = account.Name,
             Category = account.Category,
+            CategoryName = AccountingMetadataHelper.GetCategoryName(account.Category),
+            Subcategory = account.Subcategory,
+            SubcategoryName = AccountingMetadataHelper.GetSubcategoryName(account.Subcategory),
             Type = account.Type,
+            TypeName = AccountingMetadataHelper.GetAccountTypeName(account.Type),
             ParentAccountId = account.ParentAccountId,
             IsLeaf = account.IsLeaf,
             IsControlAccount = account.IsControlAccount,
             Currency = account.Currency
         };
+    }
+
+    // Initial Balances (Configuration / Setup)
+    public async Task SetInitialBalancesAsync(SetInitialBalancesDto dto, CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.TenantId ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
+
+        if (dto.Lines == null || !dto.Lines.Any())
+        {
+            throw new BusinessRuleException("İlkin qalıqlar üçün ən azı bir hesab sətri daxil edilməlidir.");
+        }
+
+        var totalDebit = dto.Lines.Sum(l => l.Debit);
+        var totalCredit = dto.Lines.Sum(l => l.Credit);
+
+        if (Math.Abs(totalDebit - totalCredit) > 0.001m)
+        {
+            throw new BusinessRuleException($"İlkin qalıqlar balanslaşdırılmalıdır (Debet cəmi: {totalDebit:N2}, Kredit cəmi: {totalCredit:N2}, Fərq: {Math.Abs(totalDebit - totalCredit):N2}).");
+        }
+
+        var date = dto.ActDate.Date;
+        var periods = await _periodRepo.FindAsync(p => p.StartDate <= date && p.EndDate >= date, ct);
+        var period = periods.FirstOrDefault();
+        if (period != null && (period.Status == FiscalPeriodStatus.Closed || period.Status == FiscalPeriodStatus.Locked))
+        {
+            throw new BusinessRuleException($"Maliyyə dövrü ({period.Name}) bağlı və ya kilidlidir. İlkin qalıq daxil edilə bilməz.");
+        }
+
+        var batch = new PostingBatch
+        {
+            TenantId = tenantId,
+            SourceDocumentType = DocumentType.OpeningBalance,
+            SourceDocumentId = Guid.NewGuid(),
+            SourceDocumentNumber = string.IsNullOrWhiteSpace(dto.ActNumber) ? "SETUP-OPENING-BALANCES" : dto.ActNumber,
+            PostingDate = date,
+            Description = $"İlkin Qalıq Təyini (Setup Opening Balances) - Akt: {dto.ActNumber}. {dto.Notes}"
+        };
+
+        foreach (var line in dto.Lines)
+        {
+            if (line.Debit <= 0 && line.Credit <= 0) continue;
+
+            var account = await _accountRepo.GetByIdAsync(line.AccountId, ct)
+                ?? throw new BusinessRuleException($"Hesab (ID: {line.AccountId}) tapılmadı.");
+
+            batch.Entries.Add(new LedgerEntry
+            {
+                TenantId = tenantId,
+                AccountId = account.Id,
+                PostingDate = date,
+                DebitBase = line.Debit,
+                CreditBase = line.Credit,
+                TransactionCurrency = account.Currency,
+                TransactionAmount = line.Debit > 0 ? line.Debit : -line.Credit,
+                ExchangeRate = 1.0m,
+                SourceDocumentType = DocumentType.OpeningBalance,
+                SourceDocumentId = batch.SourceDocumentId,
+                LineDescription = line.Description ?? $"İlkin qalıq: {account.Code} - {account.Name}"
+            });
+        }
+
+        await _postingEngine.PostBatchAsync(batch, ct);
+
+        // Audit Log
+        var audit = new InitialBalanceAuditLog
+        {
+            TenantId = tenantId,
+            ActNumber = dto.ActNumber,
+            ActDate = date,
+            AttachmentUrl = dto.AttachmentUrl,
+            AuthorizedBy = _tenantService.TenantId?.ToString() ?? "Finance Setup Admin",
+            Notes = dto.Notes,
+            TotalDebit = totalDebit,
+            TotalCredit = totalCredit,
+            JournalBatchId = batch.Id,
+            AccountCount = dto.Lines.Count
+        };
+        await _auditLogRepo.AddAsync(audit, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        _logger.LogInformation("Initial balances set successfully for tenant {TenantId}. Act: {ActNumber}, Debit/Credit: {TotalDebit:N2}", tenantId, dto.ActNumber, totalDebit);
     }
 
     // Fiscal Periods
@@ -528,6 +820,8 @@ public class AccountingService : IAccountingService
             SettlementStatus = SettlementStatus.Unpaid,
             Currency = dto.Currency,
             ExchangeRate = dto.ExchangeRate,
+            SalesOrderId = dto.SalesOrderId,
+            DeliveryNoteId = dto.DeliveryNoteId,
             SubTotal = subTotal,
             TaxTotal = taxTotal,
             GrandTotal = grandTotal,
@@ -542,7 +836,7 @@ public class AccountingService : IAccountingService
 
         if (!defaultRevenueAccount.HasValue)
         {
-            var incomeAccount = (await _accountRepo.FindAsync(a => (a.Code == "6010" || a.Type == AccountType.Revenue || a.Category == AccountCategory.Income) && a.IsLeaf && a.IsActive, ct))
+            var incomeAccount = (await _accountRepo.FindAsync(a => (a.Code == "6010" || a.Category == AccountCategory.Income) && a.IsLeaf && a.IsActive, ct))
                 .FirstOrDefault();
             defaultRevenueAccount = incomeAccount?.Id;
         }
@@ -588,6 +882,8 @@ public class AccountingService : IAccountingService
             InvoiceNumber = invoice.InvoiceNumber,
             CustomerId = customer.Id,
             CustomerName = customer.Name,
+            SalesOrderId = invoice.SalesOrderId,
+            DeliveryNoteId = invoice.DeliveryNoteId,
             InvoiceDate = invoice.InvoiceDate,
             DueDate = invoice.DueDate,
             PostingDate = invoice.PostingDate,
@@ -626,6 +922,8 @@ public class AccountingService : IAccountingService
             InvoiceNumber = inv.InvoiceNumber,
             CustomerId = inv.CustomerId,
             CustomerName = customers.TryGetValue(inv.CustomerId, out var cName) ? cName : string.Empty,
+            SalesOrderId = inv.SalesOrderId,
+            DeliveryNoteId = inv.DeliveryNoteId,
             InvoiceDate = inv.InvoiceDate,
             DueDate = inv.DueDate,
             PostingDate = inv.PostingDate,
@@ -653,6 +951,8 @@ public class AccountingService : IAccountingService
             InvoiceNumber = invoice.InvoiceNumber,
             CustomerId = invoice.CustomerId,
             CustomerName = customer?.Name ?? string.Empty,
+            SalesOrderId = invoice.SalesOrderId,
+            DeliveryNoteId = invoice.DeliveryNoteId,
             InvoiceDate = invoice.InvoiceDate,
             DueDate = invoice.DueDate,
             PostingDate = invoice.PostingDate,
@@ -717,7 +1017,7 @@ public class AccountingService : IAccountingService
             ?? throw new MissingDefaultAccountException("Hesablanmış ƏDV üçün default hesab təyin edilməyib.");
 
         var defaultRevAccountId = company.DefaultRevenueAccountId 
-            ?? (await _accountRepo.FindAsync(a => (a.Code == "6010" || a.Type == AccountType.Revenue) && a.IsActive, ct)).FirstOrDefault()?.Id;
+            ?? (await _accountRepo.FindAsync(a => (a.Code == "6010" || a.Category == AccountCategory.Income) && a.IsActive, ct)).FirstOrDefault()?.Id;
 
         // Post to GL:
         // Dr Accounts Receivable (GrandTotal)
@@ -1165,5 +1465,109 @@ public class AccountingService : IAccountingService
         await _unitOfWork.SaveChangesAsync(ct);
 
         return dto;
+    }
+
+    public async Task<CompanyProfileDto> GetCompanyProfileAsync(CancellationToken ct = default)
+    {
+        var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault();
+        if (company == null)
+        {
+            var tenantId = _tenantService.TenantId ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
+            await _tenantSeeder.SeedTenantDefaultsAsync(tenantId, ct);
+            company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
+                ?? throw new BusinessRuleException("Şirkət məlumatları tapılmadı.");
+        }
+
+        return new CompanyProfileDto
+        {
+            Id = company.Id,
+            Name = company.Name,
+            TaxNumber = company.TaxNumber,
+            BaseCurrency = company.BaseCurrency,
+            Country = company.Country,
+            Address = company.Address,
+            Phone = company.Phone,
+            Email = company.Email,
+            LegalForm = company.LegalForm,
+            TaxRegime = company.TaxRegime,
+            IsVatPayer = company.IsVatPayer,
+            VatRate = company.VatRate,
+            FiscalYearStartMonth = company.FiscalYearStartMonth,
+            FiscalYearEndMonth = company.FiscalYearEndMonth,
+            LogoUrl = company.LogoUrl,
+            DirectorName = company.DirectorName,
+            ChiefAccountantName = company.ChiefAccountantName,
+            BankName = company.BankName,
+            BankCode = company.BankCode,
+            BankAccountNumber = company.BankAccountNumber,
+            Iban = company.Iban,
+            SwiftBic = company.SwiftBic,
+            CorrespondentAccount = company.CorrespondentAccount,
+            StatisticalCode = company.StatisticalCode,
+            AsanLoginId = company.AsanLoginId
+        };
+    }
+
+    public async Task<CompanyProfileDto> UpdateCompanyProfileAsync(UpdateCompanyProfileDto dto, CancellationToken ct = default)
+    {
+        var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault();
+        if (company == null)
+        {
+            var tenantId = _tenantService.TenantId ?? throw new BusinessRuleException("Tenant konteksti tapılmadı.");
+            await _tenantSeeder.SeedTenantDefaultsAsync(tenantId, ct);
+            company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault()
+                ?? throw new BusinessRuleException("Şirkət məlumatları tapılmadı.");
+        }
+
+        company.Name = dto.Name;
+        company.TaxNumber = dto.TaxNumber;
+        company.BaseCurrency = dto.BaseCurrency;
+        company.Country = dto.Country;
+        company.Address = dto.Address;
+        company.Phone = dto.Phone;
+        company.Email = dto.Email;
+        company.LegalForm = dto.LegalForm;
+        company.TaxRegime = dto.TaxRegime;
+        company.IsVatPayer = dto.IsVatPayer;
+        company.VatRate = dto.VatRate;
+        company.FiscalYearStartMonth = dto.FiscalYearStartMonth;
+        company.FiscalYearEndMonth = dto.FiscalYearEndMonth;
+        company.LogoUrl = dto.LogoUrl;
+        company.DirectorName = dto.DirectorName;
+        company.ChiefAccountantName = dto.ChiefAccountantName;
+        company.BankName = dto.BankName;
+        company.BankCode = dto.BankCode;
+        company.BankAccountNumber = dto.BankAccountNumber;
+        company.Iban = dto.Iban;
+        company.SwiftBic = dto.SwiftBic;
+        company.CorrespondentAccount = dto.CorrespondentAccount;
+        company.StatisticalCode = dto.StatisticalCode;
+        company.AsanLoginId = dto.AsanLoginId;
+
+        await _companyRepo.UpdateAsync(company, ct);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        return await GetCompanyProfileAsync(ct);
+    }
+
+    public async Task<CompanyHeaderDto> GetCompanyHeaderAsync(CancellationToken ct = default)
+    {
+        var company = (await _companyRepo.GetAllAsync(ct)).FirstOrDefault();
+        var currentYear = DateTime.UtcNow.Year;
+        var years = await _yearRepo.FindAsync(y => y.StartDate.Year == currentYear || !y.IsClosed, ct);
+        var activeYear = years.FirstOrDefault();
+
+        var periods = await _periodRepo.FindAsync(p => p.Status == FiscalPeriodStatus.Open, ct);
+        var activePeriod = periods.OrderBy(p => p.StartDate).FirstOrDefault();
+
+        return new CompanyHeaderDto
+        {
+            CompanyName = company?.Name ?? "Altensor Enterprise",
+            TaxNumber = company?.TaxNumber ?? "-",
+            BaseCurrency = company?.BaseCurrency ?? "AZN",
+            LogoUrl = company?.LogoUrl,
+            ActiveFiscalYear = activeYear?.Name ?? $"FY-{currentYear}",
+            ActiveFiscalPeriod = activePeriod?.Name ?? $"{currentYear}-{DateTime.UtcNow.Month:D2}"
+        };
     }
 }

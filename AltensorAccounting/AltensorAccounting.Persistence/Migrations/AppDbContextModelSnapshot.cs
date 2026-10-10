@@ -61,6 +61,9 @@ namespace AltensorAccounting.Persistence.Migrations
                     b.Property<Guid?>("ParentAccountId")
                         .HasColumnType("uuid");
 
+                    b.Property<int?>("Subcategory")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
@@ -173,8 +176,26 @@ namespace AltensorAccounting.Persistence.Migrations
                     b.Property<string>("Address")
                         .HasColumnType("text");
 
+                    b.Property<string>("AsanLoginId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BankAccountNumber")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BankCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BankName")
+                        .HasColumnType("text");
+
                     b.Property<string>("BaseCurrency")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ChiefAccountantName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CorrespondentAccount")
                         .HasColumnType("text");
 
                     b.Property<string>("Country")
@@ -214,7 +235,19 @@ namespace AltensorAccounting.Persistence.Migrations
                     b.Property<Guid?>("DefaultStockAccountId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("DirectorName")
+                        .HasColumnType("text");
+
                     b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<int>("FiscalYearEndMonth")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FiscalYearStartMonth")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Iban")
                         .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
@@ -223,6 +256,16 @@ namespace AltensorAccounting.Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsVatPayer")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LegalForm")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LogoUrl")
+                        .HasColumnType("text");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
@@ -230,7 +273,17 @@ namespace AltensorAccounting.Persistence.Migrations
                     b.Property<string>("Phone")
                         .HasColumnType("text");
 
+                    b.Property<string>("StatisticalCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SwiftBic")
+                        .HasColumnType("text");
+
                     b.Property<string>("TaxNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TaxRegime")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -239,6 +292,9 @@ namespace AltensorAccounting.Persistence.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<decimal>("VatRate")
+                        .HasColumnType("numeric");
 
                     b.HasKey("Id");
 
@@ -375,6 +431,9 @@ namespace AltensorAccounting.Persistence.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("DeliveryNoteId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("DocumentStatus")
                         .HasColumnType("integer");
 
@@ -408,6 +467,9 @@ namespace AltensorAccounting.Persistence.Migrations
 
                     b.Property<DateTime>("PostingDate")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid?>("SalesOrderId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("SettlementStatus")
                         .HasColumnType("integer");
@@ -503,6 +565,124 @@ namespace AltensorAccounting.Persistence.Migrations
                     b.ToTable("CustomerInvoiceLines");
                 });
 
+            modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.DeliveryNote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DeliveryDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("DeliveryNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("DriverName")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("PostingDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid?>("SalesOrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("StockTransactionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TotalCost")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("TrackingNumber")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("VehicleNumber")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("SalesOrderId");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.ToTable("DeliveryNotes");
+                });
+
+            modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.DeliveryNoteLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<Guid>("DeliveryNoteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid?>("SalesOrderLineId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TotalCost")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeliveryNoteId");
+
+                    b.HasIndex("ItemId");
+
+                    b.ToTable("DeliveryNoteLines");
+                });
+
             modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.FiscalYear", b =>
                 {
                     b.Property<Guid>("Id")
@@ -537,6 +717,58 @@ namespace AltensorAccounting.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("FiscalYears");
+                });
+
+            modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.InitialBalanceAuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AccountCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("ActDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("ActNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("AttachmentUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorizedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("JournalBatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TotalCredit")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TotalDebit")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("InitialBalanceAuditLogs");
                 });
 
             modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.LedgerEntry", b =>
@@ -909,6 +1141,128 @@ namespace AltensorAccounting.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("PostingBatches");
+                });
+
+            modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.SalesOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CustomerReference")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("ExchangeRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime?>("ExpectedDeliveryDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<decimal>("GrandTotal")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("OrderDate")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("SubTotal")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TaxTotal")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.ToTable("SalesOrders");
+                });
+
+            modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.SalesOrderLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<decimal>("DeliveredQuantity")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("DiscountPercent")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("InvoicedQuantity")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid?>("ItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("LineTotal")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid>("SalesOrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TaxCodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TaxRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SalesOrderId");
+
+                    b.ToTable("SalesOrderLines");
                 });
 
             modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.TaxCode", b =>
@@ -2501,6 +2855,50 @@ namespace AltensorAccounting.Persistence.Migrations
                     b.Navigation("TaxCode");
                 });
 
+            modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.DeliveryNote", b =>
+                {
+                    b.HasOne("AltensorAccounting.Domain.Entities.Accounting.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AltensorAccounting.Domain.Entities.Accounting.SalesOrder", "SalesOrder")
+                        .WithMany()
+                        .HasForeignKey("SalesOrderId");
+
+                    b.HasOne("AltensorAccounting.Domain.Entities.Inventory.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("SalesOrder");
+
+                    b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.DeliveryNoteLine", b =>
+                {
+                    b.HasOne("AltensorAccounting.Domain.Entities.Accounting.DeliveryNote", "DeliveryNote")
+                        .WithMany("Lines")
+                        .HasForeignKey("DeliveryNoteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AltensorAccounting.Domain.Entities.Inventory.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DeliveryNote");
+
+                    b.Navigation("Item");
+                });
+
             modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.LedgerEntry", b =>
                 {
                     b.HasOne("AltensorAccounting.Domain.Entities.Accounting.Account", "Account")
@@ -2559,6 +2957,28 @@ namespace AltensorAccounting.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Payment");
+                });
+
+            modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.SalesOrder", b =>
+                {
+                    b.HasOne("AltensorAccounting.Domain.Entities.Accounting.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.SalesOrderLine", b =>
+                {
+                    b.HasOne("AltensorAccounting.Domain.Entities.Accounting.SalesOrder", "SalesOrder")
+                        .WithMany("Lines")
+                        .HasForeignKey("SalesOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SalesOrder");
                 });
 
             modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.TaxCode", b =>
@@ -2919,6 +3339,11 @@ namespace AltensorAccounting.Persistence.Migrations
                     b.Navigation("Lines");
                 });
 
+            modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.DeliveryNote", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
             modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.FiscalYear", b =>
                 {
                     b.Navigation("Periods");
@@ -2937,6 +3362,11 @@ namespace AltensorAccounting.Persistence.Migrations
             modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.PostingBatch", b =>
                 {
                     b.Navigation("Entries");
+                });
+
+            modelBuilder.Entity("AltensorAccounting.Domain.Entities.Accounting.SalesOrder", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("AltensorAccounting.Domain.Entities.Inventory.Item", b =>

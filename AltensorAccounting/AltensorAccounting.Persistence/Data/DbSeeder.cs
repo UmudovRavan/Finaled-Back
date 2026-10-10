@@ -15,43 +15,55 @@ public static class DbSeeder
         string Code,
         string Name,
         AccountCategory Category,
+        AccountSubcategory Subcategory,
         AccountType Type,
         bool IsLeaf,
         bool IsControl = false);
 
     public static readonly StandardAccountDefinition[] StandardChart = new[]
     {
-        // Assets (1000)
-        new StandardAccountDefinition("1000", "Dövriyyə Aktivləri", AccountCategory.Asset, AccountType.CurrentAsset, false),
-        new StandardAccountDefinition("1010", "Kassa", AccountCategory.Asset, AccountType.Cash, true, true),
-        new StandardAccountDefinition("1020", "Bank Hesablaşma Hesabı", AccountCategory.Asset, AccountType.Bank, true, true),
-        new StandardAccountDefinition("1100", "Mallar və Materiallar (Stok)", AccountCategory.Asset, AccountType.Stock, true, true),
-        new StandardAccountDefinition("1200", "Alıcıların Debitor Borcları (AR)", AccountCategory.Asset, AccountType.Receivable, true, true),
-        new StandardAccountDefinition("1250", "Əvəzləşdirilən ƏDV (Input VAT)", AccountCategory.Asset, AccountType.Tax, true, true),
+        // Assets (0100..1400)
+        new StandardAccountDefinition("0100", "Əsas Vəsaitlər", AccountCategory.Asset, AccountSubcategory.NonCurrentAssets, AccountType.FixedAsset, true, true),
+        new StandardAccountDefinition("0200", "Yığılmış Amortizasiya", AccountCategory.Asset, AccountSubcategory.NonCurrentAssets, AccountType.AccumulatedDepreciation, true, true),
+        new StandardAccountDefinition("1000", "Dövriyyə Aktivləri", AccountCategory.Asset, AccountSubcategory.CurrentAssets, AccountType.Standard, false),
+        new StandardAccountDefinition("1010", "Kassa", AccountCategory.Asset, AccountSubcategory.CurrentAssets, AccountType.Cash, true, true),
+        new StandardAccountDefinition("1020", "Bank Hesablaşma Hesabı", AccountCategory.Asset, AccountSubcategory.CurrentAssets, AccountType.Bank, true, true),
+        new StandardAccountDefinition("1100", "Mallar və Materiallar (Stok)", AccountCategory.Asset, AccountSubcategory.CurrentAssets, AccountType.Stock, true, true),
+        new StandardAccountDefinition("1200", "Alıcıların Debitor Borcları (AR)", AccountCategory.Asset, AccountSubcategory.CurrentAssets, AccountType.Receivable, true, true),
+        new StandardAccountDefinition("1250", "Əvəzləşdirilən ƏDV (Input VAT)", AccountCategory.Asset, AccountSubcategory.CurrentAssets, AccountType.Tax, true, true),
+        new StandardAccountDefinition("1300", "Verilmiş Avanslar", AccountCategory.Asset, AccountSubcategory.CurrentAssets, AccountType.AdvancesGiven, true, true),
+        new StandardAccountDefinition("1400", "Təhtəlhesab Şəxslər üzrə Hesablaşmalar", AccountCategory.Asset, AccountSubcategory.CurrentAssets, AccountType.AccountablePersons, true, true),
 
-        // Liabilities (2000)
-        new StandardAccountDefinition("2000", "Qısamüddətli Öhdəliklər", AccountCategory.Liability, AccountType.CurrentLiability, false),
-        new StandardAccountDefinition("2100", "Təchizatçılara Kreditor Borclar (AP)", AccountCategory.Liability, AccountType.Payable, true, true),
-        new StandardAccountDefinition("2200", "Fakturalaşdırılmamış Mallar (GRNI)", AccountCategory.Liability, AccountType.GRNI, true, true),
-        new StandardAccountDefinition("2250", "Büdcəyə Hesablanmış ƏDV (Output VAT)", AccountCategory.Liability, AccountType.Tax, true, true),
-        new StandardAccountDefinition("2300", "Alınmış Müştəri Avansları", AccountCategory.Liability, AccountType.Payable, true, true),
+        // Liabilities (2000..2400)
+        new StandardAccountDefinition("2000", "Qısamüddətli Öhdəliklər", AccountCategory.Liability, AccountSubcategory.CurrentLiabilities, AccountType.Standard, false),
+        new StandardAccountDefinition("2100", "Təchizatçılara Kreditor Borclar (AP)", AccountCategory.Liability, AccountSubcategory.CurrentLiabilities, AccountType.Payable, true, true),
+        new StandardAccountDefinition("2200", "Fakturalaşdırılmamış Mallar (GRNI)", AccountCategory.Liability, AccountSubcategory.CurrentLiabilities, AccountType.GRNI, true, true),
+        new StandardAccountDefinition("2250", "Büdcəyə Hesablanmış ƏDV (Output VAT)", AccountCategory.Liability, AccountSubcategory.CurrentLiabilities, AccountType.Tax, true, true),
+        new StandardAccountDefinition("2300", "Alınmış Müştəri Avansları", AccountCategory.Liability, AccountSubcategory.CurrentLiabilities, AccountType.AdvancesReceived, true, true),
+        new StandardAccountDefinition("2400", "Bank Kreditləri", AccountCategory.Liability, AccountSubcategory.NonCurrentLiabilities, AccountType.BankLoans, true, true),
 
-        // Equity (3000)
-        new StandardAccountDefinition("3000", "Kapital", AccountCategory.Equity, AccountType.Standard, false),
-        new StandardAccountDefinition("3010", "Nizamnamə Kapitalı", AccountCategory.Equity, AccountType.Standard, true),
-        new StandardAccountDefinition("3100", "Bölüşdürülməmiş Mənfəət / Zərər", AccountCategory.Equity, AccountType.RetainedEarnings, true, true),
+        // Equity (3000..3200)
+        new StandardAccountDefinition("3000", "Kapital", AccountCategory.Equity, AccountSubcategory.ShareCapital, AccountType.Standard, false),
+        new StandardAccountDefinition("3010", "Nizamnamə Kapitalı", AccountCategory.Equity, AccountSubcategory.ShareCapital, AccountType.Standard, true),
+        new StandardAccountDefinition("3100", "Bölüşdürülməmiş Mənfəət / Zərər", AccountCategory.Equity, AccountSubcategory.RetainedEarnings, AccountType.RetainedEarnings, true, true),
+        new StandardAccountDefinition("3200", "Digər Kapital və Ehtiyatlar", AccountCategory.Equity, AccountSubcategory.OtherEquityAndReserves, AccountType.Standard, true),
 
-        // Revenue (6000)
-        new StandardAccountDefinition("6000", "Əsas Əməliyyat Gəlirləri", AccountCategory.Income, AccountType.Revenue, false),
-        new StandardAccountDefinition("6010", "Malların və Xidmətlərin Satış Gəliri", AccountCategory.Income, AccountType.Revenue, true),
+        // Income (6000..6300)
+        new StandardAccountDefinition("6000", "Əsas Əməliyyat Gəlirləri", AccountCategory.Income, AccountSubcategory.OperatingRevenue, AccountType.Standard, false),
+        new StandardAccountDefinition("6010", "Malların və Xidmətlərin Satış Gəliri", AccountCategory.Income, AccountSubcategory.OperatingRevenue, AccountType.Standard, true),
+        new StandardAccountDefinition("6100", "Digər Əməliyyat Gəlirləri", AccountCategory.Income, AccountSubcategory.OtherOperatingIncome, AccountType.Standard, true),
+        new StandardAccountDefinition("6200", "Maliyyə Gəlirləri", AccountCategory.Income, AccountSubcategory.FinancialIncome, AccountType.Standard, true),
+        new StandardAccountDefinition("6300", "Digər Gəlirlər", AccountCategory.Income, AccountSubcategory.OtherIncome, AccountType.Standard, true),
 
-        // Expense (7000)
-        new StandardAccountDefinition("7000", "Əməliyyat Xərcləri", AccountCategory.Expense, AccountType.Expense, false),
-        new StandardAccountDefinition("7010", "Satılmış Malların Maya Dəyəri (COGS)", AccountCategory.Expense, AccountType.COGS, true, true),
-        new StandardAccountDefinition("7100", "Ümumi və İnzibati Xərclər", AccountCategory.Expense, AccountType.Expense, true),
-        new StandardAccountDefinition("7200", "Satış Xərcləri", AccountCategory.Expense, AccountType.Expense, true),
-        new StandardAccountDefinition("7300", "Bank Xidmət Xərcləri", AccountCategory.Expense, AccountType.Expense, true),
-        new StandardAccountDefinition("7400", "Məzənnə Fərqi Xərci / Zərəri", AccountCategory.Expense, AccountType.Expense, true)
+        // Expense (7000..7600)
+        new StandardAccountDefinition("7000", "Əməliyyat Xərcləri", AccountCategory.Expense, AccountSubcategory.AdministrativeExpenses, AccountType.Standard, false),
+        new StandardAccountDefinition("7010", "Satışın Maya Dəyəri (COGS)", AccountCategory.Expense, AccountSubcategory.CostOfGoodsSold, AccountType.COGS, true, true),
+        new StandardAccountDefinition("7100", "İnzibati Xərclər", AccountCategory.Expense, AccountSubcategory.AdministrativeExpenses, AccountType.Standard, true),
+        new StandardAccountDefinition("7200", "Satış və Marketinq Xərcləri", AccountCategory.Expense, AccountSubcategory.SellingAndMarketingExpenses, AccountType.Standard, true),
+        new StandardAccountDefinition("7300", "Maliyyə Xərcləri", AccountCategory.Expense, AccountSubcategory.FinancialExpenses, AccountType.Standard, true),
+        new StandardAccountDefinition("7400", "Məzənnə Fərqi Xərci / Zərəri", AccountCategory.Expense, AccountSubcategory.FinancialExpenses, AccountType.Standard, true),
+        new StandardAccountDefinition("7500", "Vergi Xərcləri", AccountCategory.Expense, AccountSubcategory.TaxExpenses, AccountType.Standard, true),
+        new StandardAccountDefinition("7600", "Digər Xərclər", AccountCategory.Expense, AccountSubcategory.OtherExpenses, AccountType.Standard, true)
     };
 
     public static async Task SeedTenantAccountingDefaultsAsync(AppDbContext context, Guid tenantId, ILogger logger)
@@ -91,6 +103,7 @@ public static class DbSeeder
                     Code = def.Code,
                     Name = def.Name,
                     Category = def.Category,
+                    Subcategory = def.Subcategory,
                     Type = def.Type,
                     IsLeaf = def.IsLeaf,
                     IsControlAccount = def.IsControl,
@@ -99,6 +112,15 @@ public static class DbSeeder
                 await context.Accounts.AddAsync(acc);
                 byCode[def.Code] = acc;
                 accountsAdded = true;
+            }
+            else
+            {
+                var existing = byCode[def.Code];
+                if (existing.Subcategory == null)
+                {
+                    existing.Subcategory = def.Subcategory;
+                    accountsAdded = true;
+                }
             }
         }
 

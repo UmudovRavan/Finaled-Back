@@ -9,6 +9,7 @@ public class CreateAccountDto
     public string Code { get; set; } = default!;
     public string Name { get; set; } = default!;
     public AccountCategory Category { get; set; }
+    public AccountSubcategory? Subcategory { get; set; }
     public AccountType Type { get; set; }
     public Guid? ParentAccountId { get; set; }
     public bool IsControlAccount { get; set; } = false;
@@ -21,13 +22,111 @@ public class AccountDto
     public string Code { get; set; } = default!;
     public string Name { get; set; } = default!;
     public AccountCategory Category { get; set; }
+    public string CategoryName { get; set; } = default!;
+    public AccountSubcategory? Subcategory { get; set; }
+    public string? SubcategoryName { get; set; }
     public AccountType Type { get; set; }
+    public string TypeName { get; set; } = default!;
     public Guid? ParentAccountId { get; set; }
+    public int Level { get; set; } = 0;
+    public bool HasChildren { get; set; } = false;
     public bool IsLeaf { get; set; }
     public bool IsControlAccount { get; set; }
     public bool IsActive { get; set; } = true;
     public decimal CurrentBalance { get; set; }
+    public decimal OpeningDebit { get; set; }
+    public decimal OpeningCredit { get; set; }
+    public decimal TurnoverDebit { get; set; }
+    public decimal TurnoverCredit { get; set; }
+    public decimal ClosingDebit { get; set; }
+    public decimal ClosingCredit { get; set; }
     public string Currency { get; set; } = "AZN";
+}
+
+public class AccountTreeNodeDto
+{
+    public Guid Id { get; set; }
+    public string Code { get; set; } = default!;
+    public string Name { get; set; } = default!;
+    public AccountCategory Category { get; set; }
+    public string CategoryName { get; set; } = default!;
+    public AccountSubcategory? Subcategory { get; set; }
+    public string? SubcategoryName { get; set; }
+    public AccountType Type { get; set; }
+    public string TypeName { get; set; } = default!;
+    public Guid? ParentAccountId { get; set; }
+    public int Level { get; set; }
+    public bool IsLeaf { get; set; }
+    public bool IsControlAccount { get; set; }
+    public bool IsActive { get; set; }
+    public string Currency { get; set; } = "AZN";
+    public decimal OpeningDebit { get; set; }
+    public decimal OpeningCredit { get; set; }
+    public decimal TurnoverDebit { get; set; }
+    public decimal TurnoverCredit { get; set; }
+    public decimal ClosingDebit { get; set; }
+    public decimal ClosingCredit { get; set; }
+    public decimal CurrentBalance { get; set; }
+    public List<AccountTreeNodeDto> Children { get; set; } = new();
+}
+
+public class AccountBalanceRowDto
+{
+    public Guid AccountId { get; set; }
+    public string Code { get; set; } = default!;
+    public string Name { get; set; } = default!;
+    public AccountCategory Category { get; set; }
+    public string CategoryName { get; set; } = default!;
+    public AccountSubcategory? Subcategory { get; set; }
+    public string? SubcategoryName { get; set; }
+    public int Level { get; set; }
+    public bool IsLeaf { get; set; }
+    public decimal OpeningDebit { get; set; }
+    public decimal OpeningCredit { get; set; }
+    public decimal TurnoverDebit { get; set; }
+    public decimal TurnoverCredit { get; set; }
+    public decimal ClosingDebit { get; set; }
+    public decimal ClosingCredit { get; set; }
+}
+
+public class AccountTypeOptionDto
+{
+    public int Id { get; set; }
+    public string Code { get; set; } = default!;
+    public string Name { get; set; } = default!;
+    public string Description { get; set; } = default!;
+}
+
+public class CategorySubcategoryMappingDto
+{
+    public int CategoryId { get; set; }
+    public string CategoryCode { get; set; } = default!;
+    public string CategoryName { get; set; } = default!;
+    public List<SubcategoryOptionDto> Subcategories { get; set; } = new();
+}
+
+public class SubcategoryOptionDto
+{
+    public int Id { get; set; }
+    public string Code { get; set; } = default!;
+    public string Name { get; set; } = default!;
+}
+
+public class SetInitialBalancesDto
+{
+    public string ActNumber { get; set; } = default!; // Akt nömrəsi
+    public DateTime ActDate { get; set; } = DateTime.UtcNow;
+    public string? AttachmentUrl { get; set; } // İmzalı akt sənədi fayl URL
+    public string? Notes { get; set; }
+    public List<InitialBalanceLineDto> Lines { get; set; } = new();
+}
+
+public class InitialBalanceLineDto
+{
+    public Guid AccountId { get; set; }
+    public decimal Debit { get; set; }
+    public decimal Credit { get; set; }
+    public string? Description { get; set; }
 }
 
 public class CreateFiscalYearDto
@@ -125,6 +224,8 @@ public class CreateCustomerInvoiceDto
     public DateTime PostingDate { get; set; }
     public string Currency { get; set; } = "AZN";
     public decimal ExchangeRate { get; set; } = 1.0m;
+    public Guid? SalesOrderId { get; set; }
+    public Guid? DeliveryNoteId { get; set; }
     public string? Notes { get; set; }
     public List<CustomerInvoiceLineInputDto> Lines { get; set; } = new();
 }
@@ -149,6 +250,8 @@ public class CustomerInvoiceDto
     public string InvoiceNumber { get; set; } = default!;
     public Guid CustomerId { get; set; }
     public string CustomerName { get; set; } = default!;
+    public Guid? SalesOrderId { get; set; }
+    public Guid? DeliveryNoteId { get; set; }
     public DateTime InvoiceDate { get; set; }
     public DateTime DueDate { get; set; }
     public DateTime PostingDate { get; set; }
@@ -228,3 +331,79 @@ public class CompanyDefaultAccountsDto
     public Guid? DefaultRevenueAccountId { get; set; }
     public Guid? DefaultFXGainLossAccountId { get; set; }
 }
+
+public class CompanyProfileDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = default!;
+    public string TaxNumber { get; set; } = default!; // VÖEN
+    public string BaseCurrency { get; set; } = "AZN";
+    public string Country { get; set; } = "Azerbaijan";
+    public string? Address { get; set; }
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
+
+    // Azərbaycan hüquqi & vergi sahələri
+    public string LegalForm { get; set; } = "MMC";
+    public string TaxRegime { get; set; } = "ƏDV ödəyicisi";
+    public bool IsVatPayer { get; set; } = true;
+    public decimal VatRate { get; set; } = 18.0m;
+    public int FiscalYearStartMonth { get; set; } = 1;
+    public int FiscalYearEndMonth { get; set; } = 12;
+    public string? LogoUrl { get; set; }
+
+    // Rəhbərlik
+    public string? DirectorName { get; set; }
+    public string? ChiefAccountantName { get; set; }
+
+    // Bank Rekvizitləri
+    public string? BankName { get; set; }
+    public string? BankCode { get; set; }
+    public string? BankAccountNumber { get; set; }
+    public string? Iban { get; set; }
+    public string? SwiftBic { get; set; }
+    public string? CorrespondentAccount { get; set; }
+
+    // Statistika və ASAN inteqrasiyaları
+    public string? StatisticalCode { get; set; }
+    public string? AsanLoginId { get; set; }
+}
+
+public class UpdateCompanyProfileDto
+{
+    public string Name { get; set; } = default!;
+    public string TaxNumber { get; set; } = default!; // VÖEN
+    public string BaseCurrency { get; set; } = "AZN";
+    public string Country { get; set; } = "Azerbaijan";
+    public string? Address { get; set; }
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
+    public string LegalForm { get; set; } = "MMC";
+    public string TaxRegime { get; set; } = "ƏDV ödəyicisi";
+    public bool IsVatPayer { get; set; } = true;
+    public decimal VatRate { get; set; } = 18.0m;
+    public int FiscalYearStartMonth { get; set; } = 1;
+    public int FiscalYearEndMonth { get; set; } = 12;
+    public string? LogoUrl { get; set; }
+    public string? DirectorName { get; set; }
+    public string? ChiefAccountantName { get; set; }
+    public string? BankName { get; set; }
+    public string? BankCode { get; set; }
+    public string? BankAccountNumber { get; set; }
+    public string? Iban { get; set; }
+    public string? SwiftBic { get; set; }
+    public string? CorrespondentAccount { get; set; }
+    public string? StatisticalCode { get; set; }
+    public string? AsanLoginId { get; set; }
+}
+
+public class CompanyHeaderDto
+{
+    public string CompanyName { get; set; } = default!;
+    public string TaxNumber { get; set; } = default!;
+    public string BaseCurrency { get; set; } = "AZN";
+    public string? LogoUrl { get; set; }
+    public string? ActiveFiscalYear { get; set; }
+    public string? ActiveFiscalPeriod { get; set; }
+}
+

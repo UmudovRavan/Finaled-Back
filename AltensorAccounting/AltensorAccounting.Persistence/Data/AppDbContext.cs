@@ -38,11 +38,16 @@ public class AppDbContext : DbContext
     public DbSet<AccountingDimension> AccountingDimensions => Set<AccountingDimension>();
     public DbSet<TaxCode> TaxCodes => Set<TaxCode>();
     public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<SalesOrder> SalesOrders => Set<SalesOrder>();
+    public DbSet<SalesOrderLine> SalesOrderLines => Set<SalesOrderLine>();
+    public DbSet<DeliveryNote> DeliveryNotes => Set<DeliveryNote>();
+    public DbSet<DeliveryNoteLine> DeliveryNoteLines => Set<DeliveryNoteLine>();
     public DbSet<CustomerInvoice> CustomerInvoices => Set<CustomerInvoice>();
     public DbSet<CustomerInvoiceLine> CustomerInvoiceLines => Set<CustomerInvoiceLine>();
     public DbSet<CustomerCreditNote> CustomerCreditNotes => Set<CustomerCreditNote>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<PaymentAllocation> PaymentAllocations => Set<PaymentAllocation>();
+    public DbSet<InitialBalanceAuditLog> InitialBalanceAuditLogs => Set<InitialBalanceAuditLog>();
 
     // Procurement
     public DbSet<Supplier> Suppliers => Set<Supplier>();

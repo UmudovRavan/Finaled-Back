@@ -42,6 +42,9 @@ public class CustomerInvoice : BaseEntity, ITenantEntity
     public decimal PaidAmount { get; set; } = 0;
     public decimal OutstandingAmount { get; set; } // derived open item balance
 
+    public Guid? SalesOrderId { get; set; }
+    public Guid? DeliveryNoteId { get; set; }
+
     public string? Notes { get; set; }
 
     public ICollection<CustomerInvoiceLine> Lines { get; set; } = new List<CustomerInvoiceLine>();

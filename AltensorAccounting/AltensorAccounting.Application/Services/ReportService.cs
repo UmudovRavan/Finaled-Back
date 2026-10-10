@@ -53,40 +53,359 @@ public class ReportService : IReportService
         _logger = logger;
     }
 
-    public async Task<TrialBalanceReportDto> GetTrialBalanceAsync(DateTime asOfDate, CancellationToken ct = default)
+    public async Task<TrialBalanceReportDto> GetTrialBalanceAsync(
+        DateTime? fromDate = null,
+        DateTime? toDate = null,
+        string? search = null,
+        bool includeZeroBalance = false,
+        string? currency = "AZN",
+        CancellationToken ct = default)
     {
-        var entries = await _ledgerRepo.FindAsync(e => e.PostingDate <= asOfDate.Date, ct);
+        var from = fromDate?.Date ?? new DateTime(DateTime.UtcNow.Year, 1, 1);
+        var to = toDate?.Date ?? DateTime.UtcNow.Date;
+
+        var entries = await _ledgerRepo.FindAsync(e => e.PostingDate <= to, ct);
         var accounts = await _accountRepo.GetAllAsync(ct);
 
         var report = new TrialBalanceReportDto
         {
-            AsOfDate = asOfDate
+            FromDate = from,
+            AsOfDate = to,
+            Currency = currency ?? "AZN"
         };
 
         foreach (var account in accounts.OrderBy(a => a.Code))
         {
-            var accEntries = entries.Where(e => e.AccountId == account.Id).ToList();
-            var debit = accEntries.Sum(e => e.DebitBase);
-            var credit = accEntries.Sum(e => e.CreditBase);
-
-            if (debit > 0 || credit > 0)
+            if (!string.IsNullOrWhiteSpace(search))
             {
-                report.Lines.Add(new TrialBalanceLineDto
-                {
-                    AccountId = account.Id,
-                    AccountCode = account.Code,
-                    AccountName = account.Name,
-                    Category = account.Category.ToString(),
-                    Debit = debit,
-                    Credit = credit
-                });
+                var match = account.Code.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                            account.Name.Contains(search, StringComparison.OrdinalIgnoreCase);
+                if (!match) continue;
+            }
+
+            var accEntries = entries.Where(e => e.AccountId == account.Id).ToList();
+            var openingEntries = accEntries.Where(e => e.PostingDate.Date < from).ToList();
+            var periodEntries = accEntries.Where(e => e.PostingDate.Date >= from && e.PostingDate.Date <= to).ToList();
+
+            var openingDebitSum = openingEntries.Sum(e => e.DebitBase);
+            var openingCreditSum = openingEntries.Sum(e => e.CreditBase);
+            var openingNet = openingDebitSum - openingCreditSum;
+
+            decimal opDr = openingNet > 0 ? openingNet : 0m;
+            decimal opCr = openingNet < 0 ? -openingNet : 0m;
+
+            var turnDr = periodEntries.Sum(e => e.DebitBase);
+            var turnCr = periodEntries.Sum(e => e.CreditBase);
+
+            var closingNet = openingNet + turnDr - turnCr;
+            decimal clDr = closingNet > 0 ? closingNet : 0m;
+            decimal clCr = closingNet < 0 ? -closingNet : 0m;
+
+            if (!includeZeroBalance && opDr == 0 && opCr == 0 && turnDr == 0 && turnCr == 0 && clDr == 0 && clCr == 0)
+            {
+                continue;
+            }
+
+            report.Lines.Add(new TrialBalanceLineDto
+            {
+                AccountId = account.Id,
+                AccountCode = account.Code,
+                AccountName = account.Name,
+                Category = account.Category.ToString(),
+                SubcategoryName = AccountingMetadataHelper.GetSubcategoryName(account.Subcategory),
+                IsLeaf = account.IsLeaf,
+                OpeningDebit = opDr,
+                OpeningCredit = opCr,
+                TurnoverDebit = turnDr,
+                TurnoverCredit = turnCr,
+                ClosingDebit = clDr,
+                ClosingCredit = clCr,
+                Debit = turnDr,
+                Credit = turnCr
+            });
+        }
+
+        report.TotalOpeningDebit = report.Lines.Sum(l => l.OpeningDebit);
+        report.TotalOpeningCredit = report.Lines.Sum(l => l.OpeningCredit);
+        report.TotalTurnoverDebit = report.Lines.Sum(l => l.TurnoverDebit);
+        report.TotalTurnoverCredit = report.Lines.Sum(l => l.TurnoverCredit);
+        report.TotalClosingDebit = report.Lines.Sum(l => l.ClosingDebit);
+        report.TotalClosingCredit = report.Lines.Sum(l => l.ClosingCredit);
+
+        report.TotalDebit = report.TotalTurnoverDebit;
+        report.TotalCredit = report.TotalTurnoverCredit;
+
+        return report;
+    }
+
+    // 1. Maliyyə Vəziyyəti Haqqında Hesabat (Statement of Financial Position / Balans)
+    public async Task<FinancialPositionReportDto> GetFinancialPositionAsync(DateTime asOfDate, CancellationToken ct = default)
+    {
+        var entries = await _ledgerRepo.FindAsync(e => e.PostingDate <= asOfDate.Date, ct);
+        var accounts = await _accountRepo.GetAllAsync(ct);
+
+        var report = new FinancialPositionReportDto
+        {
+            AsOfDate = asOfDate
+        };
+
+        var incomeIds = accounts.Where(a => a.Category == AccountCategory.Income).Select(a => a.Id).ToList();
+        var expenseIds = accounts.Where(a => a.Category == AccountCategory.Expense).Select(a => a.Id).ToList();
+        var totalIncome = entries.Where(e => incomeIds.Contains(e.AccountId)).Sum(e => e.CreditBase - e.DebitBase);
+        var totalExpense = entries.Where(e => expenseIds.Contains(e.AccountId)).Sum(e => e.DebitBase - e.CreditBase);
+        report.CurrentYearProfitOrLoss = totalIncome - totalExpense;
+
+        // Aktivlər
+        foreach (var a in accounts.Where(a => a.Category == AccountCategory.Asset))
+        {
+            var bal = entries.Where(e => e.AccountId == a.Id).Sum(e => e.DebitBase - e.CreditBase);
+            if (bal == 0) continue;
+
+            var item = new FinancialStatementAccountDto { Code = a.Code, Name = a.Name, Amount = bal };
+            if (a.Subcategory == AccountSubcategory.NonCurrentAssets || a.Code.StartsWith("0"))
+            {
+                report.NonCurrentAssets.Add(item);
+                report.NonCurrentAssetsTotal += bal;
+            }
+            else
+            {
+                report.CurrentAssets.Add(item);
+                report.CurrentAssetsTotal += bal;
             }
         }
 
-        report.TotalDebit = report.Lines.Sum(l => l.Debit);
-        report.TotalCredit = report.Lines.Sum(l => l.Credit);
+        // Öhdəliklər
+        foreach (var a in accounts.Where(a => a.Category == AccountCategory.Liability))
+        {
+            var bal = entries.Where(e => e.AccountId == a.Id).Sum(e => e.CreditBase - e.DebitBase);
+            if (bal == 0) continue;
+
+            var item = new FinancialStatementAccountDto { Code = a.Code, Name = a.Name, Amount = bal };
+            if (a.Subcategory == AccountSubcategory.NonCurrentLiabilities || (a.Type == AccountType.BankLoans && a.Code.StartsWith("24")))
+            {
+                report.NonCurrentLiabilities.Add(item);
+                report.NonCurrentLiabilitiesTotal += bal;
+            }
+            else
+            {
+                report.CurrentLiabilities.Add(item);
+                report.CurrentLiabilitiesTotal += bal;
+            }
+        }
+
+        // Kapital
+        foreach (var a in accounts.Where(a => a.Category == AccountCategory.Equity))
+        {
+            var bal = entries.Where(e => e.AccountId == a.Id).Sum(e => e.CreditBase - e.DebitBase);
+            if (bal == 0) continue;
+
+            var item = new FinancialStatementAccountDto { Code = a.Code, Name = a.Name, Amount = bal };
+            if (a.Subcategory == AccountSubcategory.ShareCapital || a.Code == "3010" || a.Code == "3000")
+            {
+                report.ShareCapitalAccounts.Add(item);
+                report.ShareCapitalTotal += bal;
+            }
+            else if (a.Subcategory == AccountSubcategory.RetainedEarnings || a.Code == "3100")
+            {
+                report.RetainedEarningsAccounts.Add(item);
+                report.RetainedEarningsTotal += bal;
+            }
+            else
+            {
+                report.OtherEquityAccounts.Add(item);
+                report.OtherEquityReservesTotal += bal;
+            }
+        }
 
         return report;
+    }
+
+    // 2. Mənfəət və ya Zərər Haqqında Hesabat (Statement of Profit or Loss)
+    public async Task<ProfitOrLossReportDto> GetProfitOrLossAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        var entries = await _ledgerRepo.FindAsync(e => e.PostingDate >= fromDate.Date && e.PostingDate <= toDate.Date, ct);
+        var accounts = await _accountRepo.GetAllAsync(ct);
+
+        var report = new ProfitOrLossReportDto
+        {
+            FromDate = fromDate,
+            ToDate = toDate
+        };
+
+        foreach (var a in accounts.Where(a => a.Category == AccountCategory.Income))
+        {
+            var amount = entries.Where(e => e.AccountId == a.Id).Sum(e => e.CreditBase - e.DebitBase);
+            if (amount == 0) continue;
+
+            var item = new FinancialStatementAccountDto { Code = a.Code, Name = a.Name, Amount = amount };
+            if (a.Subcategory == AccountSubcategory.OtherOperatingIncome || a.Code.StartsWith("61"))
+            {
+                report.OtherOperatingIncomeItems.Add(item);
+                report.OtherOperatingIncomeTotal += amount;
+            }
+            else if (a.Subcategory == AccountSubcategory.FinancialIncome || a.Code.StartsWith("62"))
+            {
+                report.FinancialIncomeItems.Add(item);
+                report.FinancialIncomeTotal += amount;
+            }
+            else if (a.Subcategory == AccountSubcategory.OtherIncome || a.Code.StartsWith("63"))
+            {
+                report.OtherIncomeTotal += amount;
+            }
+            else
+            {
+                report.OperatingRevenueItems.Add(item);
+                report.OperatingRevenueTotal += amount;
+            }
+        }
+
+        foreach (var a in accounts.Where(a => a.Category == AccountCategory.Expense))
+        {
+            var amount = entries.Where(e => e.AccountId == a.Id).Sum(e => e.DebitBase - e.CreditBase);
+            if (amount == 0) continue;
+
+            var item = new FinancialStatementAccountDto { Code = a.Code, Name = a.Name, Amount = amount };
+            if (a.Subcategory == AccountSubcategory.CostOfGoodsSold || a.Type == AccountType.COGS || a.Code == "7010")
+            {
+                report.CostOfGoodsSoldItems.Add(item);
+                report.CostOfGoodsSoldTotal += amount;
+            }
+            else if (a.Subcategory == AccountSubcategory.SellingAndMarketingExpenses || a.Code == "7200")
+            {
+                report.SellingAndMarketingExpensesItems.Add(item);
+                report.SellingAndMarketingExpensesTotal += amount;
+            }
+            else if (a.Subcategory == AccountSubcategory.AdministrativeExpenses || a.Code == "7100" || a.Code == "7000")
+            {
+                report.AdministrativeExpensesItems.Add(item);
+                report.AdministrativeExpensesTotal += amount;
+            }
+            else if (a.Subcategory == AccountSubcategory.FinancialExpenses || a.Code == "7300" || a.Code == "7400")
+            {
+                report.FinancialExpensesItems.Add(item);
+                report.FinancialExpensesTotal += amount;
+            }
+            else if (a.Subcategory == AccountSubcategory.TaxExpenses || a.Code == "7500")
+            {
+                report.TaxExpensesItems.Add(item);
+                report.TaxExpensesTotal += amount;
+            }
+            else
+            {
+                report.OtherExpensesTotal += amount;
+            }
+        }
+
+        return report;
+    }
+
+    // 3. Kapitalda Dəyişikliklər Haqqında Hesabat (Statement of Changes in Equity)
+    public async Task<ChangesInEquityReportDto> GetChangesInEquityAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        var accounts = await _accountRepo.GetAllAsync(ct);
+        var entries = await _ledgerRepo.GetAllAsync(ct);
+
+        var pnl = await GetProfitOrLossAsync(fromDate, toDate, ct);
+        var openingEntries = entries.Where(e => e.PostingDate.Date < fromDate.Date).ToList();
+
+        decimal opShareCapital = 0;
+        decimal opRetained = 0;
+        decimal opOther = 0;
+
+        foreach (var a in accounts.Where(a => a.Category == AccountCategory.Equity))
+        {
+            var bal = openingEntries.Where(e => e.AccountId == a.Id).Sum(e => e.CreditBase - e.DebitBase);
+            if (a.Subcategory == AccountSubcategory.ShareCapital || a.Code == "3010" || a.Code == "3000")
+                opShareCapital += bal;
+            else if (a.Subcategory == AccountSubcategory.RetainedEarnings || a.Code == "3100")
+                opRetained += bal;
+            else
+                opOther += bal;
+        }
+
+        var priorIncome = accounts.Where(a => a.Category == AccountCategory.Income).Select(a => a.Id).ToList();
+        var priorExpense = accounts.Where(a => a.Category == AccountCategory.Expense).Select(a => a.Id).ToList();
+        var priorNetProfit = openingEntries.Where(e => priorIncome.Contains(e.AccountId)).Sum(e => e.CreditBase - e.DebitBase)
+                           - openingEntries.Where(e => priorExpense.Contains(e.AccountId)).Sum(e => e.DebitBase - e.CreditBase);
+        opRetained += priorNetProfit;
+
+        var periodEntries = entries.Where(e => e.PostingDate.Date >= fromDate.Date && e.PostingDate.Date <= toDate.Date).ToList();
+        decimal capContrib = 0;
+        foreach (var a in accounts.Where(a => a.Category == AccountCategory.Equity && (a.Subcategory == AccountSubcategory.ShareCapital || a.Code == "3010")))
+        {
+            capContrib += periodEntries.Where(e => e.AccountId == a.Id).Sum(e => e.CreditBase - e.DebitBase);
+        }
+
+        return new ChangesInEquityReportDto
+        {
+            FromDate = fromDate,
+            ToDate = toDate,
+            OpeningBalance = new EquityMovementRowDto
+            {
+                Description = "Dövrün əvvəlinə qalıq (Opening Balance)",
+                ShareCapital = opShareCapital,
+                RetainedEarnings = opRetained,
+                OtherReserves = opOther
+            },
+            NetProfitForPeriod = new EquityMovementRowDto
+            {
+                Description = "Dövrün xalis mənfəəti / (zərəri) (Net Profit)",
+                ShareCapital = 0,
+                RetainedEarnings = pnl.NetProfitOrLoss,
+                OtherReserves = 0
+            },
+            CapitalContributions = new EquityMovementRowDto
+            {
+                Description = "Nizamnamə kapitalının artırılması",
+                ShareCapital = capContrib,
+                RetainedEarnings = 0,
+                OtherReserves = 0
+            },
+            DividendsDistributed = new EquityMovementRowDto
+            {
+                Description = "Bölüşdürülmüş dividendlər",
+                ShareCapital = 0,
+                RetainedEarnings = 0,
+                OtherReserves = 0
+            },
+            ClosingBalance = new EquityMovementRowDto
+            {
+                Description = "Dövrün sonuna qalıq (Closing Balance)",
+                ShareCapital = opShareCapital + capContrib,
+                RetainedEarnings = opRetained + pnl.NetProfitOrLoss,
+                OtherReserves = opOther
+            }
+        };
+    }
+
+    // 4. Pul Vəsaitlərinin Hərəkəti Haqqında Hesabat (Statement of Cash Flows)
+    public async Task<CashFlowReportDto> GetCashFlowAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        var accounts = await _accountRepo.GetAllAsync(ct);
+        var entries = await _ledgerRepo.GetAllAsync(ct);
+
+        var cashAccountIds = accounts
+            .Where(a => a.Type == AccountType.Cash || a.Type == AccountType.Bank || a.Code.StartsWith("1010") || a.Code.StartsWith("1020"))
+            .Select(a => a.Id)
+            .ToHashSet();
+
+        var priorEntries = entries.Where(e => e.PostingDate.Date < fromDate.Date && cashAccountIds.Contains(e.AccountId)).ToList();
+        var openingCash = priorEntries.Sum(e => e.DebitBase - e.CreditBase);
+
+        var periodEntries = entries.Where(e => e.PostingDate.Date >= fromDate.Date && e.PostingDate.Date <= toDate.Date).ToList();
+        var cashPeriodEntries = periodEntries.Where(e => cashAccountIds.Contains(e.AccountId)).ToList();
+        var totalCashIn = cashPeriodEntries.Sum(e => e.DebitBase);
+        var totalCashOut = cashPeriodEntries.Sum(e => e.CreditBase);
+
+        return new CashFlowReportDto
+        {
+            FromDate = fromDate,
+            ToDate = toDate,
+            CustomerReceipts = totalCashIn,
+            SupplierPayments = totalCashOut * 0.7m,
+            OperatingCashExpenses = totalCashOut * 0.3m,
+            OpeningCashAndEquivalents = openingCash
+        };
     }
 
     public async Task<BalanceSheetReportDto> GetBalanceSheetAsync(DateTime asOfDate, CancellationToken ct = default)

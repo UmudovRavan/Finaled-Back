@@ -32,10 +32,12 @@ public static class PersistenceServiceRegistration
         // Application Services
         services.AddScoped<ITenantSeeder, TenantSeeder>();
         services.AddScoped<IAccountingService, AccountingService>();
+        services.AddScoped<ISalesService, SalesService>();
         services.AddScoped<IProcurementService, ProcurementService>();
         services.AddScoped<IInventoryService, InventoryService>();
         services.AddScoped<ITreasuryService, TreasuryService>();
         services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IMasterDataService, MasterDataService>();
         services.AddScoped<IUserSyncService, UserSyncService>();
 
         return services;

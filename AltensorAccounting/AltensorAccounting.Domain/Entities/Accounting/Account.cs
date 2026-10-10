@@ -9,6 +9,7 @@ public class Account : BaseEntity, ITenantEntity
     public string Code { get; set; } = default!; // e.g. "1010", "2010"
     public string Name { get; set; } = default!; // e.g. "Debitor Borclar", "Kassa"
     public AccountCategory Category { get; set; } // Asset, Liability, Equity, Income, Expense
+    public AccountSubcategory? Subcategory { get; set; } // Uzunmüddətli aktivlər, Dövriyyə aktivləri və s.
     public AccountType Type { get; set; } = AccountType.Standard; // Purpose: Receivable, Payable, Bank, Cash, Stock, etc.
 
     public Guid? ParentAccountId { get; set; }

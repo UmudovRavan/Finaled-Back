@@ -682,7 +682,7 @@ public class ProcurementService : IProcurementService
             {
                 var expenseAccountId = (line.ExpenseOrAssetAccountId.HasValue && line.ExpenseOrAssetAccountId.Value != Guid.Empty)
                     ? line.ExpenseOrAssetAccountId.Value
-                    : (allAccounts.FirstOrDefault(a => a.Code == "7100" || a.Type == AccountType.Expense)?.Id
+                    : (allAccounts.FirstOrDefault(a => a.Code == "7100" || a.Category == AccountCategory.Expense)?.Id
                        ?? company?.DefaultStockAccountId
                        ?? throw new MissingDefaultAccountException($"Qaimə sətri ({line.Description}) üçün xərc/stok hesabı təyin edilməyib."));
 
