@@ -27,12 +27,13 @@ namespace Application.Services
             _tenantService = tenantService;
         }
 
-        public async Task<IEnumerable<ProjectDTO>> GetAllProjectsAsync(Guid? divisionId = null)
+        public async Task<IEnumerable<ProjectDTO>> GetAllProjectsAsync(Guid? divisionId = null, Guid? titleId = null)
         {
             var tenantId = _tenantService.TenantId ?? throw new UnauthorizedAccessException("Tenant konteksti tapılmadı.");
             var query = _context.Projects
                 .Where(p => p.TenantId == tenantId && !p.IsDeleted)
                 .Include(p => p.Division)
+                .Include(p => p.TitleCompany)
                 .Include(p => p.Manager)
                 .Include(p => p.Levels.Where(l => !l.IsDeleted))
                     .ThenInclude(l => l.Tasks.Where(t => !t.IsDeleted))
@@ -41,6 +42,11 @@ namespace Application.Services
             if (divisionId.HasValue)
             {
                 query = query.Where(p => p.DivisionId == divisionId.Value);
+            }
+
+            if (titleId.HasValue)
+            {
+                query = query.Where(p => p.TitleId == titleId.Value);
             }
 
             var projects = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
@@ -53,6 +59,7 @@ namespace Application.Services
             var project = await _context.Projects
                 .Where(p => p.Id == id && p.TenantId == tenantId && !p.IsDeleted)
                 .Include(p => p.Division)
+                .Include(p => p.TitleCompany)
                 .Include(p => p.Manager)
                 .Include(p => p.Levels.Where(l => !l.IsDeleted).OrderBy(l => l.Order))
                     .ThenInclude(l => l.Tasks.Where(t => !t.IsDeleted))
@@ -127,6 +134,7 @@ namespace Application.Services
             project.Name = dto.Name;
             project.Description = dto.Description;
             project.DivisionId = dto.DivisionId;
+            project.TitleId = dto.TitleId;
             project.ManagerId = dto.ManagerId;
             project.UpdatedAt = DateTime.UtcNow;
 

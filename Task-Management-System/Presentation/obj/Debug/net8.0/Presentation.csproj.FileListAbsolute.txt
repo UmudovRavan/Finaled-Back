@@ -573,3 +573,11 @@ C:\Users\Huawei\Desktop\Finaled-Back\Task-Management-System\Presentation\obj\Deb
 C:\Users\Huawei\Desktop\Finaled-Back\Task-Management-System\Presentation\obj\Debug\net8.0\Presentation.pdb
 C:\Users\Huawei\Desktop\Finaled-Back\Task-Management-System\Presentation\obj\Debug\net8.0\Presentation.genruntimeconfig.cache
 C:\Users\Huawei\Desktop\Finaled-Back\Task-Management-System\Presentation\obj\Debug\net8.0\ref\Presentation.dll
+C:\Users\Huawei\Desktop\Finaled-Back\Task-Management-System\Presentation\bin\Debug\net8.0\ClosedXML.dll
+C:\Users\Huawei\Desktop\Finaled-Back\Task-Management-System\Presentation\bin\Debug\net8.0\ClosedXML.Parser.dll
+C:\Users\Huawei\Desktop\Finaled-Back\Task-Management-System\Presentation\bin\Debug\net8.0\DocumentFormat.OpenXml.dll
+C:\Users\Huawei\Desktop\Finaled-Back\Task-Management-System\Presentation\bin\Debug\net8.0\DocumentFormat.OpenXml.Framework.dll
+C:\Users\Huawei\Desktop\Finaled-Back\Task-Management-System\Presentation\bin\Debug\net8.0\ExcelNumberFormat.dll
+C:\Users\Huawei\Desktop\Finaled-Back\Task-Management-System\Presentation\bin\Debug\net8.0\RBush.dll
+C:\Users\Huawei\Desktop\Finaled-Back\Task-Management-System\Presentation\bin\Debug\net8.0\SixLabors.Fonts.dll
+C:\Users\Huawei\Desktop\Finaled-Back\Task-Management-System\Presentation\bin\Debug\net8.0\System.IO.Packaging.dll

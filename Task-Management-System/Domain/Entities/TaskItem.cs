@@ -22,6 +22,16 @@ namespace Domain.Entities
         public Guid? LevelId { get; set; }
         public ProjectLevel? Level { get; set; }
 
+        // Üç əsas analitik bölgü: Project, Division, Title
+        public Guid? ProjectId { get; set; }
+        public Project? Project { get; set; }
+
+        public Guid? DivisionId { get; set; }
+        public Division? Division { get; set; }
+
+        public Guid? TitleId { get; set; }
+        public CompanyTitle? TitleCompany { get; set; }
+
         public Guid? AssignedWorkGroupId { get; set; }
         public WorkGroup? AssignedWorkGroup { get; set; }
 

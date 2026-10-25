@@ -1,6 +1,7 @@
 using Contract.DTOs;
 using Contract.Services;
 using Domain.Entities;
+using Domain.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,17 +23,29 @@ namespace Presentation.Controllers
         private readonly ITaksService _taskService;
         private readonly ITaskAttachmentService _taskAttachmentService;
         private readonly INotificationService _notificationService;
+        private readonly ITaskExcelExportService _taskExportService;
+        private readonly IGenericRepository<ProjectLevel> _projectLevelRepo;
+        private readonly IGenericRepository<Project> _projectRepo;
+        private readonly IGenericRepository<CompanyTitle> _titleRepo;
 
         public TaskController(
             IGenericService<TaskDTO, TaskItem> genericService,
             ITaksService taskService,
             ITaskAttachmentService taskAttachmentService,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            ITaskExcelExportService taskExportService,
+            IGenericRepository<ProjectLevel> projectLevelRepo,
+            IGenericRepository<Project> projectRepo,
+            IGenericRepository<CompanyTitle> titleRepo)
         {
             _genericService = genericService;
             _taskService = taskService;
             _taskAttachmentService = taskAttachmentService;
             _notificationService = notificationService;
+            _taskExportService = taskExportService;
+            _projectLevelRepo = projectLevelRepo;
+            _projectRepo = projectRepo;
+            _titleRepo = titleRepo;
         }
 
         [Authorize(Policy = "CanCreateTasks")]
@@ -51,6 +64,34 @@ namespace Presentation.Controllers
             if (taskDto.AssignedToUserId == "null" || taskDto.AssignedToUserId == "undefined" || string.IsNullOrWhiteSpace(taskDto.AssignedToUserId))
             {
                 taskDto.AssignedToUserId = null;
+            }
+
+            // 2. TƏLƏB: Project-də "Layihəsiz" seçimin tam aradan qaldırılması
+            if ((!taskDto.ProjectId.HasValue || taskDto.ProjectId.Value == Guid.Empty) &&
+                (!taskDto.LevelId.HasValue || taskDto.LevelId.Value == Guid.Empty))
+            {
+                return BadRequest(new { message = "Tapşırıq mütləq bir layihəyə bağlanmalıdır. Layihəsiz seçim mümkün deyil." });
+            }
+
+            // Əgər LevelId verilibsə lakin ProjectId verilməyibsə, Level-dən Layihəni tap
+            if ((!taskDto.ProjectId.HasValue || taskDto.ProjectId.Value == Guid.Empty) && taskDto.LevelId.HasValue)
+            {
+                var lvl = await _projectLevelRepo.GetByIdAsync(taskDto.LevelId.Value);
+                if (lvl != null)
+                {
+                    taskDto.ProjectId = lvl.ProjectId;
+                }
+            }
+
+            // Əgər DivisionId və ya TitleId daxil edilməyibsə, Layihədən miras al
+            if (taskDto.ProjectId.HasValue && taskDto.ProjectId.Value != Guid.Empty)
+            {
+                var prj = await _projectRepo.GetByIdAsync(taskDto.ProjectId.Value);
+                if (prj != null)
+                {
+                    taskDto.DivisionId ??= prj.DivisionId;
+                    taskDto.TitleId ??= prj.TitleId;
+                }
             }
 
             var createdTask = await _genericService.AddAsync(taskDto);
@@ -171,8 +212,110 @@ namespace Presentation.Controllers
         [HttpGet("GetAllTask")]
         public async Task<IActionResult> GetAllTask()
         {
-            var tasks = await _genericService.GetAllAsync(query => query.Include(t => t.Attachments));
+            var tasks = await _genericService.GetAllAsync(query => query
+                .Include(t => t.Attachments)
+                .Include(t => t.TitleCompany)
+                .Include(t => t.Division)
+                .Include(t => t.Project)
+                .Include(t => t.Level));
             return Ok(tasks);
+        }
+
+        /// <summary>
+        /// 3. TƏLƏB: Division, Project və Title üzrə ayrıca/müstəqil filtrləmə.
+        /// GET /api/Task/filter?titleId=...&divisionId=...&projectId=...
+        /// </summary>
+        [Authorize(Policy = "CanViewTasks")]
+        [HttpGet("filter")]
+        public async Task<IActionResult> GetFilteredTasks([FromQuery] TaskFilterDTO filter)
+        {
+            var tasks = await _genericService.GetAllAsync(query =>
+            {
+                query = query
+                    .Include(t => t.TitleCompany)
+                    .Include(t => t.Division)
+                    .Include(t => t.Project)
+                    .Include(t => t.Level)
+                    .Include(t => t.AssignedToUser)
+                    .Include(t => t.Attachments);
+
+                if (filter.TitleId.HasValue && filter.TitleId.Value != Guid.Empty)
+                {
+                    query = query.Where(t => t.TitleId == filter.TitleId.Value ||
+                                            (t.Project != null && t.Project.TitleId == filter.TitleId.Value));
+                }
+
+                if (filter.DivisionId.HasValue && filter.DivisionId.Value != Guid.Empty)
+                {
+                    query = query.Where(t => t.DivisionId == filter.DivisionId.Value ||
+                                            (t.Project != null && t.Project.DivisionId == filter.DivisionId.Value));
+                }
+
+                if (filter.ProjectId.HasValue && filter.ProjectId.Value != Guid.Empty)
+                {
+                    query = query.Where(t => t.ProjectId == filter.ProjectId.Value ||
+                                            (t.Level != null && t.Level.ProjectId == filter.ProjectId.Value));
+                }
+
+                if (filter.Status.HasValue)
+                {
+                    query = query.Where(t => t.Status == filter.Status.Value);
+                }
+
+                if (filter.Priority.HasValue)
+                {
+                    query = query.Where(t => t.Priority == filter.Priority.Value);
+                }
+
+                if (filter.AssignedToUserId.HasValue && filter.AssignedToUserId.Value != Guid.Empty)
+                {
+                    query = query.Where(t => t.AssignedToUserId == filter.AssignedToUserId.Value);
+                }
+
+                if (filter.FromDeadline.HasValue)
+                {
+                    query = query.Where(t => t.Deadline >= filter.FromDeadline.Value);
+                }
+
+                if (filter.ToDeadline.HasValue)
+                {
+                    query = query.Where(t => t.Deadline <= filter.ToDeadline.Value);
+                }
+
+                if (!string.IsNullOrWhiteSpace(filter.Search))
+                {
+                    var s = filter.Search.Trim().ToLower();
+                    query = query.Where(t => t.Title.ToLower().Contains(s) || (t.Description != null && t.Description.ToLower().Contains(s)));
+                }
+
+                return query.OrderByDescending(t => t.CreatedAt);
+            });
+
+            return Ok(tasks);
+        }
+
+        /// <summary>
+        /// 3. TƏLƏB: Division, Project və Title üzrə əməliyyatların Excel-ə (.xlsx) yüklənməsi.
+        /// GET /api/Task/export-excel?titleId=...&divisionId=...&projectId=...
+        /// </summary>
+        [Authorize(Policy = "CanViewTasks")]
+        [HttpGet("export-excel")]
+        public async Task<IActionResult> ExportTasksToExcel([FromQuery] TaskFilterDTO filter)
+        {
+            var excelBytes = await _taskExportService.ExportTasksToExcelAsync(filter);
+
+            string filePrefix = "Emeliyyatlar_Tapsiriqlar";
+            if (filter.TitleId.HasValue && filter.TitleId.Value != Guid.Empty)
+            {
+                var title = await _titleRepo.GetByIdAsync(filter.TitleId.Value);
+                if (title != null && !string.IsNullOrWhiteSpace(title.Name))
+                {
+                    filePrefix = $"Emeliyyatlar_{title.Name.Replace(" ", "_")}";
+                }
+            }
+
+            var fileName = $"{filePrefix}_{DateTime.UtcNow:yyyyMMdd_HHmm}.xlsx";
+            return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
         [Authorize(Policy = "CanDeleteTasks")]

@@ -23,6 +23,7 @@ namespace Persistence.Data
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectLevel> ProjectLevels { get; set; }
         public DbSet<TenantSettings> TenantSettings { get; set; }
+        public DbSet<CompanyTitle> Titles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -60,6 +61,21 @@ namespace Persistence.Data
                 entity.HasOne(t => t.AssignedWorkGroup)
                       .WithMany(w => w.Tasks)
                       .HasForeignKey(t => t.AssignedWorkGroupId)
+                      .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(t => t.Project)
+                      .WithMany(p => p.Tasks)
+                      .HasForeignKey(t => t.ProjectId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(t => t.Division)
+                      .WithMany()
+                      .HasForeignKey(t => t.DivisionId)
+                      .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(t => t.TitleCompany)
+                      .WithMany(tc => tc.Tasks)
+                      .HasForeignKey(t => t.TitleId)
                       .OnDelete(DeleteBehavior.SetNull);
             });
 
@@ -193,6 +209,11 @@ namespace Persistence.Data
                       .WithOne(l => l.Project)
                       .HasForeignKey(l => l.ProjectId)
                       .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(p => p.TitleCompany)
+                      .WithMany(tc => tc.Projects)
+                      .HasForeignKey(p => p.TitleId)
+                      .OnDelete(DeleteBehavior.SetNull);
             });
 
             // ================= ProjectLevel =================
@@ -209,6 +230,13 @@ namespace Persistence.Data
             modelBuilder.Entity<TenantSettings>(entity =>
             {
                 entity.HasIndex(s => s.TenantId);
+            });
+
+            // ================= CompanyTitle =================
+            modelBuilder.Entity<CompanyTitle>(entity =>
+            {
+                entity.Property(c => c.Name).IsRequired().HasMaxLength(256);
+                entity.HasIndex(c => new { c.TenantId, c.Name });
             });
         }
     }

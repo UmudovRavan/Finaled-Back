@@ -88,5 +88,16 @@ namespace Persistence.Repositories
             _context.Entry(existingEntity).CurrentValues.SetValues(entity);
             return existingEntity;
         }
+
+        public async Task<bool> AnyAsync(Func<IQueryable<T>, IQueryable<T>>? filter = null)
+        {
+            var tenantId = GetRequiredTenantId();
+            IQueryable<T> query = _dbSet.AsNoTracking().Where(e => e.TenantId == tenantId && !e.IsDeleted);
+
+            if (filter != null)
+                query = filter(query);
+
+            return await query.AnyAsync();
+        }
     }
 }

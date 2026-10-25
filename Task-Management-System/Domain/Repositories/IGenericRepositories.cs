@@ -11,5 +11,6 @@ namespace Domain.Repositories
         Task<T> AddAsync(T entity);
         Task<T> UpdateAsync(T entity);
         Task<T> DeleteAsync(Guid id);
+        Task<bool> AnyAsync(Func<IQueryable<T>, IQueryable<T>>? filter = null);
     }
 }

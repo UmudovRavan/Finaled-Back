@@ -10,6 +10,8 @@ namespace Contract.DTOs
         public string? Description { get; set; }
         public Guid? DivisionId { get; set; }
         public string? DivisionName { get; set; }
+        public Guid? TitleId { get; set; }
+        public string? TitleName { get; set; }
         public Guid ManagerId { get; set; }
         public string? ManagerName { get; set; }
         public string? ManagerEmail { get; set; }
@@ -24,6 +26,7 @@ namespace Contract.DTOs
         public string Name { get; set; } = default!;
         public string? Description { get; set; }
         public Guid? DivisionId { get; set; }
+        public Guid? TitleId { get; set; }
         public Guid ManagerId { get; set; }
     }
 
@@ -32,6 +35,7 @@ namespace Contract.DTOs
         public string Name { get; set; } = default!;
         public string? Description { get; set; }
         public Guid? DivisionId { get; set; }
+        public Guid? TitleId { get; set; }
         public Guid ManagerId { get; set; }
     }
 }

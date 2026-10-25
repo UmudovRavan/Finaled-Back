@@ -2,8 +2,8 @@ using Contract.DTOs;
 using Contract.Services;
 using Domain.Entities;
 using Domain.Enums;
+using Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Persistence.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,8 +13,15 @@ namespace Application.Services
 {
     public class WorkloadService : IWorkloadService
     {
-        private readonly AppDbContext _context;
+        private readonly IGenericRepository<TaskItem> _taskRepo;
+        private readonly IAppUserRepository _appUserRepo;
         private readonly ICurrentTenantService _tenantService;
+
+        // Kvota limitləri: Asan, Orta və Çətin statuslu tapşırıqların hərəsinə 10 tapşırıq
+        public const int MaxEasyTasks = 10;
+        public const int MaxMediumTasks = 10;
+        public const int MaxHardTasks = 10;
+        public const int MaxTotalTasks = MaxEasyTasks + MaxMediumTasks + MaxHardTasks; // 30 tapşırıq
 
         private static readonly CurrentSituation[] ActiveStatuses = new[]
         {
@@ -25,10 +32,12 @@ namespace Application.Services
         };
 
         public WorkloadService(
-            AppDbContext context,
+            IGenericRepository<TaskItem> taskRepo,
+            IAppUserRepository appUserRepo,
             ICurrentTenantService tenantService)
         {
-            _context = context;
+            _taskRepo = taskRepo;
+            _appUserRepo = appUserRepo;
             _tenantService = tenantService;
         }
 
@@ -38,24 +47,33 @@ namespace Application.Services
             var today = DateTime.UtcNow.Date;
             var tomorrow = today.AddDays(1);
 
-            var employees = await _context.AppUsers
-                .Where(u => u.TenantId == tenantId)
-                .Include(u => u.AssignedTasks.Where(t => !t.IsDeleted && ActiveStatuses.Contains(t.Status)))
-                .ToListAsync();
+            var employees = await _appUserRepo.GetByTenantAsync(tenantId);
+            var activeTasks = await _taskRepo.GetAllAsync(q => q.Where(t => ActiveStatuses.Contains(t.Status) && t.AssignedToUserId.HasValue));
+
+            var tasksByUser = activeTasks
+                .Where(t => t.AssignedToUserId.HasValue)
+                .GroupBy(t => t.AssignedToUserId!.Value)
+                .ToDictionary(g => g.Key, g => g.ToList());
 
             var result = new List<EmployeeWorkloadDTO>();
 
             foreach (var emp in employees)
             {
-                var activeTasks = emp.AssignedTasks.ToList();
-                var activeCount = activeTasks.Count;
-                var dueTodayCount = activeTasks.Count(t => t.Deadline >= today && t.Deadline < tomorrow);
-                var overdueCount = activeTasks.Count(t => t.Deadline < DateTime.UtcNow);
-                var urgentCount = activeTasks.Count(t => t.Priority == Priority.Urgent);
-                var highCount = activeTasks.Count(t => t.Priority == Priority.High);
+                tasksByUser.TryGetValue(emp.Id, out var empActiveTasks);
+                empActiveTasks ??= new List<TaskItem>();
 
-                var workloadLevel = DetermineWorkloadLevel(activeCount, dueTodayCount);
-                var score = CalculateWorkloadScore(activeTasks);
+                var activeCount = empActiveTasks.Count;
+                var easyCount = empActiveTasks.Count(t => t.Difficulty == DifficultyLevel.Easy);
+                var mediumCount = empActiveTasks.Count(t => t.Difficulty == DifficultyLevel.Medium);
+                var hardCount = empActiveTasks.Count(t => t.Difficulty == DifficultyLevel.Hard);
+
+                var dueTodayCount = empActiveTasks.Count(t => t.Deadline >= today && t.Deadline < tomorrow);
+                var overdueCount = empActiveTasks.Count(t => t.Deadline < DateTime.UtcNow);
+                var urgentCount = empActiveTasks.Count(t => t.Priority == Priority.Urgent);
+                var highCount = empActiveTasks.Count(t => t.Priority == Priority.High);
+
+                var workloadLevel = DetermineWorkloadLevel(easyCount, mediumCount, hardCount, activeCount, dueTodayCount);
+                var score = CalculateWorkloadScore(empActiveTasks);
 
                 result.Add(new EmployeeWorkloadDTO
                 {
@@ -63,6 +81,9 @@ namespace Application.Services
                     FullName = emp.FullName ?? emp.UserName,
                     Email = emp.Email,
                     ActiveTaskCount = activeCount,
+                    EasyTasksCount = easyCount,
+                    MediumTasksCount = mediumCount,
+                    HardTasksCount = hardCount,
                     TasksDueToday = dueTodayCount,
                     OverdueTasks = overdueCount,
                     UrgentTasks = urgentCount,
@@ -82,23 +103,24 @@ namespace Application.Services
             var today = DateTime.UtcNow.Date;
             var tomorrow = today.AddDays(1);
 
-            var emp = await _context.AppUsers
-                .Where(u => u.Id == userId && u.TenantId == tenantId)
-                .Include(u => u.AssignedTasks.Where(t => !t.IsDeleted && ActiveStatuses.Contains(t.Status)))
-                .FirstOrDefaultAsync();
-
-            if (emp == null)
+            var emp = await _appUserRepo.GetByIdAsync(userId);
+            if (emp == null || emp.TenantId != tenantId)
                 return null;
 
-            var activeTasks = emp.AssignedTasks.ToList();
-            var activeCount = activeTasks.Count;
-            var dueTodayCount = activeTasks.Count(t => t.Deadline >= today && t.Deadline < tomorrow);
-            var overdueCount = activeTasks.Count(t => t.Deadline < DateTime.UtcNow);
-            var urgentCount = activeTasks.Count(t => t.Priority == Priority.Urgent);
-            var highCount = activeTasks.Count(t => t.Priority == Priority.High);
+            var empActiveTasks = await _taskRepo.GetAllAsync(q => q.Where(t => t.AssignedToUserId == userId && ActiveStatuses.Contains(t.Status)));
 
-            var workloadLevel = DetermineWorkloadLevel(activeCount, dueTodayCount);
-            var score = CalculateWorkloadScore(activeTasks);
+            var activeCount = empActiveTasks.Count;
+            var easyCount = empActiveTasks.Count(t => t.Difficulty == DifficultyLevel.Easy);
+            var mediumCount = empActiveTasks.Count(t => t.Difficulty == DifficultyLevel.Medium);
+            var hardCount = empActiveTasks.Count(t => t.Difficulty == DifficultyLevel.Hard);
+
+            var dueTodayCount = empActiveTasks.Count(t => t.Deadline >= today && t.Deadline < tomorrow);
+            var overdueCount = empActiveTasks.Count(t => t.Deadline < DateTime.UtcNow);
+            var urgentCount = empActiveTasks.Count(t => t.Priority == Priority.Urgent);
+            var highCount = empActiveTasks.Count(t => t.Priority == Priority.High);
+
+            var workloadLevel = DetermineWorkloadLevel(easyCount, mediumCount, hardCount, activeCount, dueTodayCount);
+            var score = CalculateWorkloadScore(empActiveTasks);
 
             return new EmployeeWorkloadDTO
             {
@@ -106,6 +128,9 @@ namespace Application.Services
                 FullName = emp.FullName ?? emp.UserName,
                 Email = emp.Email,
                 ActiveTaskCount = activeCount,
+                EasyTasksCount = easyCount,
+                MediumTasksCount = mediumCount,
+                HardTasksCount = hardCount,
                 TasksDueToday = dueTodayCount,
                 OverdueTasks = overdueCount,
                 UrgentTasks = urgentCount,
@@ -133,14 +158,23 @@ namespace Application.Services
 
             if (workload.WorkloadLevel == "Overloaded")
             {
+                var exceededCategory = new List<string>();
+                if (workload.EasyTasksCount > MaxEasyTasks) exceededCategory.Add($"Asan ({workload.EasyTasksCount}/{MaxEasyTasks})");
+                if (workload.MediumTasksCount > MaxMediumTasks) exceededCategory.Add($"Orta ({workload.MediumTasksCount}/{MaxMediumTasks})");
+                if (workload.HardTasksCount > MaxHardTasks) exceededCategory.Add($"Çətin ({workload.HardTasksCount}/{MaxHardTasks})");
+                if (workload.ActiveTaskCount > MaxTotalTasks) exceededCategory.Add($"Ümumi ({workload.ActiveTaskCount}/{MaxTotalTasks})");
+
+                string reason = exceededCategory.Count > 0 ? string.Join(", ", exceededCategory) : "Gündəlik təcili tapşırıqlar həddi";
+
                 warningMessage = $"⚠️ DİQQƏT: Əməkdaş ({workload.FullName ?? workload.Email}) hal-hazırda həddindən artıq yüklənib! " +
-                                 $"Aktiv tapşırıq sayı: {workload.ActiveTaskCount}, Bu günə olan tapşırıq: {workload.TasksDueToday}. " +
+                                 $"Aşılmış limitlər: {reason}. " +
+                                 $"Aktiv cəmi: {workload.ActiveTaskCount} (Asan: {workload.EasyTasksCount}/10, Orta: {workload.MediumTasksCount}/10, Çətin: {workload.HardTasksCount}/10). " +
                                  $"Yeni tapşırıq təyin etməzdən əvvəl nəzərə alın.";
             }
             else if (workload.WorkloadLevel == "High")
             {
-                warningMessage = $"ℹ️ Məlumat: Əməkdaşın ({workload.FullName ?? workload.Email}) iş yükü yüksəkdir. " +
-                                 $"Aktiv tapşırıq sayı: {workload.ActiveTaskCount}.";
+                warningMessage = $"ℹ️ Məlumat: Əməkdaşın ({workload.FullName ?? workload.Email}) iş yükü kvotanın son həddindədir. " +
+                                 $"Aktiv: {workload.ActiveTaskCount} (Asan: {workload.EasyTasksCount}/10, Orta: {workload.MediumTasksCount}/10, Çətin: {workload.HardTasksCount}/10).";
             }
 
             return new WorkloadWarningDTO
@@ -148,6 +182,9 @@ namespace Application.Services
                 UserId = userId,
                 FullName = workload.FullName,
                 ActiveTaskCount = workload.ActiveTaskCount,
+                EasyTasksCount = workload.EasyTasksCount,
+                MediumTasksCount = workload.MediumTasksCount,
+                HardTasksCount = workload.HardTasksCount,
                 TasksDueToday = workload.TasksDueToday,
                 WorkloadLevel = workload.WorkloadLevel,
                 IsWarning = isWarning,
@@ -155,20 +192,36 @@ namespace Application.Services
             };
         }
 
-        private static string DetermineWorkloadLevel(int activeCount, int dueTodayCount)
+        /// <summary>
+        /// Asan, Orta və Çətin statuslu tapşırıqların hərəsinə 10 tapşırıq limiti:
+        /// 10 Asan + 10 Orta + 10 Çətin (cəmi 30) təyin edildikdə belə işçi "Overloaded" kimi görünmür!
+        /// Yalnız bu limitlərdən hər hansı biri 10-u keçdikdə (və ya ümumi 30-u aşdıqda) "Overloaded" olur.
+        /// </summary>
+        private static string DetermineWorkloadLevel(int easyCount, int mediumCount, int hardCount, int totalActive, int dueTodayCount)
         {
-            if (activeCount >= 13 || dueTodayCount >= 5)
+            // Limitlər aşıldıqda:
+            if (easyCount > MaxEasyTasks || mediumCount > MaxMediumTasks || hardCount > MaxHardTasks || totalActive > MaxTotalTasks || dueTodayCount >= 5)
+            {
                 return "Overloaded";
-            if (activeCount >= 8)
+            }
+
+            // Həddə yaxınlaşdıqda (Kvota daxilindədir, amma son həddədir):
+            if (easyCount == MaxEasyTasks || mediumCount == MaxMediumTasks || hardCount == MaxHardTasks || totalActive >= 24)
+            {
                 return "High";
-            if (activeCount >= 4)
+            }
+
+            // Orta iş yükü:
+            if (totalActive >= 10 || hardCount >= 4 || mediumCount >= 5)
+            {
                 return "Medium";
+            }
+
             return "Low";
         }
 
         private static int CalculateWorkloadScore(List<TaskItem> activeTasks)
         {
-            // Score based on difficulty and priority
             int score = 0;
             foreach (var t in activeTasks)
             {

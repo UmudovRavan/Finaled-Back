@@ -89,6 +89,8 @@ namespace Presentationn
             builder.Services.AddScoped<IDivisionService, DivisionService>();
             builder.Services.AddScoped<IProjectService, ProjectService>();
             builder.Services.AddScoped<IProjectLevelService, ProjectLevelService>();
+            builder.Services.AddScoped<ICompanyTitleService, CompanyTitleService>();
+            builder.Services.AddScoped<ITaskExcelExportService, TaskExcelExportService>();
             builder.Services.AddScoped<IWorkloadService, WorkloadService>();
             builder.Services.AddScoped<IDashboardService, DashboardService>();
             builder.Services.AddScoped<ITenantSettingsService, TenantSettingsService>();

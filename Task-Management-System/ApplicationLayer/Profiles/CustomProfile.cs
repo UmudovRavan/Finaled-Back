@@ -33,6 +33,9 @@ namespace Application.Profiles
                 .ForMember(dest => dest.CreatedByUser, opt => opt.Ignore())
                 .ForMember(dest => dest.Level, opt => opt.Ignore())
                 .ForMember(dest => dest.LevelId, opt => opt.MapFrom(src => src.LevelId))
+                .ForMember(dest => dest.ProjectId, opt => opt.MapFrom(src => src.ProjectId))
+                .ForMember(dest => dest.DivisionId, opt => opt.MapFrom(src => src.DivisionId))
+                .ForMember(dest => dest.TitleId, opt => opt.MapFrom(src => src.TitleId))
                 .ForMember(dest => dest.Priority, opt => opt.MapFrom(src => src.Priority))
                 .ForMember(dest => dest.AssignedToUserId, opt => opt.MapFrom(src => SafeParseGuid(src.AssignedToUserId)))
                 .ForMember(dest => dest.CreatedByUserId, opt => opt.MapFrom(src => SafeParseGuid(src.CreatedByUserId) ?? Guid.Empty))
@@ -48,8 +51,12 @@ namespace Application.Profiles
                 .ForMember(dest => dest.Priority, opt => opt.MapFrom(src => src.Priority))
                 .ForMember(dest => dest.LevelId, opt => opt.MapFrom(src => src.LevelId))
                 .ForMember(dest => dest.LevelName, opt => opt.MapFrom(src => src.Level != null ? src.Level.Name : null))
-                .ForMember(dest => dest.ProjectName, opt => opt.MapFrom(src => src.Level != null && src.Level.Project != null ? src.Level.Project.Name : null))
-                .ForMember(dest => dest.DivisionName, opt => opt.MapFrom(src => src.Level != null && src.Level.Project != null && src.Level.Project.Division != null ? src.Level.Project.Division.Name : null))
+                .ForMember(dest => dest.ProjectId, opt => opt.MapFrom(src => src.ProjectId ?? (src.Level != null ? src.Level.ProjectId : (Guid?)null)))
+                .ForMember(dest => dest.ProjectName, opt => opt.MapFrom(src => src.Project != null ? src.Project.Name : (src.Level != null && src.Level.Project != null ? src.Level.Project.Name : null)))
+                .ForMember(dest => dest.DivisionId, opt => opt.MapFrom(src => src.DivisionId ?? (src.Project != null ? src.Project.DivisionId : (src.Level != null && src.Level.Project != null ? src.Level.Project.DivisionId : (Guid?)null))))
+                .ForMember(dest => dest.DivisionName, opt => opt.MapFrom(src => src.Division != null ? src.Division.Name : (src.Project != null && src.Project.Division != null ? src.Project.Division.Name : (src.Level != null && src.Level.Project != null && src.Level.Project.Division != null ? src.Level.Project.Division.Name : null))))
+                .ForMember(dest => dest.TitleId, opt => opt.MapFrom(src => src.TitleId ?? (src.Project != null ? src.Project.TitleId : (Guid?)null)))
+                .ForMember(dest => dest.TitleName, opt => opt.MapFrom(src => src.TitleCompany != null ? src.TitleCompany.Name : (src.Project != null && src.Project.TitleCompany != null ? src.Project.TitleCompany.Name : null)))
                 .ForMember(dest => dest.TaskCommentId, opt => opt.MapFrom(src => src.TaskComments != null
                     ? src.TaskComments.Select(c => c.Id).ToList()
                     : null))
@@ -67,6 +74,7 @@ namespace Application.Profiles
             // Project mappings
             CreateMap<Project, ProjectDTO>()
                 .ForMember(dest => dest.DivisionName, opt => opt.MapFrom(src => src.Division != null ? src.Division.Name : null))
+                .ForMember(dest => dest.TitleName, opt => opt.MapFrom(src => src.TitleCompany != null ? src.TitleCompany.Name : null))
                 .ForMember(dest => dest.ManagerName, opt => opt.MapFrom(src => src.Manager != null ? (src.Manager.FullName ?? src.Manager.UserName) : null))
                 .ForMember(dest => dest.ManagerEmail, opt => opt.MapFrom(src => src.Manager != null ? src.Manager.Email : null))
                 .ForMember(dest => dest.LevelCount, opt => opt.MapFrom(src => src.Levels != null ? src.Levels.Count(l => !l.IsDeleted) : 0))
@@ -74,6 +82,11 @@ namespace Application.Profiles
                 .ForMember(dest => dest.Levels, opt => opt.MapFrom(src => src.Levels != null ? src.Levels.Where(l => !l.IsDeleted).OrderBy(l => l.Order) : null));
             CreateMap<CreateProjectDTO, Project>();
             CreateMap<UpdateProjectDTO, Project>();
+
+            // CompanyTitle mappings
+            CreateMap<CompanyTitle, CompanyTitleDTO>();
+            CreateMap<CreateCompanyTitleDTO, CompanyTitle>();
+            CreateMap<UpdateCompanyTitleDTO, CompanyTitle>();
 
             // ProjectLevel mappings
             CreateMap<ProjectLevel, ProjectLevelDTO>()

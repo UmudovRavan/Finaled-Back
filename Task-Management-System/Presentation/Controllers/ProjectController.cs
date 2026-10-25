@@ -21,9 +21,9 @@ namespace Presentation.Controllers
 
         [HttpGet]
         [Authorize(Policy = "CanViewProjects")]
-        public async Task<IActionResult> GetAllProjects([FromQuery] Guid? divisionId)
+        public async Task<IActionResult> GetAllProjects([FromQuery] Guid? divisionId, [FromQuery] Guid? titleId)
         {
-            var projects = await _projectService.GetAllProjectsAsync(divisionId);
+            var projects = await _projectService.GetAllProjectsAsync(divisionId, titleId);
             return Ok(projects);
         }
 

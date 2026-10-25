@@ -20,8 +20,16 @@ namespace Contract.DTOs
 
         public Guid? LevelId { get; set; }
         public string? LevelName { get; set; }
+
+        // Üç əsas analitik bölgü: Project, Division, Title
+        public Guid? ProjectId { get; set; }
         public string? ProjectName { get; set; }
+
+        public Guid? DivisionId { get; set; }
         public string? DivisionName { get; set; }
+
+        public Guid? TitleId { get; set; }
+        public string? TitleName { get; set; }
 
         public Guid? ParentTaskId { get; set; }
         public List<Guid>? TaskCommentId { get; set; }
