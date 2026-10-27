@@ -41,8 +41,7 @@ namespace Application.Services
                     .Include(t => t.Division)
                     .Include(t => t.Project)
                     .Include(t => t.Level)
-                    .Include(t => t.AssignedToUser)
-                    .Include(t => t.CreatedByUser);
+                    .Include(t => t.AssignedToUser);
 
                 // Müstəqil filtrləmə (1. Title, 2. Division, 3. Project)
                 if (filter.TitleId.HasValue && filter.TitleId.Value != Guid.Empty)
@@ -159,7 +158,7 @@ namespace Application.Services
                 row++;
             }
 
-            ws.Columns().AdjustToContents(10.0, 50.0);
+            SafelyAdjustColumns(ws, 12);
 
             using var ms = new MemoryStream();
             workbook.SaveAs(ms);
@@ -210,7 +209,7 @@ namespace Application.Services
                 row++;
             }
 
-            ws.Columns().AdjustToContents(10.0, 50.0);
+            SafelyAdjustColumns(ws, 13);
 
             using var ms = new MemoryStream();
             workbook.SaveAs(ms);
@@ -306,5 +305,37 @@ namespace Application.Services
             DifficultyLevel.Hard => "Çətin",
             _ => difficulty.ToString()
         };
+
+        private static void SafelyAdjustColumns(IXLWorksheet ws, int columnCount)
+        {
+            try
+            {
+                ws.Columns().AdjustToContents(10.0, 50.0);
+            }
+            catch
+            {
+                // Headless Linux serverlərdə font tapılmadıqda sistem çökməsin, standart en tətbiq edirik
+                for (int c = 1; c <= columnCount; c++)
+                {
+                    ws.Column(c).Width = c switch
+                    {
+                        1 => 6,   // №
+                        2 => 22,  // Title
+                        3 => 20,  // Division
+                        4 => 22,  // Layihə
+                        5 => 18,  // Mərhələ
+                        6 => 30,  // Tapşırıq
+                        7 => 35,  // Təsvir
+                        8 => 22,  // Məsul Şəxs
+                        9 => 14,  // Prioritet
+                        10 => 14, // Çətinlik
+                        11 => 16, // Status
+                        12 => 18, // Son Tarix
+                        13 => 18, // Yaradılma Tarixi
+                        _ => 18
+                    };
+                }
+            }
+        }
     }
 }
